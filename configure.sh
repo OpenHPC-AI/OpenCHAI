@@ -133,3 +133,4 @@ fi
 
 echo ""
 echo "🎉 OpenCHAI manager tool configuration paths updated successfully!"
+
