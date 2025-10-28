@@ -1,12 +1,13 @@
 #!/bin/bash
 # -------------------------------------------------------------------
 # Script Name: configure.sh
-# Purpose: Automatically configure OpenCHAI manager tool to use for cluster 
+# Purpose: Automatically configure OpenCHAI manager tool to use for cluster
 # Author: Satish Gupta
 # -------------------------------------------------------------------
 
 # Exit immediately if a command exits with a non-zero status
 set -e
+
 
 # Detect the absolute path where the script is executed (OpenCHAI base path)
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,6 +22,36 @@ fi
 SYSTEM_ANSIBLE_CFG="/etc/ansible/ansible.cfg"
 ANSIBLE_CFG="$BASE_DIR/automation/ansible/ansible.cfg"
 ALL_YML="$BASE_DIR/automation/ansible/group_vars/all.yml"
+
+# -------------------------------------------------------------------
+# 0️⃣ Ensure Ansible is installed
+# -------------------------------------------------------------------
+echo "🔍 Checking for Ansible installation..."
+
+if ! command -v ansible >/dev/null 2>&1; then
+    echo "⚠️  Ansible not found. Installing ansible-core and ansible packages..."
+
+    # Detect package manager
+    if command -v dnf >/dev/null 2>&1; then
+        PKG_MGR="dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MGR="yum"
+    else
+        echo "❌ No supported package manager found (dnf/yum)."
+        exit 1
+    fi
+
+    # Install Ansible dependencies
+    sudo $PKG_MGR -y install epel-release || true
+    sudo $PKG_MGR -y install ansible-core ansible || {
+        echo "❌ Failed to install Ansible. Please check your network or repos."
+        exit 1
+    }
+
+    echo "✅ Ansible successfully installed."
+else
+    echo "✅ Ansible is already installed."
+fi
 
 echo "🔧 Configuring OpenCHAI manager tool paths..."
 echo "Detected base directory: $BASE_DIR"
@@ -80,4 +111,5 @@ fi
 
 echo ""
 echo "🎉 OpenCHAI manager tool configuration paths updated successfully!"
+
 
