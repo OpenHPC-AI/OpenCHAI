@@ -27,11 +27,11 @@ Run configuration script to setup the manager tool
 ```python
 $ cd ./OpenCHAI
 
-Update the inventory file with all service node details for your cluster, based on your environment configuration.
+#Update the inventory file with all service node details for your cluster, based on your environment configuration.
 
 $ vim chai_setup/inventory_def.txt
 
-Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
+#Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
 
 $ bash ./configure.sh
 
