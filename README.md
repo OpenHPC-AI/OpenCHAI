@@ -10,28 +10,28 @@ Both master nodes must include a **25 GB `/drbd` partition** to support data rep
 
 
 # OpenCHAI Manager Tool Setup
-#Install the git package 
+Install the git package 
 
 ```python
 yum install git
 ```
 
-#Clone the repository
+Clone the repository
 
 ```python
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-#Run configuration script to setup the manager tool
+Run configuration script to setup the manager tool
 
 ```python
 $ cd ./OpenCHAI
 
-#Update the inventory file with all service node details for your cluster, based on your environment configuration.
+Update the inventory file with all service node details for your cluster, based on your environment configuration.
 
 $ vim chai_setup/inventory_def.txt
 
-#Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
+Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
 
 $ bash ./configure.sh
 
