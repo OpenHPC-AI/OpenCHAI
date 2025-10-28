@@ -1,7 +1,7 @@
 #!/bin/bash
 # -------------------------------------------------------------------
-# Script Name: setup_openchai_paths.sh
-# Purpose: Automatically configure OpenCHAI manager tool paths
+# Script Name: configure.sh
+# Purpose: Automatically configure OpenCHAI manager tool to use for cluster 
 # Author: Satish Gupta
 # -------------------------------------------------------------------
 
