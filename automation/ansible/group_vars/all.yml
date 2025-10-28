@@ -1,4 +1,4 @@
-base_dir: /CHAI
-rpm_stack_path: /CHAI/rpm-stack
-configuration_dir_path: /CHAI/rpm-stack/mount
-roles_parent_path: /CHAI/automation/ansible/roles_library
+base_dir: /OpenCHAI
+rpm_stack_path: /OpenCHAI/rpm-stack
+configuration_dir_path: /OpenCHAI/rpm-stack/mount
+roles_parent_path: /OpenCHAI/automation/ansible/roles_library
