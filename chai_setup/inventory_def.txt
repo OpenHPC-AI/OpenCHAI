@@ -1,0 +1,12 @@
+# Enter hostname, IP, ansible_user, and password for each node.
+# Multiple nodes can be added with their corresponding details.
+# hostname       ip              ansible_user  ansible_password      group
+headnode         192.168.1.10    root          Admin#@#$             headnode
+hpc-master01     192.168.1.1     root          Admin#@#$             hpc_master
+hpc-master02     192.168.1.2     root          Admin#@#$             hpc_master
+hpc-mgmt01       192.168.1.4     root          Admin#@#$             hpc_mgmt
+hpc-mgmt02       192.168.1.5     root          Admin#@#$             hpc_mgmt
+login01          192.168.1.11    root          Admin#@#$             login
+login02          192.168.1.12    root          Admin#@#$             login
+login03          192.168.1.13    root          Admin#@#$             login
+login04          192.168.1.14    root          Admin#@#$             login
