@@ -2,7 +2,7 @@ This section is the heart of your automated HPC+AI provisioning system, built ar
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#Overview
+Overview
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
