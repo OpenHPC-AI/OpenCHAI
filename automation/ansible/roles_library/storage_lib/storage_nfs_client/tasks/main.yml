@@ -1,0 +1,42 @@
+---
+- name: Check installed packages
+  package_facts:
+    manager: auto
+
+- name: Install NFS Client packages if missing and allowed
+  package:
+    name: "{{ nfs_client_packages }}"
+    state: present
+  when:
+    - nfs_client_install_if_missing | bool
+    - nfs_client_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Debug if NFS Client packages missing and install skipped
+  debug:
+    msg: "NFS Client packages missing, installation skipped (nfs_client_install_if_missing=false)."
+  when:
+    - not nfs_client_install_if_missing | bool
+    - nfs_client_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Manage NFS Client service
+  service:
+    name: "{{ nfs_client_service }}"
+    state: "{{ nfs_client_state }}"
+    enabled: "{{ nfs_client_enabled }}"
+  when: nfs_client_packages | difference(ansible_facts.packages.keys()) | length == 0
+
+- name: Ensure NFS mount points exist
+  file:
+    path: "{{ item.dest }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ nfs_mounts }}"
+
+- name: Mount NFS shares
+  mount:
+    src: "{{ item.src }}"
+    path: "{{ item.dest }}"
+    fstype: nfs
+    opts: "{{ item.opts | default('defaults') }}"
+    state: mounted
+  loop: "{{ nfs_mounts }}"
