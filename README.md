@@ -32,7 +32,7 @@ $ cd ./OpenCHAI
 Pull the **rpm-stack** either from your local SSD drive or pen drive to **./OpenCHAI/rpm-stack** on the head node, or download it directly from the online source using:
 
 ```bash
-wget https://cdac-hpc-sangrah/alma8.9/OpenCHAI-v1.0/rpm-stack
+wget https://cdac-hpc-sangrah/alma8.9/OpenCHAI-v1.0/rpm-stack.tar
 ```
 
 Make sure the **rpm-stack** is pulled !
