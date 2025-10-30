@@ -22,7 +22,7 @@ Clone the repository
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-Run configuration script to setup the manager tool
+Run the configuration script to set up the Manager tool after pulling the **rpm-stack** into the OpenCHAI directory.
 
 ```bash
 $ cd ./OpenCHAI
