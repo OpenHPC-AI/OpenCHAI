@@ -1,5 +1,5 @@
-headnode_ip: "{{ lookup('pipe', 'grep ^headnode /OpenCHAI/automation/ansible/inventory/inventory_def.txt | awk -F\" \" \'{print $2}\'') }}"
 base_dir: /OpenCHAI
-rpm_stack_path: /OpenCHAI/rpm-stack
-configuration_dir_path: /OpenCHAI/rpm-stack/mount
-roles_parent_path: /OpenCHAI/automation/ansible/roles_library
+rpm_stack_path: "{{ base_dir }}/rpm-stack"
+configuration_dir_path: "{{ base_dir }}/rpm-stack/mount"
+roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
+headnode_ip: "{{ lookup('pipe', 'grep ^headnode ' ~ base_dir ~ '/automation/ansible/inventory/inventory_def.txt | awk -F\" \" \'{print $2}\'') }}"
