@@ -1,0 +1,7 @@
+nfs_client_packages:
+  - nfs-utils
+nfs_client_service: nfs-client.target
+nfs_client_state: started
+nfs_client_enabled: true
+nfs_client_install_if_missing: true
+nfs_mounts: []
