@@ -62,6 +62,7 @@ if [ -f "$BASE_DIR/rpm-stack.tar" ]; then
     tar -xvf "$BASE_DIR/rpm-stack.tar" -C "$BASE_DIR" || {
         echo "❌ Failed to extract rpm-stack.tar"
         exit 1
+    rm -rf "$BASE_DIR/rpm-stack.tar"
     }
 
     # Check for enroot_pyxis_config.tgz inside rpm-stack/mount
@@ -70,6 +71,7 @@ if [ -f "$BASE_DIR/rpm-stack.tar" ]; then
         tar -xvf "$BASE_DIR/rpm-stack/mount/enroot_pyxis_config.tgz" -C "$BASE_DIR/rpm-stack/mount" || {
             echo "❌ Failed to extract enroot_pyxis_config.tgz"
             exit 1
+        rm -rf "$BASE_DIR/rpm-stack/mount/enroot_pyxis_config.tgz"
         }
         echo "✅ Extraction complete."
     else
