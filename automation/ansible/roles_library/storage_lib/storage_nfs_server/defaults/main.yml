@@ -1,0 +1,9 @@
+nfs_server_packages:
+  - nfs-utils
+nfs_server_service: nfs-server
+nfs_server_state: started
+nfs_server_enabled: true
+nfs_server_install_if_missing: true
+nfs_export_paths:
+  - /OpenCHAI/rpm-stack/
+nfs_export_options: rw,sync,no_root_squash
