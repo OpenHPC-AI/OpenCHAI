@@ -1,0 +1,39 @@
+---
+- name: Check installed packages
+  package_facts:
+    manager: auto
+
+- name: Install NFS Server packages if missing and allowed
+  package:
+    name: "{{ nfs_server_packages }}"
+    state: present
+  when:
+    - nfs_server_install_if_missing | bool
+    - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Debug if NFS Server packages missing and install skipped
+  debug:
+    msg: "NFS Server packages missing, installation skipped (nfs_server_install_if_missing=false)."
+  when:
+    - not nfs_server_install_if_missing | bool
+    - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Configure /etc/exports
+  template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload NFS exports
+
+- name: Manage NFS Server service
+  service:
+    name: "{{ nfs_server_service }}"
+    state: "{{ nfs_server_state }}"
+    enabled: "{{ nfs_server_enabled }}"
+  when: nfs_server_packages | difference(ansible_facts.packages.keys()) | length == 0
+
+# Handlers
+- name: Reload NFS exports
+  command: exportfs -r
