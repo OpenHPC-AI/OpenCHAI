@@ -50,6 +50,38 @@ else
     echo "✅ Ansible is already installed."
 fi
 
+# -----------------------------------------------------------------------------------------------------------------
+# Check if rpm-stack tar file exists
+# -----------------------------------------------------------------------------------------------------------------
+echo ""
+read -rp "📁 Have you pulled or copied the rpm-stack.tar into ./OpenCHAI at your environment? (yes/no): " CONFIRM
+
+if [ -f "$BASE_DIR/rpm-stack.tar" ]; then
+    echo "✅ rpm-stack.tar found in $BASE_DIR"
+    echo "Extracting rpm-stack..."
+    tar -xvf "$BASE_DIR/rpm-stack.tar" -C "$BASE_DIR" || {
+        echo "❌ Failed to extract rpm-stack.tar"
+        exit 1
+    }
+
+    # Check for enroot_pyxis_config.tgz inside rpm-stack/mount
+    if [ -f "$BASE_DIR/rpm-stack/mount/enroot_pyxis_config.tgz" ]; then
+        echo "Extracting enroot_pyxis_config.tgz..."
+        tar -xvf "$BASE_DIR/rpm-stack/mount/enroot_pyxis_config.tgz" -C "$BASE_DIR/rpm-stack/mount" || {
+            echo "❌ Failed to extract enroot_pyxis_config.tgz"
+            exit 1
+        }
+        echo "✅ Extraction complete."
+    else
+        echo "⚠️  enroot_pyxis_config.tgz not found in $BASE_DIR/rpm-stack/mount"
+    fi
+else
+    echo "❌ rpm-stack.tar.gz not found in $BASE_DIR"
+    echo "Please place the rpm-stack.tar file in $BASE_DIR and rerun the script."
+    exit 1
+fi
+
+
 # -------------------------------------------------------------------
 # 🧩 Confirm inventory file readiness
 # -------------------------------------------------------------------
