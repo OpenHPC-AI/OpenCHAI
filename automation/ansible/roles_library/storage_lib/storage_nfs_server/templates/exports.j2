@@ -1,0 +1,3 @@
+{% for path in nfs_export_paths %}
+{{ path }} *({{ nfs_export_options }})
+{% endfor %}
