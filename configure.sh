@@ -111,6 +111,7 @@ if [[ -f "$SYSTEM_ANSIBLE_CFG" ]]; then
     if grep -q "^inventory" "$SYSTEM_ANSIBLE_CFG"; then
         if grep -q "/OpenCHAI" "$SYSTEM_ANSIBLE_CFG"; then
             sed -i "s|^[[:space:]]*inventory[[:space:]]*=.*OpenCHAI.*|inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh|" "$SYSTEM_ANSIBLE_CFG"
+            grep -qxF 'host_key_checking = False' /etc/ansible/ansible.cfg || echo 'host_key_checking = False' >> /etc/ansible/ansible.cfg
             chmod +x $BASE_DIR/automation/ansible/inventory/inventory.sh
             echo "✅ Updated inventory path in: $SYSTEM_ANSIBLE_CFG"
         else
