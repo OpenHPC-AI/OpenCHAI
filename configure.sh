@@ -85,9 +85,9 @@ fi
 # 2️⃣ Update all.yml base paths
 if [[ -f "$ALL_YML" ]]; then
     sed -i "s|base_dir: /OpenCHAI|base_dir: $BASE_DIR|" "$ALL_YML"
-    sed -i "s|rpm_stack_path: /OpenCHAI/rpm-stack|rpm_stack_path: $BASE_DIR/rpm-stack|" "$ALL_YML"
-    sed -i "s|configuration_dir_path: /OpenCHAI/rpm-stack/mount|configuration_dir_path: $BASE_DIR/rpm-stack/mount|" "$ALL_YML"
-    sed -i "s|roles_parent_path: /OpenCHAI/automation/ansible/roles_library|roles_parent_path: $BASE_DIR/automation/ansible/roles_library|" "$ALL_YML"
+    #sed -i "s|rpm_stack_path: /OpenCHAI/rpm-stack|rpm_stack_path: $BASE_DIR/rpm-stack|" "$ALL_YML"
+    #sed -i "s|configuration_dir_path: /OpenCHAI/rpm-stack/mount|configuration_dir_path: $BASE_DIR/rpm-stack/mount|" "$ALL_YML"
+    #sed -i "s|roles_parent_path: /OpenCHAI/automation/ansible/roles_library|roles_parent_path: $BASE_DIR/automation/ansible/roles_library|" "$ALL_YML"
     echo "✅ Updated: $ALL_YML"
 else
     echo "⚠️  File not found: $ALL_YML"
