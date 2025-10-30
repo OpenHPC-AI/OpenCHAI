@@ -24,8 +24,20 @@ git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 
 Run configuration script to setup the manager tool
 
-```python
+```bash
 $ cd ./OpenCHAI
+```
+
+
+Pull the **rpm-stack** either from your local SSD drive or pen drive to **./OpenCHAI/rpm-stack** on the head node, or download it directly from the online source using:
+
+```bash
+wget https://cdac-hpc-sangrah/alma8.9/OpenCHAI-v1.0/rpm-stack
+```
+
+Make sure the **rpm-stack** is pulled !
+
+```python
 
 #Update the inventory file with all service node details for your cluster, based on your environment configuration.
 
@@ -38,17 +50,5 @@ $ bash ./configure.sh
 ```
 
 
-Pull the **rpm-stack** either from your local SSD drive or pen drive to **./OpenCHAI/rpm-stack** on the head node, or download it directly from the online source using:
 
-```bash
-wget https://cdac-hpc-sangrah/alma8.9/OpenCHAI-v1.0/rpm-stack
-```
-
-Once the **rpm-stack** is pulled, extract the **rpm-stack** tar file using the `tar -xvf` command.
-After extracting the **rpm-stack**, navigate to the `rpm-stack/mount` directory and extract the **enroot_pyxis_config.tgz** file using the same command:
-
-```bash
-tar -xvf rpm-stack.tar.gz
-tar -xvf rpm-stack/mount/enroot_pyxis_config.tgz
-```
 
