@@ -16,7 +16,8 @@ Install the git package
 yum install git
 ```
 
-Clone the repository
+Clone the Repository:
+Ensure that you clone the repository into a directory with at least 100 GB of free disk space. This space is required for the offline installation, as the complete software stack RPMs will be downloaded into the same directory. Having sufficient space ensures a smooth installation and configuration experience.
 
 ```python
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
