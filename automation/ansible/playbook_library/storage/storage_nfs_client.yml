@@ -12,7 +12,7 @@
     nfs_client_enabled: true         # true or false
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
-      - { src: "{{ headnode_ip }}":"{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
+      - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_nfs_client"
