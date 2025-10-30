@@ -43,3 +43,12 @@ Pull the **rpm-stack** either from your local SSD drive or pen drive to **./Open
 ```bash
 wget https://cdac-hpc-sangrah/alma8.9/OpenCHAI-v1.0/rpm-stack
 ```
+
+Once the **rpm-stack** is pulled, extract the **rpm-stack** tar file using the `tar -xvf` command.
+After extracting the **rpm-stack**, navigate to the `rpm-stack/mount` directory and extract the **enroot_pyxis_config.tgz** file using the same command:
+
+```bash
+tar -xvf rpm-stack.tar.gz
+tar -xvf rpm-stack/mount/enroot_pyxis_config.tgz
+```
+
