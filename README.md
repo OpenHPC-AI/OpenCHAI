@@ -1,5 +1,5 @@
 # OpenCHAI
-The OpenCHAI Manager Tool is a unified, modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It integrates provisioning, orchestration, workload scheduling, and monitoring using industry-standard tools like xCAT, Ansible, SLURM, and Kubernetes.
+The OpenCHAI Manager Tool is a unified and modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It seamlessly integrates provisioning, centralized authentication and authorization, automation, workload scheduling, orchestration, and monitoring by leveraging industry-standard tools such as xCAT, OpenLDAP, Ansible, SLURM, Kubernetes, Nagios, Ganglia, and Chakshu-Front.
 
 # OpenCHAI Deployment and Quickstart Guide
 The Quickstart is intended for deployment on **dedicated nodes or virtual machines (VMs)** running an **RPM-based Linux distribution** with an **x86_64 architecture**.
