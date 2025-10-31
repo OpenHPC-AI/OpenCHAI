@@ -1,0 +1,27 @@
+---
+# Generate UUID for ib0
+- name: Generate UUID for ib0
+  ansible.builtin.command: uuidgen
+  register: ib0
+
+# Create InfiniBand config file
+- name: Create InfiniBand configuration file for ib0
+  ansible.builtin.copy:
+    dest: /etc/sysconfig/network-scripts/ifcfg-ib0
+    content: |
+      CONNECTED_MODE=no
+      TYPE=InfiniBand
+      PROXY_METHOD=none
+      BROWSER_ONLY=no
+      BOOTPROTO=none
+      DEFROUTE=yes
+      IPV4_FAILURE_FATAL=no
+      IPV6INIT=yes
+      IPV6_AUTOCONF=yes
+      IPV6_DEFROUTE=yes
+      IPV6_FAILURE_FATAL=no
+      IPV6_ADDR_GEN_MODE=eui64
+      NAME=ib0
+      UUID={{ ib0.stdout }}
+      DEVICE=ib0
+      ONBOOT=yes
