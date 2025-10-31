@@ -1,0 +1,36 @@
+# roles/utility_kernels/tasks/detect_os.yml
+
+- name: Get ID and VERSION_ID from /etc/os-release
+  ansible.builtin.shell: |
+    . /etc/os-release
+    echo "${VERSION_ID}|${ID}"
+  register: os_release_values
+  changed_when: false
+
+
+- name: Set OS version facts
+  ansible.builtin.set_fact:
+    os_version_id: "{{ os_release_values.stdout.split('|')[0] }}"
+    os_major_version: "{{ os_release_values.stdout.split('|')[0].split('.')[0] }}"
+    platform_id: "{{ os_release_values.stdout.split('|')[1] }}"
+
+      #os_major_version: "{{ os_release_values.stdout.split('|')[1] | regex_search('el([0-9]+)', '\\1') }}"
+      #os_major_version: "{{ os_release_values.stdout.split('|')[1].split('el')[1] }}"
+
+- name: Debug detected OS major version
+  ansible.builtin.debug:
+    msg: "Detected OS major version: el{{ os_major_version }}"
+
+- name: Ensure kernel_rpm_dir exists
+  file:
+    path: "{{ kernel_rpm_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if kernel_rpm_dir exists
+  stat:
+    path: "{{ kernel_rpm_dir }}"
+  register: kernel_rpm_dir_stat
+
+- debug:
+    msg: "Directory exists: {{ kernel_rpm_dir_stat.stat.exists }}"
