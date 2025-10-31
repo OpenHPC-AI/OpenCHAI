@@ -1,0 +1,62 @@
+# vars file for install_mellanox
+
+rhel9_4_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel9.4-x86_64.tgz"
+
+rhel9_5_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel9.5-x86_64.tgz"
+
+rhel9_6_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel9.6-x86_64.tgz"
+
+rhel8_10_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel8.10-x86_64.tgz"
+
+rhel8_9_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel8.9-x86_64.tgz"
+
+rhel8_8_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel8.8-x86_64.tgz"
+
+
+base_dir: "/home/CHAI_Final"
+
+install_mellanox: true
+
+mellanox_dir: "{{ base_dir }}/rpm-stack/mellanox_rpms"
+
+
+
+# roles/common/defaults/main.yml
+required_packages:
+  - gcc
+  - gcc-c++
+  - libgcc
+  - gcc-gfortran
+  - libcurl-devel
+  - libnl3-devel
+  - libnl3
+  - libdb-devel
+  - elfutils-devel
+  - iptables-devel
+  - libmnl
+  - glib2
+  - glib2-devel
+  - glibc-devel
+  - openssl-devel
+  - openssl
+  - libcurl
+  - python3
+  - python3-devel
+  - pkgconf-pkg-config
+  - tcl-devel
+  - zlib-devel
+  - pciutils-libs
+  - libusbx
+  - libusbx-devel
+  - fuse-libs
+  - libstdc++
+  - expat
+  - expat-devel
+  - systemd-libs
+  - systemd-devel
+  - tk
+  - perl
+  - perl-core
+  - perl-Test-Simple
+  - kernel-rpm-macros
+  - createrepo_c
