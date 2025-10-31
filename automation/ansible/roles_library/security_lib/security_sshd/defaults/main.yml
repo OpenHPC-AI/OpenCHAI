@@ -1,0 +1,27 @@
+sshd_packages:
+  - openssh-server
+  - openssh-clients
+sshd_service_name: sshd
+sshd_service_state: started
+sshd_service_enabled: true
+sshd_install_if_missing: true
+ssh_key_generate: true
+ssh_key_path: /root/.ssh/id_rsa
+ssh_key_type: rsa
+ssh_key_bits: 4096
+ssh_key_force: no
+ssh_hardening_enable: true
+sshd_hardening_block: |
+  PermitRootLogin yes
+  PasswordAuthentication yes
+  PermitEmptyPasswords no
+  ChallengeResponseAuthentication no
+  UseDNS no
+  X11Forwarding yes
+  AllowTcpForwarding no
+  PrintMotd no
+  Banner none
+  VersionAddendum none
+  Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+  MACs hmac-sha2-512,hmac-sha2-256
+  KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
