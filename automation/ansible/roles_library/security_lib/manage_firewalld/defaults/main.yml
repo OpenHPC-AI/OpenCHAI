@@ -1,0 +1,5 @@
+fw_package_name: firewalld
+fw_service_name: firewalld
+fw_service_state: started
+fw_service_enabled: true
+fw_install_if_missing: true
