@@ -1,0 +1,15 @@
+---
+- name: Manage firewalld service
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    fw_package_name: firewalld
+    fw_service_name: firewalld
+    fw_service_state: started     # started, stopped, restarted
+    fw_service_enabled: true      # true or false
+    fw_install_if_missing: true   # true or false
+
+  roles:
+    - "{{ roles_parent_path }}/security_lib/manage_firewalld"
