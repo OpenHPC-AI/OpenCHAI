@@ -57,7 +57,7 @@ Entry file that calls the above tasks in sequence.
 | Variable               | Default                                       | Description                                       |
 |------------------------|-----------------------------------------------|---------------------------------------------------|
 | `default_kernel_version` | `"5.14.0-427.13.1.el9_4"`                    | Kernel version to be installed                    |
-| `kernel_rpm_dir`         | `"/home/CHAI_Sk/automation/ansible/rpm-stack/kernel_rpms"` | Path to store or read RPMs from                   |
+| `kernel_rpm_dir`         | `"OpenCHAI/automation/ansible/rpm-stack/kernel_rpms"` | Path to store or read RPMs from                   |
 | `rpm_base_urls`          | List of URLs (BaseOS, AppStream, third fallback) | Used for online fetch when local RPMs are absent  |
 
 Defines:
