@@ -1,0 +1,26 @@
+---
+- name: Check if firewalld is installed
+  package_facts:
+    manager: auto
+
+- name: Install firewalld if missing and allowed
+  package:
+    name: "{{ fw_package_name }}"
+    state: present
+  when:
+    - fw_package_name not in ansible_facts.packages
+    - fw_install_if_missing | bool
+
+- name: Debug if firewalld not installed and installation skipped
+  debug:
+    msg: "firewalld is not installed, and installation is skipped (fw_install_if_missing=false)."
+  when:
+    - fw_package_name not in ansible_facts.packages
+    - not fw_install_if_missing | bool
+
+- name: Manage firewalld service state
+  service:
+    name: "{{ fw_service_name }}"
+    state: "{{ fw_service_state }}"
+    enabled: "{{ fw_service_enabled }}"
+  when: fw_package_name in ansible_facts.packages
