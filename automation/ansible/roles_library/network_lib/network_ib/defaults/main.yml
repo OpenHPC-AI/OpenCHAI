@@ -13,7 +13,7 @@ rhel8_9_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OF
 rhel8_8_repo: "https://content.mellanox.com/ofed/MLNX_OFED-24.10-3.2.5.0/MLNX_OFED_LINUX-24.10-3.2.5.0-rhel8.8-x86_64.tgz"
 
 
-base_dir: "/home/CHAI_Final"
+base_dir: "/OpenCHAI"
 
 install_mellanox: true
 
