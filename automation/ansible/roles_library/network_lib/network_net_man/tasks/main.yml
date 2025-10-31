@@ -1,0 +1,26 @@
+---
+- name: Check if NetworkManager is installed
+  package_facts:
+    manager: auto
+
+- name: Install NetworkManager if missing and allowed
+  package:
+    name: "{{ nm_package_name }}"
+    state: present
+  when:
+    - nm_package_name not in ansible_facts.packages
+    - nm_install_if_missing | bool
+
+- name: Debug if NetworkManager not installed and installation skipped
+  debug:
+    msg: "NetworkManager is not installed, and installation is skipped (nm_install_if_missing=false)."
+  when:
+    - nm_package_name not in ansible_facts.packages
+    - not nm_install_if_missing | bool
+
+- name: Manage NetworkManager service state
+  service:
+    name: "{{ nm_service_name }}"
+    state: "{{ nm_service_state }}"
+    enabled: "{{ nm_service_enabled }}"
+  when: nm_package_name in ansible_facts.packages
