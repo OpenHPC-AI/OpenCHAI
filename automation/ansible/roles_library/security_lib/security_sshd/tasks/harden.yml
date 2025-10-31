@@ -1,0 +1,16 @@
+---
+- name: Ensure sshd_config permissions are correct
+  file:
+    path: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+  when: ssh_hardening_enable | bool
+
+- name: Harden sshd_config settings
+  blockinfile:
+    path: /etc/ssh/sshd_config
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SSH HARDENING"
+    block: "{{ sshd_hardening_block }}"
+  when: ssh_hardening_enable | bool
+  notify: Restart sshd if syntax valid
