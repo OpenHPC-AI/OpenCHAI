@@ -1,0 +1,9 @@
+required_kernel_packages:
+  - "kernel-{{ selected_kernel_version }}"
+  - "kernel-core-{{ selected_kernel_version }}"
+  - "kernel-devel-{{ selected_kernel_version }}"
+  - "kernel-headers-{{ selected_kernel_version }}"
+  - "kernel-modules-{{ selected_kernel_version }}"
+  - "kernel-modules-extra-{{ selected_kernel_version }}"
+  - "kernel-tools-{{ selected_kernel_version }}"
+  - "kernel-tools-libs-{{ selected_kernel_version }}"
