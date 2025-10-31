@@ -1,0 +1,91 @@
+- name: Ensure kernel_rpm_dir exists
+  ansible.builtin.file:
+    path: "{{ kernel_rpm_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Define list of expected kernel RPMs for selected version
+  set_fact:
+    kernel_packages:
+      - "kernel-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-core-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-modules-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-modules-extra-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-devel-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-headers-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-tools-{{ default_kernel_version }}.x86_64.rpm"
+      - "kernel-tools-libs-{{ default_kernel_version }}.x86_64.rpm"
+      #- "kernel-modules-core-{{ default_kernel_version }}.x86_64.rpm"
+
+- name: Define expected local RPM file paths
+  set_fact:
+    expected_rpm_paths: "{{ kernel_packages | map('regex_replace', '^(.*)$', kernel_rpm_dir ~ '/\\1') | list }}"
+
+- name: Check for existing RPMs
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ expected_rpm_paths }}"
+  register: rpm_file_stats
+
+- name: Set fact already_downloaded_rpms
+  ansible.builtin.set_fact:
+    already_downloaded_rpms: >-
+      {{
+        rpm_file_stats.results
+        | selectattr('stat.exists', 'defined')
+        | selectattr('stat.exists', 'equalto', true)
+        | map(attribute='stat.path')
+        | list
+      }}
+
+- name: Check if all required RPMs are already downloaded
+  ansible.builtin.set_fact:
+    all_rpms_present: "{{ already_downloaded_rpms | length == expected_rpm_paths | length }}"
+
+- name: Skip download if all RPMs are already present
+  ansible.builtin.debug:
+    msg: "All kernel RPMs already exist locally. Skipping download."
+  when: all_rpms_present
+
+- name: Find missing RPMs
+  set_fact:
+    missing_rpms: "{{ expected_rpm_paths | difference(already_downloaded_rpms) }}"
+
+- name: Skip download if no missing RPMs
+  ansible.builtin.debug:
+    msg: "All kernel RPMs already exist locally. Skipping download."
+  when: missing_rpms | length == 0
+
+- name: Download only missing kernel packages
+  ansible.builtin.get_url:
+    url: "{{ item[1] }}{{ item[0] }}"
+    dest: "{{ kernel_rpm_dir }}/{{ item[0] }}"
+    headers:
+      User-Agent: "Wget/1.21.1"
+  loop: "{{ (missing_rpms | map('basename') | list) | product(filtered_kernel_repo_urls) | list }}"
+  register: download_results
+  ignore_errors: yes
+  retries: 3
+  delay: 2
+  when: missing_rpms | length > 0
+
+
+- name: Collect final downloaded + existing RPMs
+  ansible.builtin.set_fact:
+    downloaded_packages: >-
+      {{
+        (download_results.results | default([]) | selectattr('failed', 'undefined') | map(attribute='dest') | list)
+        + (already_downloaded_rpms | default([]))
+      }}
+
+
+- name: Verify all expected RPMs are present
+  ansible.builtin.fail:
+    msg: "Some kernel RPMs are missing: {{ expected_rpm_paths | difference(downloaded_packages) }}"
+  when: downloaded_packages | length < expected_rpm_paths | length
+
+- name: Show downloaded RPMs
+  ansible.builtin.debug:
+    var: downloaded_packages
+
+
