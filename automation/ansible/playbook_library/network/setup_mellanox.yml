@@ -1,0 +1,11 @@
+---
+- name: Setup Mellanox OFED based on RHEL version
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    install_mellanox: true   # set to false to skip re-installation
+    #mellanox_repo_url: rhel9_4_repo        # Use RHEL 9.4 repository to override the default OS kernel  
+  roles:
+    - "{{ roles_parent_path }}/network_lib/network_ib"
