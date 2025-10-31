@@ -1,0 +1,33 @@
+# roles/utility_kernels/tasks/import_gpg_key.yml
+
+- name: Debug platform_id and os_major_version
+  ansible.builtin.debug:
+    msg: "platform_id={{ platform_id }}, os_major_version={{ os_major_version }}"
+
+- name: Set OS GPG key URL based on detected platform
+  ansible.builtin.set_fact:
+    os_gpg_key_url: >-
+      {% set pid = platform_id | lower %}
+      {% if 'oracle' in pid or 'ol' in pid %}
+        https://yum.oracle.com/RPM-GPG-KEY-oracle-ol{{ os_major_version }}
+      {% elif 'rocky' in pid %}
+        https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-rockyofficial
+      {% elif 'almalinux' in pid %}
+        https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ os_major_version }}
+      {% else %}
+        ""
+      {% endif %}
+  ignore_errors: yes
+
+
+
+- name: Fail if GPG key URL could not be determined
+  ansible.builtin.fail:
+    msg: "Could not determine appropriate GPG key URL for platform: {{ platform_id }}"
+  when: os_gpg_key_url == ""
+
+- name: Import OS GPG key
+  ansible.builtin.rpm_key:
+    key: "{{ os_gpg_key_url }}"
+    state: present
+  ignore_errors: yes
