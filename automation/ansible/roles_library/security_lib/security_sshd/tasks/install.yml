@@ -1,0 +1,19 @@
+---
+- name: Check installed packages
+  package_facts:
+    manager: auto
+
+- name: Install SSHD packages if missing and allowed
+  package:
+    name: "{{ sshd_packages }}"
+    state: present
+  when:
+    - sshd_install_if_missing | bool
+    - sshd_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Debug if SSHD packages missing and install skipped
+  debug:
+    msg: "SSHD packages missing, installation skipped (sshd_install_if_missing=false)."
+  when:
+    - not sshd_install_if_missing | bool
+    - sshd_packages | difference(ansible_facts.packages.keys()) | length > 0
