@@ -1,0 +1,19 @@
+# roles/utility_kernels/tasks/main.yml
+- name: Detect OS version info
+  import_tasks: detect_os.yml
+
+- name: Import GPG key based on OS
+  import_tasks: import_gpg_key.yml
+
+
+- name: Select kernel version and prepare URLs
+  import_tasks: select_kernel.yml
+
+- name: Download kernel packages
+  import_tasks: download_kernel.yml
+
+- name: Install kernel packages
+  import_tasks: install_kernel.yml
+
+- name: Verify kernel installation
+  import_tasks: verify_kernel_install.yml
