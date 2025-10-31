@@ -1,0 +1,120 @@
+---
+# tasks/main.yml
+
+- name: Check if Mellanox OFED is installed
+  command: ofed_info -s
+  register: ofed_check
+  failed_when: false
+  changed_when: false
+
+
+- name: Set mellanox_installed fact
+  set_fact:
+    mellanox_installed: "{{ 'MLNX_OFED' in ofed_check.stdout }}"
+
+- name: Prompt user for confirmation if Mellanox is installed
+  pause:
+    prompt: "Mellanox OFED appears to be already installed. Do you want to reinstall? (yes/no):"
+  register: user_choice
+  when:
+    - install_mellanox is not defined
+    - mellanox_installed | bool
+
+- name: Set skip fact when user chooses not to reinstall
+  set_fact:
+    skip_mellanox_install: true
+  when:
+    - install_mellanox is not defined
+    - user_choice.user_input | lower != 'yes'
+
+# Ensure required build packages are installed
+- name: Ensure Mellanox RPM directory exists
+  file:
+    path: "{{ base_dir }}/rpm-stack/mellanox_rpms"
+    state: directory
+    mode: "0755"
+  when: install_mellanox
+
+- name: Ensure required packages are installed
+  ansible.builtin.package:
+    name: "{{ required_packages }}"
+    state: present
+
+# Get OS version safely with slurp + regex
+- name: Read /etc/os-release content
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: os_release_content
+
+
+- name: Extract VERSION_ID from /etc/os-release
+  ansible.builtin.set_fact:
+    os_version_id: "{{ (os_release_content.content | b64decode | regex_search('^VERSION_ID=\"?([0-9.]+)\"?', '\\1', multiline=True)) | first | trim }}"
+
+
+- name: Debug extracted OS version
+  ansible.builtin.debug:
+    msg: "Detected OS version: {{ os_version_id }}"
+
+
+- name: Debug required_packages
+  ansible.builtin.debug:
+    var: required_packages
+
+
+- name: Set Mellanox download URL based on VERSION_ID
+  ansible.builtin.set_fact:
+    mellanox_ofed_url: >-
+      {{
+        (
+          rhel9_4_repo if os_version_id == '9.4' else
+          rhel9_5_repo if os_version_id == '9.5' else
+          rhel9_6_repo if os_version_id == '9.6' else
+          rhel8_10_repo if os_version_id == '8.10' else
+          rhel8_9_repo if os_version_id == '8.9' else
+          rhel8_8_repo if os_version_id == '8.8' else
+          ""
+        ) | trim
+      }}
+
+
+
+- name: Debug Mellanox URL (autodetected)
+  ansible.builtin.debug:
+    msg: "Autodetected Mellanox URL: {{ mellanox_ofed_url }}"
+
+- name: Fail if VERSION_ID is unsupported
+  ansible.builtin.fail:
+    msg: "Unsupported RHEL version: {{ os_version_id }}"
+  when: mellanox_ofed_url | length == 0
+
+- name: Extract filename from URL
+  ansible.builtin.set_fact:
+    mellanox_tgz: "{{ mellanox_ofed_url | basename }}"
+
+- name: Set Mellanox folder name without extension
+  ansible.builtin.set_fact:
+    mellanox_ofed_dir: "{{ mellanox_ofed_url | basename | regex_replace('\\.tgz$', '') }}"
+
+- name: Download Mellanox OFED tgz if not present
+  ansible.builtin.get_url:
+    url: "{{ mellanox_ofed_url }}"
+    dest: "{{ base_dir }}/rpm-stack/mellanox_rpms/{{ mellanox_tgz }}"
+    mode: '0644'
+    force: no
+  when: mellanox_ofed_url | length > 0
+
+
+# Extract the Mellanox OFED tarball
+- name: Extract Mellanox OFED tgz
+  ansible.builtin.unarchive:
+    src: "{{ mellanox_dir }}/{{ mellanox_tgz }}"
+    dest: "{{ mellanox_dir }}/"
+    remote_src: yes
+
+# Install Mellanox OFED with kernel support
+- name: Install Mellanox OFED if enabled
+  when:
+  - not mellanox_installed or install_mellanox | default(false) | bool
+  command: "{{ base_dir }}/rpm-stack/mellanox_rpms/{{ mellanox_ofed_dir }}/mlnxofedinstall --add-kernel-support"
+  when: install_mellanox
