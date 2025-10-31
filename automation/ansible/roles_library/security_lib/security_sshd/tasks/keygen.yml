@@ -1,0 +1,20 @@
+---
+- name: Ensure /root/.ssh directory exists
+  file:
+    path: "{{ ssh_key_path | dirname }}"
+    state: directory
+    mode: '0700'
+    owner: root
+    group: root
+  when: ssh_key_generate | bool
+
+- name: Generate SSH key pair
+  openssh_keypair:
+    path: "{{ ssh_key_path }}"
+    type: "{{ ssh_key_type }}"
+    size: "{{ ssh_key_bits }}"
+    force: "{{ ssh_key_force }}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: ssh_key_generate | bool
