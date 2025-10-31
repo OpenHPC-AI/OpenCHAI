@@ -1,0 +1,13 @@
+---
+- name: Manage SELinux configuration
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    selinux_mode: enforcing        # enforcing, permissive, disabled
+    selinux_install_if_missing: true
+
+
+  roles:
+    - "{{ roles_parent_path }}/security_lib/manage_selinux"
