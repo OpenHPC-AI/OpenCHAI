@@ -1,0 +1,7 @@
+---
+- name: Configure tnd Setwp Mellanox tasks
+  ansible.builtin.include_tasks: setup_mellanox.yml
+
+
+- name: Configure IB0 tasks
+  ansible.builtin.include_tasks: setup_ib0.yml
