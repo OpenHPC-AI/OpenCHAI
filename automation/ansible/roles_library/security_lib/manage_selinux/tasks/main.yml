@@ -1,0 +1,24 @@
+---
+- name: Check installed packages
+  package_facts:
+    manager: auto
+
+- name: Install SELinux-related packages if missing and allowed
+  package:
+    name: "{{ selinux_required_packages }}"
+    state: present
+  when:
+    - selinux_install_if_missing | bool
+    - selinux_required_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Debug if SELinux packages missing and install skipped
+  debug:
+    msg: "SELinux-related packages are missing, and installation is skipped (selinux_install_if_missing=false)."
+  when:
+    - not selinux_install_if_missing | bool
+    - selinux_required_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+- name: Set SELinux mode
+  selinux:
+    policy: targeted
+    state: "{{ selinux_mode }}"
