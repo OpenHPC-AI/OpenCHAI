@@ -1,0 +1,87 @@
+# roles/utility_kernels/tasks/install_kernel.yml
+
+- name: Import AlmaLinux 9 GPG key
+  ansible.builtin.rpm_key:
+    key: https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-9
+    state: present
+  ignore_errors: yes
+
+
+
+- name: Import Rocky Linux 9 GPG key
+  ansible.builtin.rpm_key:
+    key: https://dl.rockylinux.org/pub/rocky/RPM-GPG-KEY-rockyofficial
+    state: present
+  ignore_errors: yes
+
+
+# ------------------------------------------------------------------------
+# STEP 3: Install only expected kernel RPMs
+# ------------------------------------------------------------------------
+
+- name: Define expected kernel RPM package names
+  ansible.builtin.set_fact:
+    expected_kernel_rpms:
+      - "kernel-{{ selected_kernel_version }}"
+      - "kernel-core-{{ selected_kernel_version }}"
+      - "kernel-devel-{{ selected_kernel_version }}"
+      - "kernel-headers-{{ selected_kernel_version }}"
+      - "kernel-modules-{{ selected_kernel_version }}"
+      - "kernel-modules-extra-{{ selected_kernel_version }}"
+      - "kernel-tools-{{ selected_kernel_version }}"
+      - "kernel-tools-libs-{{ selected_kernel_version }}"
+
+- name: Gather list of installed RPMs
+  shell: "rpm -q {{ item }} || echo missing"
+  register: installed_kernel_rpms
+  changed_when: false
+  loop: "{{ expected_kernel_rpms }}"
+
+- name: Identify missing RPMs
+  set_fact:
+    missing_rpms: >-
+      {{
+        installed_kernel_rpms.results
+        | selectattr('stdout', 'search', 'missing')
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Debug missing RPMs
+  debug:
+    var: missing_rpms
+
+
+- name: Install missing RPMs using rpm command
+  ansible.builtin.command: >
+    rpm -Uvh --force --nodeps {{ item }}
+  loop: >-
+    {{
+      expected_rpm_paths
+      | select('search', '(' + (missing_rpms | map('regex_escape') | join('|')) + ')')
+      | list
+    }}
+  register: rpm_install_results
+  changed_when: "'error' not in (rpm_install_results.results | map(attribute='stderr') | join(''))"
+  failed_when: >
+    (rpm_install_results.rc is defined and rpm_install_results.rc != 0)
+    or (
+      'error' in (rpm_install_results.results | map(attribute='stderr') | join(''))
+      and 'NOKEY' not in (rpm_install_results.results | map(attribute='stderr') | join(''))
+    )
+  when:
+    - missing_rpms | length > 0
+    - expected_rpm_paths is defined
+
+
+
+
+- name: Debug installed RPMs
+  ansible.builtin.debug:
+    var: install_missing_rpms.results
+
+
+
+- name: Show install result
+  ansible.builtin.debug:
+    var: install_result
