@@ -1,0 +1,5 @@
+selinux_required_packages:
+  - libselinux
+  - policycoreutils
+selinux_mode: enforcing
+selinux_install_if_missing: true
