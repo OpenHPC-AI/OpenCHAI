@@ -1,0 +1,57 @@
+# roles/utility_kernels/tasks/select_kernel.yml
+
+- name: Gather OS release info
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: os_release_raw
+
+- name: Parse OS release content
+  ansible.builtin.set_fact:
+    os_release: >-
+      {{
+        dict(
+          os_release_raw['content'] | b64decode
+          | split('\n')
+          | select('match', '.+=.+')
+          | map('split', '=', 1)
+          | map('map', 'trim')
+        )
+      }}
+
+
+
+- name: Set default selected kernel version if not already defined
+  ansible.builtin.set_fact:
+    selected_kernel_version: "{{ default_kernel_version }}"
+  when: selected_kernel_version is not defined
+
+- name: Set kernel_versions list for loop
+  ansible.builtin.set_fact:
+    kernel_versions:
+      - "kernel-{{ selected_kernel_version }}"
+      - "kernel-core-{{ selected_kernel_version }}"
+      - "kernel-devel-{{ selected_kernel_version }}"
+      - "kernel-headers-{{ selected_kernel_version }}"
+      - "kernel-modules-{{ selected_kernel_version }}"
+      - "kernel-modules-extra-{{ selected_kernel_version }}"
+      - "kernel-tools-{{ selected_kernel_version }}"
+      - "kernel-tools-libs-{{ selected_kernel_version }}"
+
+- name: Set base kernel download URLs
+  ansible.builtin.set_fact:
+    kernel_repo_urls: >-
+      {{
+        [
+          "https://yum.oracle.com/repo/OracleLinux/OL" ~ os_major_version ~ "/baseos/latest/x86_64/getPackage/",
+          "https://yum.oracle.com/repo/OracleLinux/OL" ~ os_major_version ~ "/appstream/x86_64/getPackage/",
+          "https://repo.almalinux.org/almalinux/" ~ os_version_id ~  "/BaseOS/x86_64/os/Packages/",
+          "https://vault.almalinux.org/" ~ os_version_id ~ "/BaseOS/x86_64/os/Packages/",
+          "https://vault.almalinux.org/" ~ os_version_id ~ "/AppStream/x86_64/os/Packages/",
+          "https://dl.rockylinux.org/vault/rocky/" ~ os_version_id ~ "/BaseOS/x86_64/os/Packages/k/",
+          "https://dl.rockylinux.org/vault/rocky/" ~ os_version_id ~ "/AppStream/x86_64/os/Packages/k/"
+        ]
+      }}
+
+- name: Fallback set filtered_kernel_repo_urls same as kernel_repo_urls
+  ansible.builtin.set_fact:
+    filtered_kernel_repo_urls: "{{ kernel_repo_urls }}"
