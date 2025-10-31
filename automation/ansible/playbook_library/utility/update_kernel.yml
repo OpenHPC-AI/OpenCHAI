@@ -1,0 +1,11 @@
+- name: Setup selected kernel
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    kernel_rpm_dir: "{{ base_dir  }}/rpm-stack/kernel_rpms"
+    default_kernel_version: "4.18.0-513.5.1.el8_9"
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_kernels"
