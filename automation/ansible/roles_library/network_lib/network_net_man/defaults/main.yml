@@ -1,0 +1,5 @@
+nm_package_name: NetworkManager
+nm_service_name: NetworkManager
+nm_service_state: started   # started, stopped, restarted
+nm_service_enabled: true
+nm_install_if_missing: true
