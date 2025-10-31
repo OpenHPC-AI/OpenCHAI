@@ -1,0 +1,15 @@
+---
+- name: Check sshd_config syntax
+  command: sshd -T
+  register: sshd_syntax_check
+  changed_when: false
+  ignore_errors: yes
+
+- name: Manage SSHD service state
+  service:
+    name: "{{ sshd_service_name }}"
+    state: "{{ sshd_service_state }}"
+    enabled: "{{ sshd_service_enabled }}"
+  when:
+    - sshd_packages | difference(ansible_facts.packages.keys()) | length == 0
+    - sshd_syntax_check.rc == 0
