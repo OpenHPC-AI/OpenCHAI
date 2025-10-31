@@ -1,0 +1,14 @@
+---
+- name: Manage NetworkManager service
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    nm_service_state: started   # Options: started, stopped, restarted
+    nm_service_enabled: true    # true or false
+    nm_install_if_missing: true  # true or false
+
+  roles:
+    - "{{ roles_parent_path }}/network_lib/network_net_man"
