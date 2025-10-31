@@ -1,0 +1,6 @@
+default_kernel_version:  "4.18.0-513.5.1.el8_9"
+#default_kernel_version:  "5.14.0-570.25.1.el9_6"
+kernel_rpm_dir: "/OpenCHAI/rpm-stack/kernel_rpms"
+kernel_repo_urls:
+  - "https://yum.oracle.com/repo/OracleLinux/OL9/baseos/latest/x86_64/getPackage/"
+  - "https://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/Packages/k/"
