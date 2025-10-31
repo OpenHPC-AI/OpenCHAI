@@ -1,0 +1,38 @@
+# roles/utility_kernels/tasks/verify_kernel_install.yml
+
+- name: Define expected kernel RPM package names
+  ansible.builtin.set_fact:
+    expected_kernel_rpms:
+      - "kernel-{{ selected_kernel_version }}"
+      - "kernel-core-{{ selected_kernel_version }}"
+      - "kernel-devel-{{ selected_kernel_version }}"
+      - "kernel-headers-{{ selected_kernel_version }}"
+      - "kernel-modules-{{ selected_kernel_version }}"
+      - "kernel-modules-extra-{{ selected_kernel_version }}"
+      - "kernel-tools-{{ selected_kernel_version }}"
+      - "kernel-tools-libs-{{ selected_kernel_version }}"
+
+- name: Gather list of installed RPMs
+  shell: "rpm -q {{ item }} || echo missing"
+  register: installed_kernel_rpms
+  changed_when: false
+  loop: "{{ expected_kernel_rpms }}"
+
+- name: Identify missing RPMs
+  set_fact:
+    missing_rpms: >-
+      {{
+        installed_kernel_rpms.results
+        | selectattr('stdout', 'search', 'missing')
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Debug missing RPMs
+  debug:
+    var: missing_rpms
+
+- name: Fail if any expected kernel RPMs are missing
+  fail:
+    msg: "These expected RPMs are not installed: {{ missing_rpms }}"
+  when: missing_rpms | length > 0
