@@ -8,7 +8,7 @@
   vars:
     lustre_mounts:
       - dest: "{{ lustre_mounts_dest_primary_path }}"
-        src: "{{ lustre_mount_server_src}} :{{ lustre_mounts_src_primary_path }}"
+        src: "{{ lustre_mount_server_src }}:{{ lustre_mounts_src_primary_path }}"
 
       - dest: "{{ lustre_mounts_dest_secondary_path }}"
         src: "{{ lustre_mount_server_src }}:{{ lustre_mounts_src_secondary_path }}"
