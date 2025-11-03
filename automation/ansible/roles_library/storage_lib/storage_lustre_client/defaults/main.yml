@@ -1,0 +1,5 @@
+---
+kernel_rpm_src: "{{ rpm_stack_path }}/kernel_rpms"
+lustre_conf_src: "{{ configuration_dir_path }}/lustre_client"
+lustre_conf_dest: "/etc/modprobe.d/"
+lustre_rpm_src: "{{ configuration_dir_path }}/lustre_client"
