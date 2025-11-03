@@ -1,12 +1,14 @@
+# Base paths
 base_dir: /OpenCHAI
 rpm_stack_path: "{{ base_dir }}/rpm-stack"
 configuration_dir_path: "{{ base_dir }}/rpm-stack/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
+
+# Extract headnode IP dynamically from inventory
 headnode_ip: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[1] }}"
 
-
-# Lustre Mount
+# Lustre Server IPs and Network Configurations
 storage_vm_server_ip_one: 10.5.41.1
 storage_vm_server_ha_ip_one: 10.5.41.11
 storage_vm_server_ip_two: 10.5.41.2
@@ -15,4 +17,11 @@ storage_vm_server_ha_ip_two: 10.5.41.12
 lnet_networks: o2ib
 lnet_networks_ha: o2ib1
 
+# Lustre Mount Source String
 lustre_mount_server_src: "{{ storage_vm_server_ip_one }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_one }}@{{ lnet_networks_ha }}:{{ storage_vm_server_ip_two }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_two }}@{{ lnet_networks_ha }}"
+
+# Lustre Mount Paths
+lustre_mounts_dest_primary_path: /home
+lustre_mounts_src_primary_path: /home
+lustre_mounts_dest_secondary_path: /scratch
+lustre_mounts_src_secondary_path: /scratch
