@@ -1,0 +1,36 @@
+---
+- name: Check if kernel-abi-stablelists is installed
+  command: rpm -q kernel-abi-stablelists
+  register: kernel_abi_pkg
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install kernel-abi-stablelists if not installed
+  command: rpm -ivh "{{ kernel_rpm_src }}/kernel-abi-stablelists-4.18.0-513.5.1.el8_9.noarch.rpm"
+  when: kernel_abi_pkg.rc != 0
+
+- name: Check if Lustre client is installed
+  command: rpm -q lustre-client
+  register: lustre_client_pkg
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Lustre client packages if not installed
+  command: >
+    rpm -ivh {{ lustre_rpm_src }}/kmod-lustre-client-2.14.0_ddn214-1.el8.x86_64.rpm
+    {{ lustre_rpm_src }}/lustre-client-2.14.0_ddn214-1.el8.x86_64.rpm --nodeps
+  when: lustre_client_pkg.rc != 0
+
+- name: Copy lustre.conf file
+  copy:
+    src: "{{ lustre_conf_src }}/lustre.conf"
+    dest: "{{ lustre_conf_dest }}/lustre.conf"
+    owner: root
+    group: root
+    mode: "0644"
+    remote_src: yes
+
+- name: Load Lustre kernel module
+  modprobe:
+    name: lustre
+    state: present
