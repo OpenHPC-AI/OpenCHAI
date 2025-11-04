@@ -25,3 +25,14 @@ lustre_mounts_dest_primary_path: /home
 lustre_mounts_src_primary_path: /home
 lustre_mounts_dest_secondary_path: /scratch
 lustre_mounts_src_secondary_path: /scratch
+
+# DRBD High Availability Nodes Hostname and their Netwrok IPs
+primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
+secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
+primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
+secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
+
+primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
+secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
+primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
+secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
