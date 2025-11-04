@@ -21,16 +21,16 @@ def parse_input_file(filename):
                 continue
 
             try:
-                hostname, ip, user, password, group = line.split()
+                ansible_hostname, ip, user, password, group, hostname = line.split()
             except ValueError:
                 print(f"Invalid line in inventory file: {line}", file=sys.stderr)
                 continue
 
             if group not in groups:
                 groups[group] = {"hosts": [], "vars": {}}
-            groups[group]["hosts"].append(hostname)
+            groups[group]["hosts"].append(ansible_hostname)
 
-            hostvars[hostname] = {
+            hostvars[ansible_hostname] = {
                 "ansible_host": ip,
                 "ansible_user": user,
                 "ansible_password": password
