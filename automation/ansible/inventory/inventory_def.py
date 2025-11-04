@@ -6,10 +6,10 @@ import argparse
 def parse_input_file(filename):
     """
     Parse a simple text file where each line is:
-    hostname ip ansible_user ansible_password group
+    ansible_hostname ip ansible_user ansible_password group hostname
     Example:
-    master01 192.168.1.10 root mypass hpc_master
-    mgmt01   192.168.1.20 admin secret hpc_management
+    hpc-master01 192.168.1.10 root mypass hpc_master master01
+    hpc-mgmt01   192.168.1.20 admin secret hpc_management mgmt01
     """
     groups = {}
     hostvars = {}
