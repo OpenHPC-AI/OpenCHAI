@@ -7,12 +7,18 @@
 
   vars:
     drbd_resource_name: rudra_drbd
-    drbd_disk: /dev/nvme0n1p3
-    drbd_device: /dev/drbd0
+    #drbd_disk: /dev/nvme0n1p5
+    #drbd_device: /dev/drbd0
     drbd_force_md_create: true
     drbd_nodes:
-      - { name: "cn06", ip: "172.10.3.6" }
-      - { name: "cn28", ip: "172.10.3.28" }
+      - name: "{{ primary_master_node_hostname }}"
+        ip: "{{ primary_master_node_ip }}"
+        device: /dev/drbd0
+        #disk: /dev/nvme0n1p4
+      - name: "{{ secondary_master_node_hostname }}"
+        ip: "{{ secondary_master_node_ip }}"
+        device: /dev/drbd0
+        #disk: /dev/nvme0n1p5
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_drbd_config"
