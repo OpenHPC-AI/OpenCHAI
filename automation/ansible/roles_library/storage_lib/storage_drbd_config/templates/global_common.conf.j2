@@ -1,0 +1,13 @@
+global {
+    usage-count yes;
+}
+
+common {
+    net {
+        protocol {{ drbd_net.protocol }};
+        allow-two-primaries {{ drbd_net.allow_two_primaries }};
+        max-buffers {{ drbd_net.max_buffers }};
+        max-epoch-size {{ drbd_net.max_epoch_size }};
+        sndbuf-size {{ drbd_net.sndbuf_size }};
+    }
+}
