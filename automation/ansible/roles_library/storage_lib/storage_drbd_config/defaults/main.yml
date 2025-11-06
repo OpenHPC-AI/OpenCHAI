@@ -1,0 +1,37 @@
+---
+# Default variables for DRBD configuration
+
+drbd_resource_name: rudra_drbd
+drbd_device: /dev/drbd0
+#drbd_disk: /dev/mapper/almalinux-drbd
+drbd_port: 7789
+
+
+# DRBD tuning parameters
+drbd_net:
+  protocol: "C"
+  allow_two_primaries: "no"
+  max_buffers: 8000
+  max_epoch_size: 8000
+  sndbuf_size: "2M"
+
+drbd_disk_params:
+  c_min_rate: "80M"
+  c_max_rate: "720M"
+  resync_rate: "40M"
+
+
+drbd_disk_params:
+  c_min_rate: 80M
+  c_max_rate: 720M
+  resync_rate: 40M
+
+drbd_nodes:
+  - name: "{{ primary_master_node_hostname }}"
+    ip: "{{ primary_master_node_ip }}"
+    device: /dev/drbd0
+    disk: /dev/nvme0n1p4
+  - name: "{{ secondary_master_node_hostname }}"
+    ip: "{{ secondary_master_node_ip }}"
+    device: /dev/drbd0
+    disk: /dev/nvme0n1p5
