@@ -1,0 +1,27 @@
+---
+# Role: common_dir_setup
+# Purpose: Create required directories for HPC container and RPM stack setup
+
+- name: Create directory for container persistent volumes
+  file:
+    path: /hpc_container_pv
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create directory for container-related information and creation
+  file:
+    path: /hpctool_stack
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create directory to store RPM packages and configuration files
+  file:
+    path: /root/hpc_cluster_suite
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
