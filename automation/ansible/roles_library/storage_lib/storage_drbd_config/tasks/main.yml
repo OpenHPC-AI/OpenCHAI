@@ -1,0 +1,138 @@
+---
+
+
+# Detect disk backing the /drbd mount point
+- name: Detect DRBD backing disk
+  ansible.builtin.shell: |
+    lsblk -o NAME,MOUNTPOINT -nr | awk '$2=="/drbd"{print "/dev/"$1}'
+  register: drbd_backing_disk
+  changed_when: false
+
+- name: Debug detected DRBD disk
+  ansible.builtin.debug:
+    msg: "Detected DRBD disk for {{ inventory_hostname }}: {{ drbd_backing_disk.stdout }}"
+
+# Fail if no disk was detected
+- name: Fail if DRBD disk not found
+  ansible.builtin.fail:
+    msg: "No disk found for /drbd mount. Ensure the partition exists."
+  when: drbd_backing_disk.stdout == ""
+  ignore_errors: true
+
+
+# Set DRBD disk variable dynamically for template
+- name: Set DRBD disk variable
+  ansible.builtin.set_fact:
+    drbd_node_disk: "{{ drbd_backing_disk.stdout }}"
+
+
+- name: Ensure /drbd is unmounted if mounted
+  ansible.builtin.command: umount /drbd
+  ignore_errors: true
+
+- name: Wipe filesystem signatures from DRBD disk
+  ansible.builtin.command: "wipefs -a {{ drbd_node_disk }}"
+  ignore_errors: true
+
+
+
+- name: Ensure DRBD configuration directory exists
+  ansible.builtin.file:
+    path: /etc/drbd.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy global DRBD configuration
+  ansible.builtin.template:
+    src: global_common.conf.j2
+    dest: /etc/drbd.d/global_common.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy DRBD resource configuration
+  ansible.builtin.template:
+    src: drbd_resource.res.j2
+    dest: "/etc/drbd.d/{{ drbd_resource_name }}.res"
+    owner: root
+    group: root
+    mode: "0644"
+
+
+
+- name: Create DRBD metadata non-interactively
+  ansible.builtin.command: >
+    drbdadm create-md --force {{ drbd_resource_name }}
+  when: drbd_force_md_create | default(false) | bool
+  register: drbd_create_md
+  changed_when: "'Writing meta data' in drbd_create_md.stdout or 'successfully' in drbd_create_md.stdout"
+  failed_when: >
+    drbd_create_md.rc != 0 and
+    ('already contains meta data' not in drbd_create_md.stdout)
+
+
+
+# 1. Bring DRBD resource up ---
+- name: Bring DRBD resource up
+  ansible.builtin.command:
+    cmd: drbdadm up {{ drbd_resource_name }}
+  register: drbd_up_result
+  changed_when: "'successfully' in drbd_up_result.stdout or drbd_up_result.rc == 0"
+  failed_when: drbd_up_result.rc != 0
+
+
+- name: Debug DRBD node and primary hostname
+  ansible.builtin.debug:
+    msg:
+      - "inventory_hostname = {{ inventory_hostname }}"
+      - "ansible_hostname = {{ ansible_hostname }}"
+      - "primary_master_node_hostname = {{ primary_master_node_hostname | default('undefined') }}"
+
+
+
+# 2. Set Primary node (force only on designated host) ---
+- name: Set this node as Primary (only on the designated master)
+  ansible.builtin.command:
+    cmd: "drbdadm primary --force {{ drbd_resource_name }}"
+  when: inventory_hostname == primary_master_node_hostname or
+        ansible_hostname == primary_master_node_hostname or
+        primary_master_node_hostname in inventory_hostname
+  register: drbd_primary_result
+  changed_when: "'became Primary' in drbd_primary_result.stdout or 'already' in drbd_primary_result.stdout"
+  failed_when: false
+
+# 3. Wait until Secondary disk sync is complete ---
+- name: Wait for DRBD secondary to become UpToDate
+  ansible.builtin.command:
+    cmd: drbdadm status {{ drbd_resource_name }}
+  register: drbd_status
+  until: "'peer-disk:UpToDate' in drbd_status.stdout"
+  retries: 30
+  delay: 20
+  changed_when: false
+  when: inventory_hostname == primary_master_node_hostname or
+        ansible_hostname == primary_master_node_hostname or
+        primary_master_node_hostname in inventory_hostname
+
+# 4. Create filesystem on /dev/drbd0 ---
+- name: Create ext4 filesystem on DRBD device
+  ansible.builtin.command:
+    cmd: mkfs -t ext4 {{ drbd_device }}
+  args:
+    creates: "{{ drbd_device }}"
+  register: drbd_mkfs
+  changed_when: "'Creating filesystem' in drbd_mkfs.stdout"
+  when: inventory_hostname == primary_master_node_hostname or
+        ansible_hostname == primary_master_node_hostname or
+        primary_master_node_hostname in inventory_hostname
+
+# 5. Comment out DRBD mount entry in /etc/fstab ---
+- name: Comment DRBD mount entry in /etc/fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(UUID=.*[[:space:]]+/drbd[[:space:]]+)'
+    replace: '# \1'
+    backup: yes
+  when: "'/drbd' in lookup('file', '/etc/fstab')"
