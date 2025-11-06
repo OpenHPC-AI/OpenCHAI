@@ -1,0 +1,6 @@
+---
+# Default variables for directory paths (can be overridden in playbooks)
+
+hpc_container_pv_dir: /hpc_container_pv
+hpctool_stack_dir: /hpctool_stack
+hpc_cluster_suite_dir: /root/hpc_cluster_suite
