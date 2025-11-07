@@ -1,5 +1,5 @@
 # OpenCHAI
-The OpenCHAI Manager Tool is a unified and modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It seamlessly integrates provisioning, centralized authentication and authorization, automation, workload scheduling, orchestration, and monitoring by leveraging industry-standard tools such as xCAT, OpenLDAP, Ansible, SLURM, Kubernetes, Nagios, Ganglia, and Chakshu-Front.
+The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It seamlessly integrates provisioning, centralized authentication and authorization, automation, workload scheduling, orchestration, and monitoring by leveraging industry-standard tools such as xCAT, OpenLDAP, Ansible, SLURM, Kubernetes, Nagios, Ganglia, and Chakshu-Front.
 
 # OpenCHAI Deployment and Quickstart Guide
 The Quickstart is intended for deployment on **dedicated nodes or virtual machines (VMs)** running an **RPM-based Linux distribution** with an **x86_64 architecture**.
@@ -42,7 +42,7 @@ $ cd ./OpenCHAI
 Pull the **rpm-stack** either from your USB drive (local SSD drive or pen drive) to **./OpenCHAI/rpm-stack** on the head node, or download it directly from the online source using:
 
 ```bash
-wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/v1.0/alma8.9/rpm-stack.tar
+wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/rpm-stack.tar
 ```
 
 Make sure the **rpm-stack** is pulled !
