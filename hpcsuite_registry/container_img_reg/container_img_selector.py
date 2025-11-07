@@ -8,7 +8,7 @@ import urllib3
 # Suppress only the InsecureRequestWarning from urllib3
 urllib3.disable_warnings(InsecureRequestWarning)
 
-BASE_URL = "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/v1.0/hpcsuite_registry/container_img_reg/alma8.9"
+BASE_URL = "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/alma8.9/"
 TOOLS = ["chakshu-front_reg", "ganglia_reg", "ldap_reg", "nagios_reg", "osticket_reg", "xCAT_reg"]
 LOCAL_DIR = os.path.join(os.getcwd(), "hpcsuite_registry/container_img_reg")
 
