@@ -1,0 +1,15 @@
+- name: Remove Docker, Podman, and related packages
+  become: "{{ docker_remove_exiting }}"
+  dnf:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+      - podman
+      - runc
+    state: absent
