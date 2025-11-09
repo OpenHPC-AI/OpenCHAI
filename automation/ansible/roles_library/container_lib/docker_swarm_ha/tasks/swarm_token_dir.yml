@@ -1,0 +1,21 @@
+- name: Ensure swarm token directory exists
+  file:
+    path: "{{ swarm_token_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Check if swarm token file exists
+  stat:
+    path: "{{ swarm_token_file }}"
+  register: token_file_status
+
+- name: Create empty swarm token file if not present
+  copy:
+    dest: "{{ swarm_token_file }}"
+    content: ""
+    owner: root
+    group: root
+    mode: '0644'
+  when: not token_file_status.stat.exists
