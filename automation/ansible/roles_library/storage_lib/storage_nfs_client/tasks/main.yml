@@ -40,3 +40,4 @@
     opts: "{{ item.opts | default('defaults') }}"
     state: mounted
   loop: "{{ nfs_mounts }}"
+  when: inventory_hostname != headnode_inventory_hostname
