@@ -1,0 +1,19 @@
+---
+# tasks/main.yml
+#
+- name: Create a directory for swarm token save
+  include_tasks: swarm_token_dir.yml
+  when: inventory_hostname == primary_swarm_manager
+
+- name: Initialize Docker Swarm on the primary manager
+  include_tasks: swarm_init.yml
+  when: inventory_hostname == primary_swarm_manager
+
+- name: Join other managers to the swarm
+  include_tasks: swarm_join.yml
+  when: inventory_hostname != primary_swarm_manager
+
+- name: Verify Swarm cluster status
+  include_tasks: swarm_verify.yml
+  when: inventory_hostname == primary_swarm_manager
+
