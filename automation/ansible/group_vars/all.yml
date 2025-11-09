@@ -1,12 +1,15 @@
-# Base paths
-base_dir: /OpenCHAI
-rpm_stack_path: "{{ base_dir }}/rpm-stack"
+base_dir: /home/hpc-project-oct-2025/CHAI
+hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
+rpm_stack_path: "{{ base_dir }}/hpcsuite_registry/rpm-stack"
 configuration_dir_path: "{{ base_dir }}/rpm-stack/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
+
 # Extract headnode IP dynamically from inventory
 headnode_ip: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[1] }}"
+headnode_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[5] }}"
+headnode_inventory_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[0] }}"
 
 # Lustre Server IPs and Network Configurations
 storage_vm_server_ip_one: 10.5.41.1
@@ -31,6 +34,8 @@ primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_fi
 secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
 primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
 secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
+primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
+secondary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[0] }}"
 
 primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
 secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
@@ -38,6 +43,7 @@ primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_
 secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
 # Docker Swarm Manager
-primary_swarm_manager: "{{ primary_master_node_ip }}"
-secondary_swarm_manager: "{{ secondary_master_node_ip }}"
-tertiary_swarm_manager: "{{ primary_mgmt_node_ip }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
+primary_swarm_manager_ip: "{{ primary_master_node_ip }}"
+primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
+secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
+tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
