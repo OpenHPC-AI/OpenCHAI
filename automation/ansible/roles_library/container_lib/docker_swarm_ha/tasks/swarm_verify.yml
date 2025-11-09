@@ -1,0 +1,12 @@
+# tasks/swarm_verify.yml
+
+- name: Wait 10 seconds for nodes to join
+  wait_for:
+    timeout: 10
+
+- name: List swarm nodes
+  command: docker node ls
+  register: node_list
+
+- debug:
+    msg: "{{ node_list.stdout }}"
