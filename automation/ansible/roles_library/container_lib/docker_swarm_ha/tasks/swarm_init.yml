@@ -1,0 +1,60 @@
+# tasks/swarm_init.yml
+
+- name: Check if swarm is already initialized
+  command: docker info --format '{{ "{{ .Swarm.LocalNodeState }}" }}'
+  register: swarm_status
+  failed_when: false
+  changed_when: false
+
+# Initialize swarm only on the primary manager (hostname-based)
+- name: Initialize Docker Swarm if inactive
+  command: docker swarm init --advertise-addr {{ advertise_addr | default(ansible_default_ipv4.address) }}
+  when:
+    - swarm_status.stdout != "active"
+    - inventory_hostname == primary_swarm_manager
+  register: swarm_init_output
+  failed_when: false
+
+- name: Debug swarm init output
+  debug:
+    msg: "Swarm init output: {{ swarm_init_output.stdout | default('No output (may already be active)') }}"
+  when: inventory_hostname == primary_swarm_manager
+
+# Create directory for storing swarm token
+- name: Create directory for storing swarm token
+  file:
+    path: "{{ rpm_stack_path }}/docker_swarm"
+    state: directory
+    mode: '0755'
+  when: inventory_hostname == primary_swarm_manager
+
+# Get the join token for managers
+- name: Get swarm manager join token
+  command: docker swarm join-token manager -q
+  register: manager_token
+  when: inventory_hostname == primary_swarm_manager
+
+# Save token to local file
+- name: Save swarm token to local file
+  copy:
+    content: "{{ manager_token.stdout }}"
+    dest: "{{ swarm_token_file }}"
+  when:
+    - inventory_hostname == primary_swarm_manager
+    - manager_token.stdout | length > 0
+
+# Save token to shared NFS location
+- name: Save swarm token to NFS shared location
+  copy:
+    content: "{{ manager_token.stdout }}"
+    dest: "{{ rpm_stack_path }}/docker_swarm/swarm_token_file"
+  when:
+    - inventory_hostname == primary_swarm_manager
+    - manager_token.stdout | length > 0
+
+# Debug confirmation
+- name: Display saved token path
+  debug:
+    msg: "Swarm manager token saved at {{ rpm_stack_path }}/docker_swarm/swarm_token_file"
+  when: inventory_hostname == primary_swarm_manager
+
