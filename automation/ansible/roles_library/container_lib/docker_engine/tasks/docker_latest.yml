@@ -1,0 +1,24 @@
+- name: Make sure the Docker CE repo is enabled
+  ini_file:
+    path: /etc/yum.repos.d/docker-ce.repo
+    section: 'docker-ce-stable'
+    option: enabled
+    value: '1'
+
+- name: Install Docker CE, CLI, containerd.io, Buildx and Compo
+  become: "{{ docker_install }}"
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: latest
+    allowerasing: "{{ at_install_allow_erasing }}"
+
+- name: Enable and start Docker service
+  systemd:
+    name: docker
+    enabled: "{{ docker_service_enable }}"
+    state: started
