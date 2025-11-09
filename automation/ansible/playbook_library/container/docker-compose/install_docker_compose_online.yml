@@ -1,0 +1,8 @@
+---
+- name: Install Docker Compose on all nodes
+  hosts: all
+  become: true
+  vars_files:
+    - ../../../group_vars/all.yml
+  roles:
+    - "{{ roles_parent_path }}/container_lib/docker_compose"
