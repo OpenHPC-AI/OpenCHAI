@@ -38,6 +38,6 @@ primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_
 secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
 # Docker Swarm Manager
-primary_swarm_manager= "{{ primary_master_node_ip }}"
-secondary_swarm_manager= "{{ secondary_master_node_ip }}"
-tertiary_swarm_manager= "{{ primary_mgmt_node_ip }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
+primary_swarm_manager: "{{ primary_master_node_ip }}"
+secondary_swarm_manager: "{{ secondary_master_node_ip }}"
+tertiary_swarm_manager: "{{ primary_mgmt_node_ip }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
