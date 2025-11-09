@@ -1,0 +1,9 @@
+---
+# tasks file for docker_engine
+- import_tasks: docker_repo.yml
+
+- import_tasks: docker_remove_exiting.yml
+  when: docker_remove_exiting | default(false)
+
+- import_tasks: docker_latest.yml
+  when: docker_install | default(false)
