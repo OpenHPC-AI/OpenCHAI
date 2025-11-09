@@ -1,0 +1,18 @@
+---
+# defaults file for docker_swarm_ha
+# defaults/main.yml
+
+# List of manager node hostnames or IPs
+swarm_managers:
+  - "{{ primary_swarm_manager }}"
+  - "{{ secondary_swarm_manager }}"
+  - "{{ tertiary_swarm_manager }}"
+
+# Primary node IP or hostname for swarm init
+primary_manager: "{{ primary_swarm_manager }}"
+
+# Advertise IP (of the primary manager)
+advertise_addr: "{{ hostvars[primary_manager].ansible_host | default(primary_manager) }}"
+
+# Swarm join token cache file path
+swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
