@@ -1,0 +1,14 @@
+---
+- name: Install Docker
+  hosts: all
+  become: true
+  vars_files:
+    - ../../../group_vars/all.yml
+  vars:
+    docker_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
+    docker_remove_exiting: true # or false
+    docker_install: true # or false
+    at_install_allow_erasing: false # or true
+    docker_service_enable: yes # or no
+  roles:
+    - "{{ roles_parent_path }}/container_lib/docker_engine"
