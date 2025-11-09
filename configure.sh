@@ -137,27 +137,38 @@ else
 fi
 
 # -------------------------------------------------------------------
-# 4️⃣ Set up Ansible local configuration
+# 4️⃣ Update or add inventory path in system-wide /etc/ansible/ansible.cfg
 # -------------------------------------------------------------------
+if [[ -f "$SYSTEM_ANSIBLE_CFG" ]]; then
+    echo ""
+    echo "🔍 Checking system Ansible configuration: $SYSTEM_ANSIBLE_CFG"
 
-ANSIBLE_CFG_PATH="$BASE_DIR/automation/ansible/ansible.cfg"
-BASHRC_FILE="$HOME/.bashrc"
-
-# Export ANSIBLE_CONFIG for current session
-export ANSIBLE_CONFIG="$ANSIBLE_CFG_PATH"
-
-# Persist it in ~/.bashrc if not already present
-if ! grep -q "ANSIBLE_CONFIG=" "$BASHRC_FILE"; then
-    echo "export ANSIBLE_CONFIG=$ANSIBLE_CFG_PATH" >> "$BASHRC_FILE"
-    echo "✅ Added ANSIBLE_CONFIG export to $BASHRC_FILE"
+    if grep -q "^inventory" "$SYSTEM_ANSIBLE_CFG"; then
+        if grep -q "/OpenCHAI" "$SYSTEM_ANSIBLE_CFG"; then
+            sed -i "s|^[[:space:]]*inventory[[:space:]]*=.*OpenCHAI.*|inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh|" "$SYSTEM_ANSIBLE_CFG"
+            grep -qxF 'host_key_checking = False' /etc/ansible/ansible.cfg || echo 'host_key_checking = False' >> /etc/ansible/ansible.cfg
+            chmod +x $BASE_DIR/automation/ansible/inventory/inventory.sh
+            echo "✅ Updated inventory path in: $SYSTEM_ANSIBLE_CFG"
+        else
+            echo "ℹ️  Inventory path already customized — no changes made."
+        fi
+    else
+        if grep -q "^\[defaults\]" "$SYSTEM_ANSIBLE_CFG"; then
+            sed -i "/^\[defaults\]/a inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh" "$SYSTEM_ANSIBLE_CFG"
+            echo "✅ Added inventory path under [defaults] section in: $SYSTEM_ANSIBLE_CFG"
+        else
+            echo "[defaults]" >> "$SYSTEM_ANSIBLE_CFG"
+            echo "inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh" >> "$SYSTEM_ANSIBLE_CFG"
+            echo "✅ Created [defaults] section and added inventory path in: $SYSTEM_ANSIBLE_CFG"
+        fi
+    fi
+    cp -ar $BASE_DIR/automation/ansible/group_vars /etc/ansible/
 else
-    echo "ℹ️ ANSIBLE_CONFIG already set in $BASHRC_FILE"
+    echo ""
+    echo "⚠️  System-wide Ansible config not found at: $SYSTEM_ANSIBLE_CFG"
+    echo "👉 Skipping system Ansible config update."
 fi
 
-# Source ~/.bashrc so that the change takes effect immediately
-source "$BASHRC_FILE"
-
-echo "✅ Using Ansible config: $ANSIBLE_CONFIG"
 
 echo ""
 echo "🎉 OpenCHAI manager tool configuration paths updated successfully!"
