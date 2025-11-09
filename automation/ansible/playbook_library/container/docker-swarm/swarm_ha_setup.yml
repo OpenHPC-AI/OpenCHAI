@@ -1,0 +1,15 @@
+- name: Setup Docker Swarm HA cluster for xCAT
+  hosts: all
+  become: true
+  vars_files:
+    - ../../../group_vars/all.yml
+  vars:
+    primary_manager: "{{ primary_swarm_manager }}"
+    swarm_managers:
+      - "{{ primary_swarm_manager }}"
+      - "{{ secondary_swarm_manager }}"
+      - "{{ tertiary_swarm_manager }}"
+    swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
+
+  roles:
+    - "{{ roles_parent_path }}/container_lib/docker_swarm_ha"
