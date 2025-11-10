@@ -131,6 +131,7 @@ fi
 # 3️⃣ Update inventory.sh base_dir
 if [[ -f "$INVENTORY_SCRIPT" ]]; then
     sed -i "s|base_dir=.*|base_dir=\"$BASE_DIR\"|" "$INVENTORY_SCRIPT"
+    chmod +x "$INVENTORY_SCRIPT"
     echo "✅ Updated: $INVENTORY_SCRIPT"
 else
     echo "⚠️  File not found: $INVENTORY_SCRIPT"
