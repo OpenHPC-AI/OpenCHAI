@@ -1,7 +1,7 @@
 base_dir: /home/hpc-project-oct-2025/CHAI
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
-rpm_stack_path: "{{ base_dir }}/hpcsuite_registry/rpm-stack"
-configuration_dir_path: "{{ base_dir }}/rpm-stack/mount"
+rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/rpm-stack"
+configuration_dir_path: "{{ hpcsuite_registry_mount_path }}/rpm-stack/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
