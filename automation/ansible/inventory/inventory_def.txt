@@ -1,6 +1,28 @@
-# Enter hostname, IP, ansible_user, and password for each node.
-# Multiple nodes can be added with their corresponding details.
-#ansible_hostname        ip              ansible_user  ansible_password      group          hostname
+# ================================
+# Ansible Node Details File
+# ================================
+# This file contains connection details for all nodes that Ansible will manage.
+# Each line represents one node in your cluster (for example, headnode, master, compute node, etc.)
+
+# -------------------------------------------------------------------------
+# COLUMN MEANINGS (Fill carefully)
+# -------------------------------------------------------------------------
+# ansible_hostname   →  The name Ansible uses to identify this node.
+# ip                 →  The node's IP address (used to connect to it over SSH).
+# ansible_user       →  The login username used by Ansible (example: root).
+# ansible_password   →  The password for the user mentioned above.
+# group              →  Logical group name (like headnode, hpc_master, compute).
+# hostname           →  The actual hostname configured on the node (output of `hostname` command).
+#
+# NOTE:
+# - Each column should be separated by spaces or tabs.
+# - You can add as many nodes as you want — one per line.
+# - If using SSH keys (no password login), you can leave the password column blank.
+# -------------------------------------------------------------------------
+
+# Example entries:
+
+ansible_hostname        ip              ansible_user  ansible_password      group          hostname
 headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode
 hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01
 hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02
