@@ -1,0 +1,13 @@
+---
+- name: Setup Lmod and configure MODULEPATH
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    local_rpm_base: "{{ rpm_stack_path }}/utilities_rpm"
+    modulepath_dir: "{{ modulepath_dir }}"
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_lmod"
