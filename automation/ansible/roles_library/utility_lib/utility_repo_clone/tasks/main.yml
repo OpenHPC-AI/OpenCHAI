@@ -1,0 +1,86 @@
+---
+- name: Ensure destination root exists
+  ansible.builtin.file:
+    path: "{{ clone_dest }}"
+    state: directory
+    owner: "{{ clone_owner }}"
+    group: "{{ clone_group }}"
+    mode: "{{ clone_mode }}"
+
+- name: Normalize repo_server (remove trailing slash)
+  ansible.builtin.set_fact:
+    repo_server_normalized: "{{ repo_server.rstrip('/') }}"
+
+# If user didn't provide hosted_dirs, fetch root HTML and detect directories
+- name: Fetch directory list from repo server (only if hosted_dirs not set)
+  ansible.builtin.uri:
+    url: "{{ repo_server_normalized }}/"
+    return_content: yes
+    validate_certs: no
+  register: repo_index
+  when: hosted_dirs | default([]) | length == 0
+
+- name: Parse directory names from repo index (basic HTML parsing)
+  ansible.builtin.set_fact:
+    detected_dirs: "{{ repo_index.content | regex_findall('href=\"([^\"]+)/\"') | unique }}"
+  when: hosted_dirs | default([]) | length == 0
+
+
+- name: Determine directories to sync
+  ansible.builtin.set_fact:
+    dirs_to_sync: >-
+      {{
+        hosted_dirs
+        if (hosted_dirs is defined and hosted_dirs | length > 0)
+        else (detected_dirs | default([]))
+      }}
+
+
+
+
+- name: Fail if no directories discovered to sync
+  ansible.builtin.fail:
+    msg: "No directories to sync (hosted_dirs empty and no directories detected on server)."
+  when: dirs_to_sync | length == 0
+
+- name: Show which directories will be synced
+  ansible.builtin.debug:
+    var: dirs_to_sync
+
+- name: Create destination subdirectories
+  ansible.builtin.file:
+    path: "{{ clone_dest | regex_replace('/$','') }}/{{ item }}"
+    state: directory
+    owner: "{{ clone_owner }}"
+    group: "{{ clone_group }}"
+    mode: "{{ clone_mode }}"
+  loop: "{{ dirs_to_sync }}"
+
+
+- name: Mirror each remote directory with wget (recursive, no index pages, timestamping)
+  ansible.builtin.command:
+    cmd: >-
+      wget -r -np -nH
+      --reject "index.html*" --reject-regex "/(i686|aarch64|ppc64le|s390x|raspberrypi)/"
+      --no-check-certificate -e robots=off
+      -N
+      -P {{ clone_dest | regex_replace('/$','') }}
+      "{{ repo_server_normalized }}/{{ item }}/"
+  loop: "{{ dirs_to_sync }}"
+  register: wget_results
+  # consider changed if wget actually reports saved/downloaded files
+  changed_when: >
+    >
+    (wget_results is defined and
+     wget_results.results | map(attribute='stdout') | join('') | regex_search('(saved|downloaded|retrieved)', multiline=True))
+  failed_when: wget_results is failed
+
+
+
+- name: Fix permissions on cloned content
+  ansible.builtin.file:
+    path: "{{ clone_dest }}"
+    owner: "{{ clone_owner }}"
+    group: "{{ clone_group }}"
+    mode: "{{ clone_mode }}"
+    recurse: yes
