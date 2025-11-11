@@ -1,0 +1,30 @@
+---
+- name: Install Apache
+  ansible.builtin.yum:
+    name: httpd
+    state: present
+
+- name: Configure Apache port
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    line: "Listen {{ web_port }}"
+  notify: Restart Apache
+
+#################################################################
+# APACHE CONFIGURATION
+#################################################################
+- name: Deploy Apache configuration
+  ansible.builtin.template:
+    src: apache_site.conf.j2
+    dest: /etc/httpd/conf.d/web_host.conf
+    mode: '0644'
+  when: web_server == "apache"
+  notify: Restart Apache
+
+
+- name: Start and enable Apache
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true
