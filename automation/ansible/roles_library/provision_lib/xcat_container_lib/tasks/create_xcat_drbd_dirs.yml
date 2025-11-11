@@ -1,0 +1,38 @@
+---
+# tasks/create_xcat_drbd_dirs.yml
+
+- name: Check if /drbd is actively mounted
+  command: mountpoint -q /drbd
+  register: drbd_mount_check
+  failed_when: false
+  changed_when: false
+
+- name: Ensure DRBD directories for xCAT environment exist (only if /drbd is mounted)
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  loop:
+    - /drbd/cont_env
+    - /drbd/xcatdata
+    - /drbd/var_log_xcat
+    - /drbd/xcat_mysqldata
+    - /drbd/xcatcont_sshkey
+    - /drbd/xcatcont_sshkey/.ssh
+  when: drbd_mount_check.rc == 0
+  tags:
+    - drbd_dirs
+
+- name: Display created DRBD directories (only if /drbd is mounted)
+  command: ls -l /drbd/
+  register: drbd_dirs
+  changed_when: false
+  when: drbd_mount_check.rc == 0
+
+- name: Show DRBD directory listing
+  debug:
+    var: drbd_dirs.stdout_lines
+  when: drbd_mount_check.rc == 0
+
