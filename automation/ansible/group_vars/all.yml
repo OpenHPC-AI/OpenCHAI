@@ -1,3 +1,4 @@
+####################### OpenCHAI Manager Tool Variable #####################
 base_dir: /OpenCHAI
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
 rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/rpm-stack"
@@ -5,12 +6,18 @@ configuration_dir_path: "{{ hpcsuite_registry_mount_path }}/rpm-stack/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
+# Ansible inventroy hostname
+primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
+secondary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[0] }}"
+headnode_inventory_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[0] }}"
 
+####################### HeadNode Variable ###########################
 # Extract headnode IP dynamically from inventory
 headnode_ip: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[1] }}"
 headnode_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[5] }}"
-headnode_inventory_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[0] }}"
 
+
+####################### Lustre Variable ###########################
 # Lustre Server IPs and Network Configurations
 storage_vm_server_ip_one: 10.5.41.1
 storage_vm_server_ha_ip_one: 10.5.41.11
@@ -29,16 +36,33 @@ lustre_mounts_src_primary_path: /home
 lustre_mounts_dest_secondary_path: /scratch
 lustre_mounts_src_secondary_path: /scratch
 
+####################### HPC Master and Management Nodes IP and Hostname Variables ###########################
 # DRBD High Availability Nodes Hostname and their Netwrok IPs
+# xCAT VIP IP
+xcat_vip_ip: "172.10.3.111"
+xcat_vip_interface: "ens1f2:0"
+xcat_vip_subnet_prefix: "22"
+xcat_vip_resource_name: "vip_xCAT"
+
+drbd_resource_name: "rudra_drbd"
+drbd_clone_name: "drbd_fs_clone"
+drbd_fs_resource_name: "xcatfs"
+drbd_device: "/dev/drbd0"
+drbd_mount_dir: "/drbd"
+drbd_fstype: "ext4"
+
+
+#IP
 primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
 secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
+#Hostname
 primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
 secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
-primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
-secondary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[0] }}"
 
+#IP
 primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
 secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
+#Hostname
 primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
 secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
