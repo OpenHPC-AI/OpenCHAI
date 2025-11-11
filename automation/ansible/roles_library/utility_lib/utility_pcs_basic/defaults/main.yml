@@ -1,0 +1,13 @@
+---
+# Default variables for PCS basic setup
+
+# Cluster user credentials
+pcs_cluster_user: hacluster
+pcs_cluster_password: "R3dh@t@@3234"   # Override in playbook or vault
+
+# Cluster name
+pcs_cluster_name: drbd_xCAT
+
+# Node hostnames (must be resolvable)
+primary_master_node_hostname: "hpc-master01"
+secondary_master_node_hostname: "hpc-master02"
