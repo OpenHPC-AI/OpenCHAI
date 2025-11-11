@@ -1,0 +1,19 @@
+---
+- name: Clone hosted RPM repositories to client
+  hosts: all
+  become: yes
+  vars_files:
+    - ../../group_vars/all.yml
+
+
+  vars:
+    #repo_server: "http://172.10.3.25:8080"
+    repo_server: "http://{{headnode_ip}}:8080"
+    #clone_dest: "/home/hpc-project-oct-2025/CHAI/rpm-stack/"
+    clone_dest: "{{rpm_stack_path}}/"
+    # hosted_dirs: ["cuda_rpms", "kernel_rpms"]   # Optional
+    #hosted_dirs: ["kernel_rpms", "drbd_pcs_rpms"]   # Optional
+    download_tool: "wget"
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_repo_clone"
