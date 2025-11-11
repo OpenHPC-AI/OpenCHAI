@@ -54,6 +54,8 @@ drbd_fstype: "ext4"
 pcs_primary_master_node_hostname: "{{ primary_master_node_hostname }}"
 pcs_secondary_master_node_hostname: "{{ secondary_master_node_hostname }}"
 
+pcs_cluster_password: "StrongPass123"
+pcs_cluster_name: "drbd_xCAT"
 #IP
 primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
 secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
