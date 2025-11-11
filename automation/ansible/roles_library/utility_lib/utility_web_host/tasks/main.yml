@@ -1,0 +1,87 @@
+---
+- name: Ensure web content directory exists
+  ansible.builtin.file:
+    path: "{{ web_content_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure web content directory exists
+  ansible.builtin.file:
+    path: "{{ web_content_dir }}"
+    state: directory
+    owner: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    group: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    mode: '0755'
+
+- name: Copy web content if local files exist
+  ansible.builtin.copy:
+    src: "./site_content/"
+    dest: "{{ web_content_dir }}/"
+    owner: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    group: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    mode: '0644'
+  ignore_errors: yes
+
+- name: Ensure proper permissions recursively on web content
+  ansible.builtin.file:
+    path: "{{ web_content_dir }}"
+    owner: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    group: "{{ 'apache' if web_server == 'apache' else 'nginx' }}"
+    recurse: yes
+    mode: '0755'
+
+
+- name: Ensure directory and parent directories have proper permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0755'
+  loop:
+    - "{{ web_content_dir }}"
+    - "{{ web_content_dir | dirname }}"
+    - "{{ web_content_dir | dirname | dirname }}"
+
+- name: Set SELinux context for web content recursively
+  ansible.builtin.command: chcon -R -t httpd_sys_content_t {{ web_content_dir }}
+  when: ansible_facts.selinux.status == "enabled"
+  ignore_errors: yes
+
+- name: Allow Nginx/Apache to serve user content
+  ansible.builtin.command: setsebool -P httpd_read_user_content 1
+  when: ansible_facts.selinux.status == "enabled"
+  ignore_errors: yes
+
+
+
+# Optional (for SELinux-enabled systems)
+
+
+# Select web server type
+- name: Include Apache setup
+  ansible.builtin.include_tasks: apache.yml
+  when: web_server == "apache"
+
+- name: Include Nginx setup
+  ansible.builtin.include_tasks: nginx.yml
+  when: web_server == "nginx"
+
+- name: Ensure firewall allows web port
+  ansible.builtin.command: >
+    firewall-cmd --permanent --add-port={{ web_port }}/tcp
+  register: fw_add
+  changed_when: "'success' in fw_add.stdout or 'added' in fw_add.stdout"
+  failed_when: fw_add.rc not in [0, 2]
+  ignore_errors: yes
+
+- name: Reload firewalld
+  ansible.builtin.command: firewall-cmd --reload
+  when: fw_add.rc == 0
+  ignore_errors: yes
+
+
+- name: Show access info
+  ansible.builtin.debug:
+    msg: >
+      Web server ({{ web_server }}) hosted successfully at:
+      http://{{ ansible_host | default(inventory_hostname) }}:{{ web_port }}
