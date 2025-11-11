@@ -1,0 +1,39 @@
+drbd_use_local_rpms: true  # Toggle between local RPM install or remote
+
+# Package & service management
+pcs_manage_services: true
+pcs_reinstall_packages: true
+allow_package_removal: false
+
+pcs_services:
+  - pcsd
+  - pacemaker
+  - corosync
+
+drbd_mount_points:
+  - /drbd
+
+# RHEL 9 package lists
+pcs_drbd_packages_rhel9:
+  - pcs
+  - kmod-drbd9x
+  - drbd9x-utils
+
+conflicting_drbd_pkg_rhel9:
+  - drbd-utils
+
+# RHEL 8 package lists
+pcs_drbd_packages_rhel8:
+  - pcs
+  - kmod-drbd84
+  - drbd84-utils
+
+conflicting_drbd_pkg_rhel8:
+  - drbd-utils
+
+# Repos
+elrepo_release_pkg_rhel9: "https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm"
+elrepo_release_pkg_rhel8: "https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm"
+
+ha_repo_rhel9: "highavailability"
+ha_repo_rhel8: "ha"
