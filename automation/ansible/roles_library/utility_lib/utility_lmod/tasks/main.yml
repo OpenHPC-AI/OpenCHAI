@@ -1,0 +1,88 @@
+---
+
+- name: Detect OS major version
+  ansible.builtin.set_fact:
+    os_major_version: "{{ ansible_distribution_major_version }}"
+
+- name: Check if Lmod or lmod-hpc is installed
+  ansible.builtin.shell: "rpm -qa | grep -E '^(Lmod|lmod-hpc)'"
+  register: lmod_check
+  failed_when: false
+  changed_when: false
+
+# 1. Ensure HISTTIMEFORMAT is set in /etc/bashrc
+- name: Ensure HISTTIMEFORMAT is set in /etc/bashrc
+  ansible.builtin.lineinfile:
+    path: /etc/bashrc
+    regexp: '^export HISTTIMEFORMAT='
+    line: "{{ histtimeformat_line }}"
+    state: present
+    insertafter: EOF
+
+# 2. Install Development Tools group
+- name: Install Development Tools group
+  ansible.builtin.yum:
+    name: "@Development Tools"
+    state: present
+
+# 3. Install extra packages
+- name: Install extra development packages
+  ansible.builtin.yum:
+    name: "{{ extra_packages }}"
+    state: present
+
+# 4. Remove old environment-modules
+- name: Remove old environment-modules package
+  ansible.builtin.yum:
+    name: "{{ old_modules_package }}"
+    state: absent
+    autoremove: no
+
+# 5. Try to install lmod-hpc from local RPMs
+- name: Find local Lmod RPMs
+  ansible.builtin.find:
+    paths: "{{ local_rpm_base }}/el{{ os_major_version }}"
+    patterns: "lmod-hpc*.rpm"
+  register: local_lmod_rpms
+  when: lmod_check.stdout == ""
+
+- name: Install Lmod from local RPMs
+  ansible.builtin.yum:
+    name: "{{ local_lmod_rpms.files | map(attribute='path') | list }}"
+    state: present
+  when: lmod_check.stdout == "" and local_lmod_rpms.matched > 0
+  register: local_rpm_install
+
+# 6. Fallback: install Lmod from EPEL if local RPMs not found
+- name: Install epel-release if needed
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+  when: lmod_check.stdout == "" and (local_lmod_rpms is not defined or local_lmod_rpms.matched == 0)
+
+- name: Install Lmod from repos (EPEL)
+  ansible.builtin.yum:
+    name: Lmod
+    state: present
+  when: lmod_check.stdout == "" and (local_lmod_rpms is not defined or local_lmod_rpms.matched == 0)
+
+# 7. Deploy lmod.sh profile script
+- name: Deploy lmod.sh profile script
+  ansible.builtin.template:
+    src: lmod.sh.j2
+    dest: /etc/profile.d/lmod.sh
+    owner: root
+    group: root
+    mode: '0644'
+
+# 8. Configure MODULEPATH
+- name: Configure MODULEPATH
+  ansible.builtin.copy:
+    dest: /etc/profile.d/00-modulepath.sh
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [ -z "$MODULEPATH" ] &&
+        [ "$(readlink /etc/alternatives/modules.sh)" = "/usr/share/lmod/lmod/init/profile" -o -f /etc/profile.d/z00_lmod.sh ] &&
+        export MODULEPATH={{ modulepath_dir }}:/etc/modulefiles || :
