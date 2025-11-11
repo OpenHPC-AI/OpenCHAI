@@ -1,0 +1,7 @@
+---
+- name: Enable and start PCS/DRBD services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    enabled: true
+    state: stopped
+  loop: "{{ pcs_services }}"
