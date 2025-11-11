@@ -1,0 +1,14 @@
+
+<VirtualHost *:{{ web_port }}>
+    DocumentRoot "{{ web_content_dir }}"
+
+    <Directory "{{ web_content_dir }}">
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/httpd/filehost_error.log
+    CustomLog /var/log/httpd/filehost_access.log combined
+</VirtualHost>
+
