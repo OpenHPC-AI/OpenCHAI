@@ -1,0 +1,14 @@
+---
+# Enable HA repository for RHEL 9
+- name: Enable HA repository (RHEL 9)
+  ansible.builtin.shell: >
+    dnf config-manager --set-enabled crb &&
+    dnf config-manager --set-enabled highavailability
+  when: ansible_distribution_major_version | int == 9
+
+# Enable HA repository for RHEL 8
+- name: Enable HA repository (RHEL 8)
+  ansible.builtin.shell: >
+    yum config-manager --enable powertools &&
+    yum config-manager --enable ha
+  when: ansible_distribution_major_version | int == 8
