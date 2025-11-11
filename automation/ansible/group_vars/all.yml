@@ -51,6 +51,8 @@ drbd_device: "/dev/drbd0"
 drbd_mount_dir: "/drbd"
 drbd_fstype: "ext4"
 
+pcs_primary_master_node_hostname: "{{ primary_master_node_hostname }}"
+pcs_secondary_master_node_hostname: "{{ secondary_master_node_hostname }}"
 
 #IP
 primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
