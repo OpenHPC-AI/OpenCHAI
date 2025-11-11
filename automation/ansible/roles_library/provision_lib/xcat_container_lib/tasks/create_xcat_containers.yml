@@ -1,0 +1,72 @@
+- name: Check if /drbd is mounted on active master node
+  command: mountpoint -q /drbd
+  register: drbd_active
+  failed_when: false
+  changed_when: false
+
+- name: Skip xCAT container deployment on passive node
+  when: drbd_active.rc != 0
+  debug:
+    msg: "⛔ Skipping xCAT container deployment because /drbd is not mounted on {{ inventory_hostname }}"
+
+# -------------------------------------------------------------------
+# Verify both files exist in /drbd/cont_env/
+# -------------------------------------------------------------------
+- name: Verify both docker-compose.yml and dev.env exist
+  stat:
+    path: "{{ item }}"
+  register: file_check
+  loop:
+    - /drbd/cont_env/docker-compose.yml
+    - /drbd/cont_env/dev.env
+
+- name: Check that all files exist
+  assert:
+    that:
+      - file_check.results | map(attribute='stat.exists') | all
+    fail_msg: "❌ One or more required files are missing in /drbd/cont_env/"
+    success_msg: "✅ Both docker-compose.yml and dev.env exist in /drbd/cont_env/"
+
+# -------------------------------------------------------------------
+# Copy updated dev.env as .env
+# -------------------------------------------------------------------
+- name: Copy dev.env to .env
+  command: cp -ar /drbd/cont_env/dev.env /drbd/cont_env/.env
+  args:
+    creates: /drbd/cont_env/.env
+
+# -------------------------------------------------------------------
+# Restart the xCAT container stack
+# -------------------------------------------------------------------
+- name: Deploy or update the xcat_stack using docker-compose.yml
+  command: docker stack deploy -c /drbd/cont_env/docker-compose.yml xcat_stack
+  register: deploy_result
+
+- name: Show deploy output
+  debug:
+    msg: "{{ deploy_result.stdout_lines }}"
+
+# -------------------------------------------------------------------
+# Verify xcat_stack services
+# -------------------------------------------------------------------
+- name: Verify stack and services
+  shell: |
+    docker stack ls && echo "----" && docker service ls
+  register: stack_status
+  changed_when: false
+
+- name: Show stack verification output
+  debug:
+    msg: "{{ stack_status.stdout_lines }}"
+
+# -------------------------------------------------------------------
+# Verify running containers (Replica 1/1)
+# -------------------------------------------------------------------
+- name: Check running xCAT containers
+  shell: docker ps | grep xcat
+  register: running_containers
+  changed_when: false
+
+- name: Show container status
+  debug:
+    msg: "{{ running_containers.stdout_lines }}"
