@@ -76,6 +76,9 @@ primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
 secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
 tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
 
-
+####################### xCAT Management Tool Variable #######################
+xcat_version_tag: "2.17.0"
+xcat_docker_img: "cdac_xcat/alma8.9:2.17.0"
+####################### Application Module Variable #######################
 # lmod
 modulepath_dir: "/home/apps/modulefiles/apps"
