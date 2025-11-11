@@ -1,0 +1,61 @@
+---
+# -------------------------------------------------------------------
+# Deploy xCAT docker-compose file with automatic image detection
+# -------------------------------------------------------------------
+
+- name: Detect xCAT Docker image (if xcat_image not provided)
+  shell: |
+    docker images --format '{{ "{{.Repository}}:{{.Tag}}" }}' | grep -i 'cdac_xcat' | head -n 1
+  register: detected_xcat_image
+  changed_when: false
+  when: xcat_image is not defined or xcat_image == ""
+
+- name: Fail if no xCAT image found locally
+  fail:
+    msg: "❌ No xCAT image found locally. Please load or pull the xCAT container image first."
+  when:
+    - (xcat_image is not defined or xcat_image == "")
+    - detected_xcat_image.stdout == ""
+
+- name: Set xCAT image fact
+  set_fact:
+    xcat_image: "{{ detected_xcat_image.stdout if (xcat_image is not defined or xcat_image == '') else xcat_image }}"
+
+- name: Display selected xCAT image
+  debug:
+    msg: "✅ Using xCAT image: {{ xcat_image }}"
+
+# -------------------------------------------------------------------
+# Generate docker-compose file using detected/defined image
+# -------------------------------------------------------------------
+- name: Generate docker-compose.yml with xCAT image
+  template:
+    src: docker-compose.yml.j2
+    dest: /hpctool_stack/xcat_repo/docker-compose.yml
+    mode: '0644'
+
+- name: Confirm docker-compose.yml creation
+  debug:
+    msg: "✅ docker-compose.yml generated successfully at /hpctool_stack/xcat_repo/docker-compose.yml"
+
+# -------------------------------------------------------------------
+# Copy dev.env and docker-compose.yml into /drbd/cont_env/
+# -------------------------------------------------------------------
+- name: Ensure /drbd/cont_env directory exists
+  file:
+    path: /drbd/cont_env
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.yml and dev.env to /drbd/cont_env/
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: '/hpctool_stack/xcat_repo/docker-compose.yml', dest: '/drbd/cont_env/docker-compose.yml' }
+    - { src: '/hpctool_stack/xcat_repo/dev.env', dest: '/drbd/cont_env/dev.env' }
+
+- name: Display final confirmation
+  debug:
+    msg: "✅ All files copied to /drbd/cont_env successfully."
