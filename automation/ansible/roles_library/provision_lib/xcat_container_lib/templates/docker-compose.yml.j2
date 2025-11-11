@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  xcat:
+    image: {{ xcat_image }}
+    container_name: xcat-service
+    hostname: xcat-container
+    env_file:
+      - .env
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /drbd/xcatdata:/xcatdata
+      - /drbd/var_log_xcat:/var/log/xcat
+      - /drbd/xcat_mysqldata:/var/lib/mysql
+      - /drbd/xcatcont_sshkey/.ssh/:/root/.ssh/
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0
+        window: 120s
+      placement:
+        constraints:
+          - node.labels.xcat_master == true
+    networks:
+      - host
+
+networks:
+  host:
+    external: true
