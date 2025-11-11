@@ -1,6 +1,6 @@
 ---
 # Base URL of the web host
-repo_server: "http://{{ headnode }}:8080"
+repo_server: "http://{{ headnode_ip }}:8080"
 
 # Root directory under which repos are hosted
 repo_base_path: "/rpm-stack"
