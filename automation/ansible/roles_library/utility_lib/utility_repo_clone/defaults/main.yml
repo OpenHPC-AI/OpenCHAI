@@ -1,0 +1,21 @@
+---
+# Base URL of the web host
+repo_server: "http://{{ headnode }}:8080"
+
+# Root directory under which repos are hosted
+repo_base_path: "/rpm-stack"
+
+# Where to clone repositories on the client
+clone_dest: "/opt/repo-clone"
+
+# Directories to clone (if not defined, clone all)
+# Example: hosted_dirs: ["cuda_rpms", "kernel_rpms"]
+hosted_dirs: []
+
+# Download utility (wget or curl)
+download_tool: "wget"
+
+# Permission settings
+clone_owner: "root"
+clone_group: "root"
+clone_mode: "0755"
