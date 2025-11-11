@@ -75,3 +75,7 @@ primary_swarm_manager_ip: "{{ primary_master_node_ip }}"
 primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
 secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
 tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
+
+
+# lmod
+modulepath_dir: "/home/apps/modulefiles/apps"
