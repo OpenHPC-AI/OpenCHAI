@@ -1,0 +1,21 @@
+---
+- name: Deploy web server with Apache or Nginx
+  hosts: all
+  become: yes
+  vars_files:
+    - ../../group_vars/all.yml
+
+
+  vars:
+    # Default web server choice
+    web_server: "nginx"   # options: nginx, apache
+
+    # Directory to host
+    #web_content_dir: "/home/hpc-project-oct-2025/CHAI/rpm-stack/"
+    web_content_dir: "{{rpm_stack_path}}/"
+
+    # Web server port
+    web_port: 8080
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_web_host"
