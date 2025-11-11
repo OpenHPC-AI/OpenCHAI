@@ -1,0 +1,170 @@
+---
+
+# Ensure DRBD directory exists
+- name: Ensure DRBD mount directory exists
+  ansible.builtin.file:
+    path: "{{ drbd_mount_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# Create Virtual IP network alias configuration file
+- name: Configure virtual IP interface for cluster
+  ansible.builtin.template:
+    src: ifcfg-virtual.j2
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ vip_interface }}:0"
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Restart NetworkManager to bring up virtual IP interface
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+    enabled: true
+  register: nm_restart
+  changed_when: nm_restart.state == "restarted"
+  tags: [initscript]
+
+
+- name: Restart pcsd to bring up pcs service for further processes
+  ansible.builtin.systemd:
+    name: pcsd
+    state: restarted
+    enabled: true
+
+
+
+# 3. Ensure cluster user exists
+- name: Ensure cluster user "hacluster" exists
+  ansible.builtin.user:
+    name: hacluster
+    password: "{{ pcs_cluster_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    state: present
+
+# 4. Authenticate cluster nodes
+- name: Authenticate cluster nodes
+  ansible.builtin.command: >
+    pcs host auth {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}
+    -u hacluster -p {{ pcs_cluster_password }}
+  register: pcs_auth
+  changed_when: "'already authorized' not in pcs_auth.stdout"
+  failed_when: pcs_auth.rc != 0 and "'already authorized' not in pcs_auth.stdout"
+
+
+- name: Debug hostname matching logic
+  ansible.builtin.debug:
+    msg:
+      - "inventory_hostname = {{ inventory_hostname }}"
+      - "ansible_hostname = {{ ansible_hostname }}"
+      - "primary_master_node_hostname = {{ primary_master_node_hostname }}"
+      - "Comparison (inventory_hostname == primary_master_node_hostname): {{ inventory_hostname == primary_master_node_hostname }}"
+      - "Comparison (ansible_hostname == primary_master_node_hostname): {{ ansible_hostname == primary_master_node_hostname }}"
+
+
+
+# 5. Setup PCS cluster (only on primary)
+- name: Setup PCS cluster
+  ansible.builtin.command: >
+    pcs cluster setup {{ pcs_cluster_name }}
+    {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}
+  when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+  register: pcs_cluster_setup
+  changed_when: "'already configured' not in pcs_cluster_setup.stderr and 'already set up' not in pcs_cluster_setup.stderr"
+  failed_when: pcs_cluster_setup.rc != 0 and
+               "'already configured' not in pcs_cluster_setup.stderr and
+               'already set up' not in pcs_cluster_setup.stderr"
+
+
+
+# 6. Enable & start the cluster
+- name: Enable PCS cluster on all nodes
+  ansible.builtin.command: pcs cluster enable --all
+  changed_when: true
+
+- name: Start PCS cluster on all nodes
+  ansible.builtin.command: pcs cluster start --all
+  changed_when: true
+
+- name: Comment out DRBD entries from /etc/fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(?!#)(.*(\/drbd|drbd\d+).*)$'
+    replace: '# \1'
+    backup: yes
+    validate: 'mount -a -f -T %s'
+
+
+
+
+#######################################################################
+# Execute following PCS configuration tasks only on the PRIMARY NODE #
+#######################################################################
+
+# 7. Disable STONITH
+- name: Disable STONITH (fencing)
+  ansible.builtin.command: pcs property set stonith-enabled=false
+  when: ansible_hostname == primary_master_node_hostname
+  register: stonith_disable
+  changed_when: stonith_disable.rc == 0
+
+# 8. Set default resource properties
+- name: Set PCS resource defaults
+  ansible.builtin.command: >
+    pcs resource defaults update migration-threshold=10 resource-stickiness=100 start-delay=45s
+  when: ansible_hostname == primary_master_node_hostname
+  register: pcs_defaults
+  changed_when: pcs_defaults.rc == 0
+
+# 9. Create Virtual IP resource
+- name: Create Virtual IP resource for xCAT
+  ansible.builtin.command: >
+    pcs resource create {{ vip_resource_name }} ocf:heartbeat:IPaddr2
+    ip={{ vip_ip }} cidr_netmask={{ vip_prefix }}
+    op monitor interval=20s timeout=20s
+       start interval=0s timeout=20s
+       stop interval=0s timeout=20s --force
+  when: ansible_hostname == primary_master_node_hostname
+  register: vip_create
+  changed_when: vip_create.rc == 0
+
+# 10. Create DRBD resource
+- name: Create DRBD resource
+  ansible.builtin.command: >
+    pcs resource create {{ drbd_resource_name }} ocf:linbit:drbd
+    drbd_resource={{ drbd_resource_name }}
+    op demote interval=0s timeout=90
+       monitor interval=60s notify interval=0s timeout=90
+       promote interval=0s timeout=90
+       reload interval=0s timeout=30
+       start interval=0s timeout=240
+       stop interval=0s timeout=100
+  when: ansible_hostname == primary_master_node_hostname
+  register: drbd_create
+  changed_when: drbd_create.rc == 0
+
+# 11. Promote DRBD resource to Master/Slave
+- name: Promote DRBD resource to Master/Slave
+  ansible.builtin.command: >
+    pcs resource promotable {{ drbd_resource_name }} {{ drbd_clone_name }}
+    master-node-max=1 clone-max=2 notify=true master-max=1 clone-node-max=1
+  when: ansible_hostname == primary_master_node_hostname
+  register: drbd_promote
+  changed_when: drbd_promote.rc == 0
+
+# 12. Create Filesystem resource for DRBD mount
+- name: Create Filesystem resource for DRBD mount
+  ansible.builtin.command: >
+    pcs resource create {{ drbd_fs_resource_name }} ocf:heartbeat:Filesystem
+    device={{ drbd_device }}
+    directory={{ drbd_mount_dir }}
+    fstype={{ drbd_fstype }}
+    op monitor interval=20s timeout=40s
+       start interval=0s timeout=60s
+       stop interval=0s timeout=60s --force
+  when: ansible_hostname == primary_master_node_hostname
+  register: fs_create
+  changed_when: fs_create.rc == 0
