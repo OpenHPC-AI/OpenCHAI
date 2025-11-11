@@ -1,0 +1,24 @@
+---
+- name: Install Nginx
+  ansible.builtin.yum:
+    name: nginx
+    state: present
+
+
+#################################################################
+# NGINX CONFIGURATION
+#################################################################
+- name: Deploy Nginx configuration
+  ansible.builtin.template:
+    src: nginx_site.conf.j2
+    dest: /etc/nginx/conf.d/web_host.conf
+    mode: '0644'
+  when: web_server == "nginx"
+  notify: Restart Nginx
+
+
+- name: Start and enable Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
