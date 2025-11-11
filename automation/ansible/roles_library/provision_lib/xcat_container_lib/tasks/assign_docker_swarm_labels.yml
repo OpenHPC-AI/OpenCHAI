@@ -1,0 +1,25 @@
+---
+# tasks/assign_xcat_swarm_labels.yml
+# Assign common Swarm labels to primary and secondary master nodes
+# Run only on the primary HPC master node (Swarm manager)
+
+- name: Assign xCAT master label to primary and secondary Swarm nodes
+  become: true
+  shell: |
+    for host in {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}; do
+      node_id=$(docker node ls --format '{{"{{.Hostname}} {{.ManagerStatus}} {{.ID}}"}}' | grep "$host" | awk '{print $3}')
+      if [ -n "$node_id" ]; then
+        docker node update --label-add xcat_master=true "$node_id"
+      else
+        echo "Warning: Node with hostname $host not found in docker swarm"
+      fi
+    done
+  when: inventory_hostname == primary_master_node_hostname
+  args:
+    executable: /bin/bash
+
+- name: Confirm xCAT Swarm labels applied
+  debug:
+    msg: "Swarm label 'xcat_master=true' successfully applied to primary and secondary nodes: [{{ primary_swarm_manager }}, {{ secondary_swarm_manager }}]"
+  run_once: true
+
