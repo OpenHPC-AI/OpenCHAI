@@ -1,0 +1,29 @@
+---
+- name: Basic PCS cluster setup
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    vip_interface: "{{ xcat_vip_interface }}"
+    vip_ip: "{{ xcat_vip_ip }}"
+    vip_prefix: "{{ xcat_vip_subnet_prefix }}"
+    vip_resource_name: "{{ xcat_vip_resource_name }}"
+
+    drbd_resource_name: "{{ drbd_resource_name }}"
+    drbd_clone_name: "{{ drbd_clone_name }}"
+    drbd_fs_resource_name: "{{ drbd_fs_resource_name }}"
+    drbd_device: "{{ drbd_device }}"
+    drbd_mount_dir: "{{ drbd_mount_dir }}"
+    drbd_fstype: "{{ drbd_fstype }}"
+
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: "{{ pcs_cluster_password }}"
+    pcs_cluster_name: "{{ pcs_cluster_name }}"
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_pcs_basic"
+
