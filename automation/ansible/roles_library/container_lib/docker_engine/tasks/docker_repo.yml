@@ -7,12 +7,17 @@
     state: directory
     mode: '0755'
 
+- name: Check if existing Docker repo file exists
+  ansible.builtin.stat:
+    path: /etc/yum.repos.d/docker-ce.repo
+  register: docker_repo_file
+
 - name: Backup existing Docker repo if present
   ansible.builtin.copy:
     src: /etc/yum.repos.d/docker-ce.repo
     dest: /etc/yum.repos.d/docker-ce.repo.bk
     remote_src: yes
-  when: lookup('ansible.builtin.file', '/etc/yum.repos.d/docker-ce.repo', errors='ignore')
+  when: docker_repo_file.stat.exists
 
 - name: Download or replace Docker repo file
   ansible.builtin.get_url:
@@ -20,8 +25,9 @@
     dest: /etc/yum.repos.d/docker-ce.repo
     mode: '0644'
     force: yes
+    validate_certs: yes
 
-- name: Disable Docker Edge & Test repos
+- name: Disable Docker Edge & Test repos if they exist
   ansible.builtin.ini_file:
     dest: /etc/yum.repos.d/docker-ce.repo
     section: "{{ item }}"
@@ -30,3 +36,5 @@
   loop:
     - docker-ce-test
     - docker-ce-edge
+  ignore_errors: yes  # in case those sections don't exist
+
