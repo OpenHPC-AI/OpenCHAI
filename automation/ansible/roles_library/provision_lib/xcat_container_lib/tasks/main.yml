@@ -1,0 +1,32 @@
+---
+# tasks file for xcat_container_lib
+
+# Step 1: Assign a common label to primary and secondary Docker Swarm master nodes
+- name: Assign a common label to primary and secondary Docker Swarm master nodes
+  include_tasks: assign_docker_swarm_labels.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# Step 2: Create persistent directories required for xCAT HA management
+- name: Create all persistent directories required for xCAT HA management
+  include_tasks: create_xcat_drbd_dirs.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# Step 3: Pull xCAT docker image and load it on HPC master nodes
+- name: Pull and load xCAT Docker image on HPC master nodes
+  include_tasks: load_xcat_image.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# Step 4: Generate xCAT dev.env file aligned with HPC master environment
+- name: Generate xCAT dev.env file aligned with HPC master environment
+  include_tasks: xcat_dev_env.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# Step 5: Generate xCAT docker-compose file to deploy the container
+- name: Generate xCAT docker-compose.yml file for xCAT container deployment
+  include_tasks: deploy_xcat_docker_compose.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# Step 6: Copy files, deploy stack, and verify xCAT container setup
+- name: Deploy and verify xCAT container stack on active master
+  include_tasks: create_xcat_containers.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
