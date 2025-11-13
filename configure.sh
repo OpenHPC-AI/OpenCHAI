@@ -56,24 +56,38 @@ safe_input() {
     local prompt="$1"
     local -n __out=$2
     local input=""
+
     while true; do
-        if read -e -rp "$prompt" input 2>/dev/null; then :; else read -r -p "$prompt" input; fi
-        input="$(echo -n "$input" | tr -d '\r' | xargs)"
-        [[ -n "$input" ]] && { __out="$input"; return 0; }
-        warn "Input cannot be empty. Try again or press Ctrl-C to cancel."
+        # Use read -e to allow backspace navigation
+        read -e -rp "$prompt" input || true
+        input="${input//[$'\r\n']/}" # remove newline characters
+        input="$(echo "$input" | xargs)" # trim spaces
+
+        if [[ -n "$input" ]]; then
+            __out="$input"
+            return 0
+        else
+            echo -e "${YELLOW}⚠️  Input cannot be empty. Try again or press Ctrl+C to exit.${RESET}"
+        fi
     done
 }
 
 confirm_yes_no() {
-    local prompt="$1"; local -n __out=$2; local input=""
+    local prompt="$1"; local -n __out=$2
+    local input=""
     while true; do
         read -e -rp "$prompt" input || true
-        input="$(echo -n "$input" | tr -d '\r' | xargs)"
-        case "${input,,}" in
-            y|yes) __out="yes"; return 0 ;;
-            n|no)  __out="no";  return 0 ;;
-            "") warn "Input cannot be empty. Please type yes or no." ;;
-            *) warn "Please type yes or no." ;;
+        input="$(echo "${input,,}" | xargs)"  # lowercase + trim
+
+        case "$input" in
+            y|yes)
+                __out="yes"; return 0 ;;
+            n|no)
+                __out="no"; return 0 ;;
+            "")
+                echo -e "${YELLOW}⚠️  Please type yes or no.${RESET}" ;;
+            *)
+                echo -e "${YELLOW}⚠️  Invalid input. Type yes or no and press Enter.${RESET}" ;;
         esac
     done
 }
@@ -206,6 +220,8 @@ fi
 # Tar file handling (local / network)
 # -------------------------
 info "Checking for OS tar files in: ${HOSTMACHINE_REGISTRY_PATH}"
+
+# Find all tar-like files
 tar_files=($(find "$HOSTMACHINE_REGISTRY_PATH" -maxdepth 1 -type f \( -iname "*.tar*" -o -iname "*.tgz" \) 2>/dev/null || true))
 
 if (( ${#tar_files[@]} == 0 )); then
@@ -213,137 +229,156 @@ if (( ${#tar_files[@]} == 0 )); then
     echo -e "\nOptions:"
     select ACTION in "Install tar manually" "Download from network" "Skip (handle later)"; do
         case "$REPLY" in
-            1) error_exit "Place OS tar manually in ${HOSTMACHINE_REGISTRY_PATH} and rerun."; ;;
+            1)
+                error_exit "Place OS tar manually in ${HOSTMACHINE_REGISTRY_PATH} and rerun."
+                ;;
             2)
                 info "Fetching tar list from ${HOSTMACHINE_REG_NETWORK_URL} ..."
-                mapfile -t files < <(curl -fsSL $CERT_FLAG_CURL "$HOSTMACHINE_REG_NETWORK_URL" | grep -oP 'href="([^"]+\.(tar\.gz|tar|tgz))"' | sed 's/href="//;s/"//' || true)
+                mapfile -t files < <(curl -fsSL $CERT_FLAG_CURL "$HOSTMACHINE_REG_NETWORK_URL" \
+                    | grep -oP 'href="([^"]+\.(tar\.gz|tar|tgz|tar\.xz))"' \
+                    | sed 's/href="//;s/"//' || true)
+
                 (( ${#files[@]} == 0 )) && error_exit "No tar files found in network repository."
+
+                echo ""
+                echo "===================================================================="
+                echo " 🌐 Network Tar Selection for HPC-AI Cluster Setup"
+                echo "--------------------------------------------------------------------"
+                echo "Select a registry tarball to download and configure your environment."
+                echo "These files usually contain pre-packaged OS base images or full HPC"
+                echo "software stacks used by OpenCHAI and xCAT for cluster deployment."
+                echo "===================================================================="
+                echo ""
+
                 select FILE in "${files[@]}"; do
-                    [[ -n "$FILE" ]] && break || warn "Invalid choice."
+                    [[ -n "$FILE" ]] && break || warn "Invalid choice. Please select a valid tar file."
                 done
+
                 info "Downloading ${FILE} ..."
-                wget -q --show-progress $CERT_FLAG_WGET "${HOSTMACHINE_REG_NETWORK_URL}${FILE}" -O "${HOSTMACHINE_REGISTRY_PATH}/${FILE}"  || error_exit "Download failed."
-                tar -xzvf "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" -C "$HOSTMACHINE_REGISTRY_PATH" || tar -xvf "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" -C "$HOSTMACHINE_REGISTRY_PATH"
-                notice "Downloaded and extracted ${FILE}"
-                break ;;
-            3) warn "Skipping tar handling. You must add it manually later."; break ;;
-            *) warn "Invalid option. Choose 1-3." ;;
+                wget -q --show-progress $CERT_FLAG_WGET \
+                    "${HOSTMACHINE_REG_NETWORK_URL}${FILE}" \
+                    -O "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" \
+                    || error_exit "Download failed."
+
+                info "Extracting ${FILE} ..."
+                if ! tar -xavf "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" -C "$HOSTMACHINE_REGISTRY_PATH"; then
+                    warn "Auto-detect extraction failed. Trying manual method ..."
+                    if file "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" | grep -q 'gzip compressed'; then
+                        tar -xzvf "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" -C "$HOSTMACHINE_REGISTRY_PATH"
+                    else
+                        tar -xvf "${HOSTMACHINE_REGISTRY_PATH}/${FILE}" -C "$HOSTMACHINE_REGISTRY_PATH"
+                    fi
+                fi
+
+                notice "✅ Downloaded and extracted ${FILE}"
+                echo ""
+                echo "🎯 The selected registry package has been unpacked into:"
+                echo "   → ${HOSTMACHINE_REGISTRY_PATH}"
+                echo ""
+                echo "You can now proceed with the HPC-AI cluster configuration process."
+                echo "===================================================================="
+                break
+                ;;
+            3)
+                warn "Skipping tar handling. You must add it manually later."
+                break
+                ;;
+            *)
+                warn "Invalid option. Choose 1-3."
+                ;;
         esac
     done
+
 else
-    select local_tar in "${tar_files[@]}"; do
-        [[ -n "$local_tar" ]] && { tar -xzf "$local_tar" -C "$BASE_DIR"; notice "Extracted ${local_tar}"; break; }
-        warn "Invalid selection."
-    done
-fi
-
-
-# =====================================================
-# 🧩 Step 4: Container Image Selection or Network Fetch
-# =====================================================
-
-CONTAINER_IMAGE_REGISTRY_PATH="$BASE_DIR/hpcsuite_registry/container_img_reg"
-PYTHON_SELECTOR="./automation/python/container_img_selector.py"
-
-echo ""
-info "Checking local container image registry at: ${CONTAINER_IMAGE_REGISTRY_PATH}"
-mkdir -p "$CONTAINER_IMAGE_REGISTRY_PATH" || true
-
-# Scan local registry
-
-mapfile -t app_dirs < <(find "$CONTAINER_IMAGE_REGISTRY_PATH" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
-
-if (( ${#app_dirs[@]} == 0 )); then
-    warn "No application directories found in ${CONTAINER_IMAGE_REGISTRY_PATH}"
     echo ""
-    read -rp "Do you want to fetch container images from the network? (yes/no): " netopt
-    if [[ "$netopt" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-        info "Launching Python container image selector..."
-        python3 "$PYTHON_SELECTOR"
-    else
-        notice "Skipping container image setup. You can add images later under ${CONTAINER_IMAGE_REGISTRY_PATH}."
-    fi
-    return 0
-fi
-
-# Collect local images
-
-declare -A IMG_MAP
-index=1
-found_local=0
-
-echo ""
-info "Scanning local container image directories..."
-
-for app_dir in "${app_dirs[@]}"; do
-    app_name=$(basename "$app_dir")
-    mapfile -t local_imgs < <(find "$app_dir" -type f \( -iname "*.img" -o -iname "*.tar" -o -iname "*.tar.gz" -o -iname "*.tgz" \) 2>/dev/null)
-
-    if (( ${#local_imgs[@]} == 0 )); then
-        warn "No images found in $app_name"
-        continue
-    fi
-
+    echo "===================================================================="
+    echo " 🧠 HPC-AI Cluster Setup: Select a Registry Tarball"
+    echo "--------------------------------------------------------------------"
+    echo "Below is a list of available hpcsuite_registry tar files detected in:"
+    echo "  → $HOSTMACHINE_REGISTRY_PATH"
     echo ""
-    echo "🧩[$app_name] Found ${#local_imgs[@]} image(s):"
-    for img in "${local_imgs[@]}"; do
-        echo "   [$index] $(basename "$img")"
-        IMG_MAP[$index]="$img"
-        ((index++))
-        found_local=1
-    done
-done
-
-if (( found_local == 0 )); then
-    warn "No local container images found in any registry directories."
+    echo "Each tarball contains prepackaged OS base files or complete HPC-AI"
+    echo "software stacks used to configure your cluster environment."
     echo ""
-    read -rp "Would you like to fetch container images from the network instead? (yes/no): " use_net
-    if [[ "$use_net" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-        info "Launching Python container image selector..."
-        python3 "$PYTHON_SELECTOR"
-    else
-        notice "Skipped. You can manually place images under ${CONTAINER_IMAGE_REGISTRY_PATH}."
-    fi
-    return 0
-fi
-
-# Select image
-
-echo ""
-read -rp "➡️  Enter the number of the container image to use (or press Enter to skip): " choice
-
-if [[ -n "$choice" && -n "${IMG_MAP[$choice]}" ]]; then
-    selected_img="${IMG_MAP[$choice]}"
-    info "Selected local container image: $selected_img"
-
+    echo "👉 Please select the number corresponding to the tar file you wish"
+    echo "   to extract and use for this cluster setup, or choose 'Skip'."
+    echo "===================================================================="
     echo ""
-    read -rp "Do you want to extract/load this image into the system now? (yes/no): " extract_choice
-    if [[ "$extract_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-        info "Loading container image..."
-        # Attempt gzip extraction first; fallback to tar
-        if ! tar -xzf "$selected_img" -C "$BASE_DIR" 2>/dev/null; then
-            info "Falling back to uncompressed extraction..."
-            tar -xf "$selected_img" -C "$BASE_DIR" || warn "⚠️ Extraction failed for ${selected_img}"
+
+    # Detect already extracted directories based on tar files
+    extracted_info=""
+    extracted_dir=""
+    mod_time=""
+
+    for tar_file in "${tar_files[@]}"; do
+        base_name=$(basename "$tar_file")
+        # Strip known tar extensions
+        base_name="${base_name%.tar.gz}"
+        base_name="${base_name%.tgz}"
+        base_name="${base_name%.tar}"
+
+        extracted_dir="$HOSTMACHINE_REGISTRY_PATH/$base_name"
+
+        if [[ -d "$extracted_dir" ]]; then
+            mod_time=$(stat -c '%y' "$extracted_dir" 2>/dev/null | cut -d'.' -f1)
+            extracted_info="🗂  Existing extracted content already present at:
+   → $extracted_dir
+   Modified on: $mod_time"
+            break
         fi
-        notice "Completed loading container image: $(basename "$selected_img")"
-    else
-        notice "Extraction skipped. Image remains in registry: $selected_img"
+    done
+
+    # Print detected directory info *before menu*
+    if [[ -n "$extracted_info" ]]; then
+        echo ""
+        echo "$extracted_info"
+        echo ""
+        echo "💡 You may choose 'Skip extraction' if this directory already contains valid data."
+        echo ""
     fi
 
-else
-    warn "No valid image selection made."
-    echo ""
-    read -rp "Would you like to load container images from the network instead? (yes/no): " use_net2
-    if [[ "$use_net2" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-        info "Launching Python container image selector..."
-        python3 "$PYTHON_SELECTOR"
-    else
-        notice "Skipped. You can manually add or load images later under ${CONTAINER_IMAGE_REGISTRY_PATH}."
-    fi
+    # Add "Skip extraction" as menu option
+    PS3=$'\n'"Enter your choice (or type the number for 'Skip' to continue without extraction): "
+
+    select local_tar in "${tar_files[@]}" "Skip extraction"; do
+        if [[ -z "$local_tar" ]]; then
+            warn "Invalid selection. Please choose a valid number from the list."
+            continue
+        fi
+
+        if [[ "$local_tar" == "Skip extraction" ]]; then
+            notice "⏭ Skipping tar extraction as per user choice."
+            echo ""
+            echo "You can manually extract the desired tarball later from:"
+            echo "  → $HOSTMACHINE_REGISTRY_PATH"
+            echo "===================================================================="
+            break
+        fi
+
+        info "Extracting selected file: ${local_tar} ..."
+        if ! tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH"; then
+            warn "Auto-detect extraction failed. Trying manual method ..."
+            if file "$local_tar" | grep -q 'gzip compressed'; then
+                tar -xzvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH"
+            else
+                tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH"
+            fi
+        fi
+
+        notice "✅ Successfully extracted: ${local_tar}"
+        echo ""
+        echo "🎯 The selected registry package has been unpacked into:"
+        echo "   → $HOSTMACHINE_REGISTRY_PATH"
+        echo ""
+        echo "You can now proceed with the HPC-AI cluster configuration process."
+        echo "===================================================================="
+        break
+    done
 fi
+
 
 # -------------------------
-# Step 5: Inventory confirmation & copy
+# Inventory confirmation & copy
 # -------------------------
 SYSTEM_ANSIBLE_CFG="/etc/ansible/ansible.cfg"
 ANSIBLE_CFG="$BASE_DIR/automation/ansible/ansible.cfg"
@@ -367,7 +402,7 @@ else
 fi
 
 # -------------------------
-# Step 6: Update ansible / OpenCHAI paths
+# Update ansible / OpenCHAI paths
 # -------------------------
 info "Configuring OpenCHAI manager tool paths..."
 echo "Detected base directory: ${BASE_DIR}"
@@ -423,6 +458,134 @@ fi
 
 notice "OpenCHAI manager tool configuration paths updated successfully!"
 
+# =====================================================
+# 🧩 Container Image Selection or Network Fetch (Non-breaking & Hardened)
+# =====================================================
+
+CONTAINER_IMAGE_REGISTRY_PATH="$BASE_DIR/hpcsuite_registry/container_img_reg"
+PYTHON_SELECTOR="./automation/python/container_img_selector.py"
+CONTAINER_REGISTRY_URL="${CONTAINER_IMAGE_REG_NETWORK_URL}"
+
+# Ensure Python script points to correct registry path
+if [[ -f "$PYTHON_SELECTOR" ]]; then
+    sed -i "s|^LOCAL_DIR *=.*|LOCAL_DIR = \"${CONTAINER_IMAGE_REGISTRY_PATH}\"|" "$PYTHON_SELECTOR"
+fi
+
+echo ""
+info "Checking local container image registry at: ${CONTAINER_IMAGE_REGISTRY_PATH}"
+mkdir -p "$CONTAINER_IMAGE_REGISTRY_PATH" || error_exit "Unable to create container image registry path."
+
+# ---------------------------------------------------------
+# Scan for existing container image directories
+# ---------------------------------------------------------
+mapfile -t app_dirs < <(find "$CONTAINER_IMAGE_REGISTRY_PATH" -mindepth 1 -maxdepth 1 -type d 2>/dev/null || true)
+
+if (( ${#app_dirs[@]} == 0 )); then
+    warn "No application directories found in ${CONTAINER_IMAGE_REGISTRY_PATH}"
+    echo ""
+    confirm_yes_no "Do you want to fetch container images from the network? (yes/no): " netopt
+    if [[ "$netopt" == "yes" ]]; then
+        info "Launching Python container image selector..."
+        python3 "$PYTHON_SELECTOR" || warn "Python image selector failed or aborted by user."
+    else
+        notice "Skipping container image setup. You can add images later under ${CONTAINER_IMAGE_REGISTRY_PATH}."
+    fi
+else
+    info "Found ${#app_dirs[@]} application directory(ies):"
+    for dir in "${app_dirs[@]}"; do
+        echo " - $(basename "$dir")"
+    done
+fi
+
+echo ""
+info "Proceeding to verify and collect container images..."
+echo ""
+
+# ---------------------------------------------------------
+# Collect all local container images
+# ---------------------------------------------------------
+declare -A IMG_MAP
+declare -A LOCAL_IMG_NAMES
+index=1
+found_local=0
+
+for app_dir in "${app_dirs[@]}"; do
+    app_name=$(basename "$app_dir")
+    mapfile -t local_imgs < <(find "$app_dir" -type f \( -iname "*.img" -o -iname "*.tar" -o -iname "*.tar.gz" -o -iname "*.tgz" \) 2>/dev/null)
+
+    if (( ${#local_imgs[@]} == 0 )); then
+        warn "No images found in $app_name"
+        continue
+    fi
+
+    echo ""
+    echo "🧩 [$app_name] Found ${#local_imgs[@]} image(s):"
+    for img in "${local_imgs[@]}"; do
+        base_img=$(basename "$img")
+        echo "   [$index] $base_img"
+        IMG_MAP[$index]="$img"
+        LOCAL_IMG_NAMES["$base_img"]=1
+        ((index++))
+        found_local=1
+    done
+done
+
+# ---------------------------------------------------------
+# Handle missing or absent local images
+# ---------------------------------------------------------
+if (( found_local == 0 )); then
+    warn "No local container images found in any registry directories."
+    echo ""
+    confirm_yes_no "Would you like to fetch container images from the network instead? (yes/no): " use_net
+    if [[ "$use_net" == "yes" ]]; then
+        info "Launching Python container image selector..."
+        python3 "$PYTHON_SELECTOR" || warn "Python selector aborted or failed."
+    else
+        notice "No images configured. Continuing setup without container image fetch."
+    fi
+    # Continue script — no exit
+fi
+
+
+confirm_yes_no "Do you want to fetch missing images from the network? (yes/no): " fetch_net
+if [[ "$fetch_net" == "yes" ]]; then
+    info "Fetching container image list from ${CONTAINER_REGISTRY_URL} ..."
+    mapfile -t net_imgs < <(
+        curl -fsSL $CERT_FLAG_CURL "$CONTAINER_REGISTRY_URL" \
+        | grep -Eo 'href="[^"]+\.(tar\.gz|tar|tgz|img)"' \
+        | sed -E 's/href="([^"]+)"/\1/' \
+        || true
+    )
+
+    if (( ${#net_imgs[@]} == 0 )); then
+        warn "No images found using curl parser. Falling back to Python selector..."
+        python3 "$PYTHON_SELECTOR" || warn "Python fallback aborted or failed."
+    else
+        total=${#net_imgs[@]}
+        info "Found $total image(s) in network repository."
+        for net_img in "${net_imgs[@]}"; do
+            base_net_img=$(basename "$net_img")
+            if [[ -n "${LOCAL_IMG_NAMES[$base_net_img]}" ]]; then
+                notice "⏭️  Skipping $base_net_img (already present locally)"
+                continue
+            fi
+            info "⬇️  Downloading $base_net_img ..."
+            wget -q --show-progress $CERT_FLAG_WGET \
+                "${CONTAINER_REGISTRY_URL}${net_img}" \
+                -O "${CONTAINER_IMAGE_REGISTRY_PATH}/${base_net_img}" \
+                || warn "⚠️  Failed to download $base_net_img"
+        done
+        notice "✅ Network image synchronization complete."
+    fi
+else
+    notice "⏭️  Network image fetch skipped by user."
+fi
+
+# Continue with rest of setup — no exit here
+echo ""
+info "Proceeding to next setup phase..."
+
+
 # -------------------------
 # Done
 # -------------------------
@@ -443,6 +606,4 @@ grep -qxF 'host_key_checking = False' "$SYSTEM_ANSIBLE_CFG" 2>/dev/null || echo 
 notice "Configuration complete."
 log "Script finished successfully."
 exit 0
-
-
 
