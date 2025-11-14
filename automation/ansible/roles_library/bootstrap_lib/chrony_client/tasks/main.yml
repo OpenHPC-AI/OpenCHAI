@@ -1,0 +1,18 @@
+---
+
+- name: Backup existing chrony.conf if not already backed up
+  copy:
+    src: "{{ chrony_conf_dest }}"
+    dest: "{{ chrony_conf_backup }}"
+    remote_src: yes
+  when: not lookup('file', chrony_conf_backup, errors='ignore')
+
+- name: Deploy custom chrony.conf
+  command: cp -ar  "{{ chrony_conf_src }}" "{{ chrony_conf_dest }}"
+  notify: Restart chronyd
+
+- name: Ensure chronyd is started and enabled
+  service:
+    name: chronyd
+    state: started
+    enabled: yes
