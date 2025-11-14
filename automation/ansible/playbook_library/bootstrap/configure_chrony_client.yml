@@ -1,0 +1,13 @@
+---
+- name: Configure Chrony Client Service
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    chrony_conf_src: "{{ configuration_dir_path }}/chrony.conf"
+    chrony_conf_dest: "/etc/chrony.conf"
+    chrony_conf_backup: "/etc/chrony.conf.bk"
+
+  roles:
+    - "{{ roles_parent_path }}/bootstrap_lib/chrony_client"
