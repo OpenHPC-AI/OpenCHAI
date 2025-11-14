@@ -4,11 +4,17 @@ The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automa
 # OpenCHAI Deployment and Quickstart Guide
 The Quickstart is intended for deployment on **dedicated nodes or virtual machines (VMs)** running an **RPM-based Linux distribution** with an **x86_64 architecture**.
 
-A **minimum high-availability (HA) master node configuration** requires **three stateful nodes** — two permanent and one temporary (which can also be made permanent if desired) — along with at least **one stateful compute node** and an **optional stateful GPU node**.
+A **minimum high-availability (HA) master node configuration** requires **three stateful nodes** — two permanent and one temporary (which can also be made permanent if desired) — along with at least **one stateless compute node** and an **optional stateless GPU node**.
 
 **Hardware Requirements**
 
-Both master nodes must include a **25 GB `/drbd` partition** to enable data replication and synchronization between them. Additionally, ensure that the **head node** has at least **60 GB of free disk space** in the directory where the **OpenCHAI repository and the `rpm-stack`** will be cloned to support offline installation.
+Both master nodes must include a **25 GB /drbd partition** to support data replication and synchronization between them. Additionally, ensure that the head node has **at least 60 GB of free disk space** in the directory where the OpenCHAI repository and the rpm-stack will be cloned, as these are required for offline installation.
+
+For testing purposes, the minimum hardware requirements are:
+
+**Head Node**: 4 CPU cores and 4 GB RAM (recommended: 8 CPU cores and 8 GB RAM)
+
+**Master Nodes**: Minimum 16 CPU cores and 8 GB RAM each
 
 
 # OpenCHAI Manager Tool Setup
@@ -21,14 +27,14 @@ The quick installation steps are outlined below:
 
 Install the git package 
 
-```python
+```bash
 yum install git
 ```
 
 Clone the Repository:
-Make sure to clone the repository into a directory with at least 100 GB of free disk space. This space is essential for offline installation, as the complete software stack RPMs will be downloaded into the same directory. Adequate space ensures a smooth and error-free installation and configuration process.
+Make sure to clone the repository into a directory with at least 60 GB of free disk space. This space is essential for offline installation, as the complete software stack RPMs will be downloaded into the same directory. Adequate space ensures a smooth and error-free installation and configuration process.
 
-```python
+```bash
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
@@ -39,10 +45,19 @@ $ cd ./OpenCHAI
 ```
 
 
-Pull the **rpm-stack** either from your USB drive (local SSD drive or pen drive) to **./OpenCHAI/rpm-stack** on the head node, or download it directly from the online source using:
+Pull the rpm-stack for Alma or Rocky Linux from your **USB drive (local SSD or pen drive)** into the directory
+./OpenCHAI/hpcsuite_registry/hostmachine_reg on the head node.
+
+Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the rpm-stack from the network.
+You may also download it directly from the online source using:
 
 ```bash
-wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/rpm-stack.tar
+# Multiple OS versions are available for download.
+# Browse available options here:
+# https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
+
+# Example: Downloading the AlmaLinux 8.9 rpm-stack
+wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/alma8.9.tar.xz
 ```
 
 Make sure the **rpm-stack** is pulled !
