@@ -5,6 +5,6 @@
   vars_files:
     - ../../../group_vars/all.yml
   vars:
-    - docker_compose_version: "v2.40.1"
+    docker_compose_version: "v2.40.1"
   roles:
     - "{{ roles_parent_path }}/container_lib/docker_compose"
