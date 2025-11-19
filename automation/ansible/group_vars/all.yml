@@ -40,8 +40,10 @@ lustre_mounts_src_secondary_path: /scratch
 ####################### HPC Master and Management Nodes IP and Hostname Variables ###########################
 # DRBD High Availability Nodes Hostname and their Netwrok IPs
 # xCAT VIP IP
+private_interface : "eth2:0"
+
 xcat_vip_ip: "172.10.3.111"
-xcat_vip_interface: "ens1f2:0"
+xcat_vip_interface: "ens1f2"
 xcat_vip_subnet_prefix: "22"
 xcat_vip_resource_name: "vip_xCAT"
 
@@ -54,20 +56,21 @@ drbd_fstype: "ext4"
 
 pcs_primary_master_node_hostname: "{{ primary_master_node_hostname }}"
 pcs_secondary_master_node_hostname: "{{ secondary_master_node_hostname }}"
-
 pcs_cluster_password: "StrongPass123"
 pcs_cluster_name: "drbd_xCAT"
-#IP
+
+
+#Service Nodes IP's
 primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
 secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
-#Hostname
+
+primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
+secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
+
+#Service Nodes Hostname
 primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
 secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
 
-#IP
-primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
-secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
-#Hostname
 primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
 secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
@@ -79,7 +82,10 @@ tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be
 
 ####################### xCAT Management Tool Variable #######################
 xcat_version_tag: "2.17.0"
+xcat_container_img: "cdac_xcat_{{ os_version }}_{{ xcat_version }}"
 xcat_docker_img: "cdac_xcat/alma8.9:2.17.0"
+
 ####################### Application Module Variable #######################
 # lmod
 modulepath_dir: "/home/apps/modulefiles/apps"
+
