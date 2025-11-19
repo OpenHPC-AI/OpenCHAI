@@ -82,8 +82,8 @@ tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be
 
 ####################### xCAT Management Tool Variable #######################
 xcat_version_tag: "2.17.0"
-xcat_container_img: "cdac_xcat_{{ os_version }}_{{ xcat_version }}"
-xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version }}"
+xcat_container_img: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
+xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 
 ####################### Application Module Variable #######################
 # lmod
