@@ -103,7 +103,7 @@ roles/xcat_container_lib/tasks/
 | `swarm_label_value`       | Value of Swarm label                      | `true`                             |
 | `xcat_version`            | xCAT container version                    | `2.17.0`                           |
 | `xcat_image`              | xCAT container image                      | `cdac_xcat/alma8.9:2.17.0`         |
-| `xCAT_reg_path`           | Registry path containing xCAT image       | `/drbd/container_img_reg/xCAT_reg` |
+| `xCAT_reg_path`           | Registry path containing xCAT image       | `/hpctool_stack/xcat_repo/`        |
 
 ---
 
@@ -130,7 +130,7 @@ cat /proc/drbd
 ### 3️⃣  Run the Ansible Playbook
 
 ```bash
-ansible-playbook xcat_ha_setup.yml -i inventory/hosts
+ansible-playbook OpenCHAI/automation/ansible/playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml -i inventory/hosts
 ```
 
 ### 4️⃣  Verify the Deployment
