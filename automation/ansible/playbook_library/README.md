@@ -12,8 +12,11 @@ This repository contains a well-structured **Ansible playbook library** for auto
 * Monitoring
 * Security and networking automation
 
+
 The library is divided into modular **parent directories**, each dedicated to a specific area of automation.
 This structure makes it easy for System Administrators, DevOps Engineers, SREs, and Developers to find the correct playbooks quickly.
+
+
 
 
 
