@@ -43,7 +43,7 @@ Preparing DRBD mount
 Installing Docker Engine/Swarm prerequisites
 
 Initial SSH setup
-```
+
 📄 Example:
 bootstrap/
  ├── pre-requisite.yml
@@ -51,7 +51,7 @@ bootstrap/
  └── setup_basic_packages.yml
 ```
 ```
-🧩 install/ – Software Installation
+🧩 **install/ – Software Installation**
 
 Contains playbooks to install infrastructure components.
 
@@ -71,7 +71,10 @@ install/
  ├── install_mariadb.yml
  └── install_slurm.yml
 
-⚙️ configure/ – Post-Installation Configuration
+```
+
+```
+⚙️ **configure/ – Post-Installation Configuration**
 
 These playbooks configure the software installed in the previous stage.
 
@@ -94,8 +97,9 @@ configure/
  ├── configure_xcat.yml
  ├── configure_dhcp.yml
  └── configure_slurm_settings.yml
-
-📦 container/ – Docker/Podman/Swarm Automation
+```
+```
+📦 **container/ – Docker/Podman/Swarm Automation**
 
 Playbooks to deploy or manage containers and container stacks.
 
@@ -116,8 +120,10 @@ container/
  ├── build_xcat_image.yml
  ├── deploy_xcat_stack.yml
  └── create_xcat_containers.yml
+```
+```
 
-🏗️ provision/ – Provisioning Nodes & Cluster Resources
+🏗️ **provision/ – Provisioning Nodes & Cluster Resources**
 
 Playbooks that add nodes, build OS images, or allocate resources.
 
@@ -139,6 +145,8 @@ provision/
  ├── generate_osimage.yml
  └── provision_xcat_nodes.yml
 
+```
+```
 🖧 network/ – Network Configuration & Validation
 
 Everything required to bring up or verify cluster networking.
@@ -160,7 +168,8 @@ network/
  ├── configure_bonding.yml
  ├── setup_dns.yml
  └── verify_network.yml
-
+```
+```
 🛡️ security/ – Hardening & Access Control
 
 Playbooks for implementing security best practices.
@@ -182,7 +191,8 @@ security/
  ├── configure_selinux.yml
  ├── setup_firewall.yml
  └── secure_ssh.yml
-
+```
+```
 🔧 services/ – Service Management
 
 Handles Linux services and daemon operations.
@@ -202,7 +212,8 @@ services/
  ├── restart_xcat.yml
  ├── manage_mariadb.yml
  └── validate_services.yml
-
+```
+```
 🗄️ storage/ – Storage, DRBD, LVM, RAID
 
 Automation related to local or distributed storage setups.
@@ -224,7 +235,8 @@ storage/
  ├── configure_drbd.yml
  ├── setup_lvm.yml
  └── mount_storage.yml
-
+```
+```
 📊 monitoring/ – Observability & Metrics
 
 Playbooks for monitoring stack deployment and log management.
@@ -246,7 +258,8 @@ monitoring/
  ├── install_prometheus.yml
  ├── configure_rsyslog.yml
  └── healthcheck_containers.yml
-
+```
+```
 🧰 utility/ – Helper Tools (General Purpose)
 
 Utility playbooks are non-critical helpers used by developers and admins.
@@ -268,8 +281,9 @@ utility/
  ├── cleanup_logs.yml
  ├── backup_xcatdata.yml
  └── collect_debug_info.yml
-
-🤖 ai_stack/ – AI/ML/HPC Stack Deployment
+```
+```
+🤖 **ai_stack/ – AI/ML/HPC Stack Deployment**
 
 Playbooks specifically for GPU, AI, and HPC application installation.
 
@@ -288,5 +302,6 @@ ai_stack/
  ├── install_nccl.yml
  ├── run_hpl.yml
  └── deploy_ai_containers.yml
+```
 
 ```
