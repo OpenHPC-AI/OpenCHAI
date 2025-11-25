@@ -1,5 +1,3 @@
----
-
 # 📘 Infrastructure Automation Playbook Library
 
 ### *Ansible • HPC • Docker Swarm • xCAT • DRBD • Linux Automation*
@@ -17,7 +15,7 @@ This repository contains a well-structured **Ansible playbook library** for auto
 The library is divided into modular **parent directories**, each dedicated to a specific area of automation.
 This structure makes it easy for System Administrators, DevOps Engineers, SREs, and Developers to find the correct playbooks quickly.
 
----
+
 
 # 🗂️ Directory Overview
 
