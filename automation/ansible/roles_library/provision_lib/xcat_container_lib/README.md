@@ -3,28 +3,21 @@
 #
 # This playbook deploys xCAT in Docker Swarm with DRBD HA.
 #
-# Architecture:
-#
-#         Docker Swarm Managers:
-#         ┌───────────────┐      ┌───────────────┐
-#         │ headnode01    │      │ headnode02    │
-#         └───────────────┘      └───────────────┘
-#                │                     │
-#                ▼                     ▼
-#           /drbd primary        /drbd standby
-#
-# Shared DRBD Volume:
-#   /xcatdata
-#   /var/log/xcat
-#   /var/lib/mysql
-#
-# -------------------------------------------------------
-# Actual tasks start below
-# -------------------------------------------------------
+#Architecture:
 
-- name: Example placeholder
-  debug:
-    msg: "YAML is now valid"
+         Docker Swarm Managers:
+          ┌───────────────┐      ┌───────────────┐
+          │ headnode01    │      │ headnode02    │
+          └───────────────┘      └───────────────┘
+                 │                     │
+                 ▼                     ▼
+            /drbd primary        /drbd standby
+
+# Shared DRBD Volume:
+   /xcatdata
+   /var/log/xcat
+   /var/lib/mysql
+
 
 
 ---
