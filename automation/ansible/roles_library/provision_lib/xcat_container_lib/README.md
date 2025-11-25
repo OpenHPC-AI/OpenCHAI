@@ -1,4 +1,37 @@
+🧰 xCAT Container HA Deployment
+(Docker Swarm + DRBD + Ansible)
 
+This repository contains an automated framework to deploy xCAT (Extreme Cloud Administration Toolkit) in a High-Availability (HA) configuration using:
+
+Docker Swarm (for cluster-managed container orchestration)
+
+DRBD (for synchronous disk replication between master nodes)
+
+Ansible (for automated provisioning and failover control)
+
+The system ensures reliable xCAT operation, persistent shared storage, and smooth failover between two master nodes.
+
+🏗️ Architecture Overview
+Docker Swarm Manager Nodes
+        ┌───────────────┐          ┌───────────────┐
+        │  headnode01   │          │  headnode02   │
+        │ (Primary)     │          │ (Secondary)   │
+        └───────────────┘          └───────────────┘
+                 │                          │
+                 ▼                          ▼
+           /drbd mounted           /drbd not mounted
+             (active)                 (standby)
+
+📦 Shared DRBD Volume Layout
+
+The following directories are replicated between both nodes via DRBD and mounted inside the xCAT container:
+
+/xcatdata
+/var/log/xcat
+/var/lib/mysql
+
+
+This ensures xCAT configuration, logs, and database remain consistent across failovers.
 
 
 
