@@ -81,15 +81,15 @@ roles/xcat_container_lib/tasks/
 
 ## 📋 Prerequisites
 
-| Component         | Minimum Version                               | Notes                                      |
-| ----------------- | --------------------------------------------- | ------------------------------------------ |
-| **Docker Engine** | ≥ 20.10                                       | Installed and configured on both masters   |
-| **Docker Swarm**  | Initialized and both nodes joined as managers |                                            |
-| **DRBD**          | Configured and synced between both nodes      |                                            |
-| **Ansible**       | ≥ 2.14                                        | Used for orchestration                     |
-| **xCAT Image**    | 2.17.0 (based on AlmaLinux 8.9)               | Can be customized in `xcat_image` variable |
-| **SSH Access**    | Password-less between both master nodes 
-                      (Not Compulsory)                             | For Better Experience                      |
+| Component         | Minimum Version                                            | Notes                                      |
+| ----------------- | -----------------------------------------------------------| ------------------------------------------ |
+| **Docker Engine** | ≥ 20.10                                                    | Installed and configured on both masters   |
+| **Docker Swarm**  | Initialized and both nodes joined as managers              |                                            |
+| **DRBD**          | Configured and synced between both nodes                   |                                            |
+| **Ansible**       | ≥ 2.14                                                     | Used for orchestration                     |
+| **xCAT Image**    | 2.17.0 (based on AlmaLinux 8.9)                            | Can be customized in `xcat_image` variable |
+| **SSH Access**    | ansible inventory must have password of master nodes       |                                            |
+                      
 
 ---
 
