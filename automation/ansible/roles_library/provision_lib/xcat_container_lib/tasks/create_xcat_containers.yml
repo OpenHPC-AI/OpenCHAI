@@ -9,10 +9,6 @@
   debug:
     msg: "⛔ Skipping xCAT container deployment because /drbd is not mounted on {{ inventory_hostname }}"
 
-
-
-
-
 # -------------------------------------------------------------------
 # Verify both files exist in /drbd/cont_env/
 # -------------------------------------------------------------------
@@ -32,8 +28,6 @@
     fail_msg: "❌ One or more required files are missing in /drbd/cont_env/"
     success_msg: "✅ Both docker-compose.yml and dev.env exist in /drbd/cont_env/"
   when: drbd_mount_check.rc == 0
-
-
 
 # -------------------------------------------------------------------
 # Copy updated dev.env as .env
