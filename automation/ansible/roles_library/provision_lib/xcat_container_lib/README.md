@@ -20,19 +20,19 @@ The setup supports:
 ## 🏗️ Architecture Diagram
 
 ```
-        ┌───────────────────────────────────────────┐
-        │               Docker Swarm HA             │
-        │   (Primary Manager)        (Secondary)    │
-        │   headnode01                headnode02    │
-        │        │                         │        │
-        │   /drbd mounted             /drbd standby │
-        └────────┬──────────────────────┬───────────┘
+        ┌─────────────────────────────────────────────┐
+        │               Docker Swarm HA               │
+        │   (Primary Manager)      (Secondary Manager)│
+        │   headnode01                headnode02      │
+        │        │                         │          │
+        │   /drbd mounted             /drbd standby   │
+        └─────────────────────────────────────────────┘
                  │                      │
                  ▼                      ▼
-         ┌────────────────────────────────────┐
-         │ Shared DRBD Storage (/drbd volume) │
-         │  → /xcatdata, /var/log/xcat, /var/lib/mysql  │
-         └────────────────────────────────────┘
+         ┌─────────────────────────────────────────────┐
+         │ Shared DRBD Storage (/drbd volume)          │
+         │  → /xcatdata, /var/log/xcat, /var/lib/mysql │
+         └─────────────────────────────────────────────┘
 ```
 
 ---
@@ -52,27 +52,27 @@ The setup supports:
 ```
 roles/xcat_container_lib/tasks/
 ├── main.yml
-├── docker_swarm_label.yml
+├── assign_docker_swarm_labels.yml
 ├── create_xcat_drbd_dirs.yml
 ├── load_xcat_image.yml
 ├── xcat_dev_env.yml
-├── xcat_docker_compose.yml
-└── xcat_container_creation.yml
+├── deploy_xcat_docker_compose.yml
+└── create_xcat_containers.yml
 ```
 
 ---
 
 ## 🧩 Files Overview
 
-| File                            | Purpose                                                    |
-| ------------------------------- | ---------------------------------------------------------- |
-| **main.yml**                    | Master orchestrator that calls all subtasks                |
-| **docker_swarm_label.yml**      | Adds labels to Swarm manager nodes                         |
-| **create_xcat_drbd_dirs.yml**   | Creates DRBD-backed persistent directories                 |
-| **load_xcat_image.yml**         | Pulls or loads xCAT Docker image locally                   |
-| **xcat_dev_env.yml**            | Generates `.env` file aligned with host parameters         |
-| **xcat_docker_compose.yml**     | Generates docker-compose (Jinja2 template)                 |
-| **xcat_container_creation.yml** | Creates and starts the xCAT container (active master only) |
+| File                                    | Purpose                                                    |
+| --------------------------------------- | ---------------------------------------------------------- |
+| **main.yml**                            | Master orchestrator that calls all subtasks                |
+| **assign_docker_swarm_labels.yml**      | Adds labels to Swarm manager nodes                         |
+| **create_xcat_drbd_dirs.yml**           | Creates DRBD-backed persistent directories                 |
+| **load_xcat_image.yml**                 | Pulls or loads xCAT Docker image locally                   |
+| **xcat_dev_env.yml**                    | Generates `.env` file aligned with host parameters         |
+| **deploy_xcat_docker_compose.yml**      | Generates docker-compose (Jinja2 template)                 |
+| **create_xcat_containers.yml**          | Creates and starts the xCAT container (active master only) |
 
 ---
 
@@ -85,7 +85,8 @@ roles/xcat_container_lib/tasks/
 | **DRBD**          | Configured and synced between both nodes      |                                            |
 | **Ansible**       | ≥ 2.14                                        | Used for orchestration                     |
 | **xCAT Image**    | 2.17.0 (based on AlmaLinux 8.9)               | Can be customized in `xcat_image` variable |
-| **SSH Access**    | Password-less between both master nodes       |                                            |
+| **SSH Access**    | Password-less between both master nodes 
+                      (Not Compulsory)                             | For Better Experience                      |
 
 ---
 
