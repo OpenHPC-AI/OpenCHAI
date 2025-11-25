@@ -7,12 +7,52 @@
   vars_files:
     - ../../../../group_vars/all.yml
 
+  vars_prompt:
+    - name: "xcat_vip"
+      prompt: "Enter xCAT Virtual IP (VIP)"
+      private: no
+
+    - name: "mysql_port"
+      prompt: "Enter MySQL port (default: 3307)"
+      private: no
+      default: "3307"
+
+    - name: "mysql_admin_pw"
+      prompt: "Enter MySQL admin password (alphanumeric only)"
+      private: yes
+
+    - name: "mysql_root_pw"
+      prompt: "Enter MySQL root password (alphanumeric only)"
+      private: yes
+
+    - name: "domain_name"
+      prompt: "Enter DNS domain name (default: pune.ac.in)"
+      private: no
+      default: "pune.ac.in"
+
+    - name: "dhcp_interface"
+      prompt: "Enter DHCP interface(s), comma separated (default: ens3f0,ens3f0:0)"
+      private: no
+      default: "ens3f0,ens3f0:0"
+
+    - name: "private_ethernet_interface"
+      prompt: "Enter Private Ethernet interface for xCAT (default: ens3f0)"
+      private: no
+      default: "{{ private_interface }}"
+
+    - name: "gateway_ip"
+      prompt: "Enter Gateway/DHCP server IP (default: same as VIP)"
+      private: no
+      default: "{{ xcat_vip_ip }}"
+
+
   vars:
     swarm_label_key: xcat_master
     swarm_label_value: true
     xCAT_reg_path: "{{ hpcsuite_registry_mount_path }}/container_img_reg/xCAT_reg"
-    xcat_version: "xcat_version_tag"
-    xcat_image: "xcat_docker_img"
+    xcat_version: "{{ xcat_version_tag }}"
+    xcat_image: "{{ xcat_docker_img }}"
+    xcat_container_img: "{{ xcat_container_img_tar }}"
 
   roles:
     - role: "{{ roles_parent_path }}/provision_lib/xcat_container_lib"
