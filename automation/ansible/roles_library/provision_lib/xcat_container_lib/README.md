@@ -1,40 +1,31 @@
 ---
+# 🧰 xCAT Container HA Deployment (Docker Swarm + DRBD + Ansible)
+#
+# This playbook deploys xCAT in Docker Swarm with DRBD HA.
+#
+# Architecture:
+#
+#         Docker Swarm Managers:
+#         ┌───────────────┐      ┌───────────────┐
+#         │ headnode01    │      │ headnode02    │
+#         └───────────────┘      └───────────────┘
+#                │                     │
+#                ▼                     ▼
+#           /drbd primary        /drbd standby
+#
+# Shared DRBD Volume:
+#   /xcatdata
+#   /var/log/xcat
+#   /var/lib/mysql
+#
+# -------------------------------------------------------
+# Actual tasks start below
+# -------------------------------------------------------
 
-## 🧰 xCAT Container HA Deployment (Docker Swarm + DRBD + Ansible)
+- name: Example placeholder
+  debug:
+    msg: "YAML is now valid"
 
-### 📘 Overview
-
-This Ansible automation framework deploys **xCAT (Extreme Cloud Administration Toolkit)** in a **high-availability (HA)** setup using **Docker Swarm** and **DRBD**.
-
-It ensures persistent storage, automatic failover, and synchronized configuration between two master nodes.
-
-The setup supports:
-
-* Two Docker Swarm manager nodes (primary & secondary)
-* DRBD-based shared storage for xCAT data
-* Automatic container creation using a dynamically fetched xCAT image
-* Persistent directories for `/xcatdata`, `/var/log/xcat`, and `/var/lib/mysql`
-* Controlled container startup only on the node where `/drbd` is actively mounted
-
----
-
-## 🏗️ Architecture Diagram
-
-
-        ┌─────────────────────────────────────────────┐
-        │               Docker Swarm HA               │
-        │   (Primary Manager)      (Secondary Manager)│
-        │   headnode01                headnode02      │
-        │        │                         │          │
-        │   /drbd mounted             /drbd standby   │
-        └─────────────────────────────────────────────┘
-                 │                      │
-                 ▼                      ▼
-         ┌─────────────────────────────────────────────┐
-         │ Shared DRBD Storage (/drbd volume)          │
-         │  → /xcatdata, /var/log/xcat, /var/lib/mysql │
-         └─────────────────────────────────────────────┘
-```
 
 ---
 
