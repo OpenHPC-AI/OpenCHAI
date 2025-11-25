@@ -9,6 +9,10 @@
   debug:
     msg: "⛔ Skipping xCAT container deployment because /drbd is not mounted on {{ inventory_hostname }}"
 
+
+
+
+
 # -------------------------------------------------------------------
 # Verify both files exist in /drbd/cont_env/
 # -------------------------------------------------------------------
@@ -19,13 +23,17 @@
   loop:
     - /drbd/cont_env/docker-compose.yml
     - /drbd/cont_env/dev.env
+  when: drbd_mount_check.rc == 0
 
 - name: Check that all files exist
   assert:
     that:
-      - file_check.results | map(attribute='stat.exists') | all
+      - file_check.results | map(attribute='stat.exists') | list | min
     fail_msg: "❌ One or more required files are missing in /drbd/cont_env/"
     success_msg: "✅ Both docker-compose.yml and dev.env exist in /drbd/cont_env/"
+  when: drbd_mount_check.rc == 0
+
+
 
 # -------------------------------------------------------------------
 # Copy updated dev.env as .env
@@ -34,17 +42,18 @@
   command: cp -ar /drbd/cont_env/dev.env /drbd/cont_env/.env
   args:
     creates: /drbd/cont_env/.env
-
+  when: drbd_mount_check.rc == 0
 # -------------------------------------------------------------------
 # Restart the xCAT container stack
 # -------------------------------------------------------------------
 - name: Deploy or update the xcat_stack using docker-compose.yml
   command: docker stack deploy -c /drbd/cont_env/docker-compose.yml xcat_stack
   register: deploy_result
-
+  when: drbd_mount_check.rc == 0
 - name: Show deploy output
   debug:
     msg: "{{ deploy_result.stdout_lines }}"
+  when: drbd_mount_check.rc == 0
 
 # -------------------------------------------------------------------
 # Verify xcat_stack services
@@ -60,13 +69,32 @@
     msg: "{{ stack_status.stdout_lines }}"
 
 # -------------------------------------------------------------------
+# Wait until xcat service reaches 1 running task
+# -------------------------------------------------------------------
+- name: Wait for xcat service to reach running state
+  shell: |
+    docker service ps xcat_stack_xcat --format '{{"{{"}}.CurrentState{{"}}"}}'
+  register: xcat_state
+  until: "'Running' in xcat_state.stdout"
+  retries: 30          # = ~5 minutes (30 × 10s)
+  delay: 10
+  changed_when: false
+  failed_when: false
+
+- name: Show xCAT service task state
+  debug:
+    msg: "xCAT task state: {{ xcat_state.stdout }}"
+
+# -------------------------------------------------------------------
 # Verify running containers (Replica 1/1)
 # -------------------------------------------------------------------
 - name: Check running xCAT containers
-  shell: docker ps | grep xcat
+  shell: docker ps --filter 'name=xcat' --format '{{"{{"}}.Names{{"}}"}}'
   register: running_containers
   changed_when: false
+  when: drbd_mount_check.rc == 0
 
 - name: Show container status
   debug:
     msg: "{{ running_containers.stdout_lines }}"
+  when: drbd_mount_check.rc == 0
