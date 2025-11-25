@@ -12,12 +12,12 @@
 
 - name: Check if xCAT image already exists locally
   stat:
-    path: "/hpctool_stack/xcat_repo/cdac_xcat_alma8.9_{{ xcat_version }}"
+    path: "/hpctool_stack/xcat_repo/{{ xcat_container_img }}"
   register: xcat_img_local
 
 - name: Copy xCAT image from mounted registry if available
   copy:
-    src: "{{ hpcsuite_registry_mount_path }}/container_img_reg/xCAT_reg/cdac_xcat_alma8.9_{{ xcat_version }}"
+    src: "{{ hpcsuite_registry_mount_path }}/container_img_reg/xCAT_reg/{{ xcat_container_img }}"
     dest: "/hpctool_stack/xcat_repo/"
     mode: '0644'
   when:
@@ -28,13 +28,13 @@
 
 - name: Check again if image exists after copy attempt
   stat:
-    path: "/hpctool_stack/xcat_repo/cdac_xcat_alma8.9_{{ xcat_version }}"
+    path: "/hpctool_stack/xcat_repo/{{ xcat_container_img }}"
   register: xcat_img_after_copy
 
 - name: Download xCAT image from URL if not present locally or not copied
   get_url:
-    url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/alma8.9/xCAT_reg/{{ xcat_version }}/cdac_xcat_alma8.9_{{ xcat_version }}"
-    dest: "/hpctool_stack/xcat_repo/cdac_xcat_alma8.9_{{ xcat_version }}"
+    url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/alma8.9/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
+    dest: "/hpctool_stack/xcat_repo/{{ xcat_container_img }}"
     mode: '0644'
   when: not xcat_img_after_copy.stat.exists
   retries: 3
@@ -45,17 +45,18 @@
 
 - name: Verify xCAT image file presence after copy/download
   stat:
-    path: "/hpctool_stack/xcat_repo/cdac_xcat_alma8.9_{{ xcat_version }}"
+    path: "/hpctool_stack/xcat_repo/{{ xcat_container_img }}"
   register: xcat_img_check
   failed_when: not xcat_img_check.stat.exists
 
 - name: Load xCAT Docker image
-  command: "docker load < /hpctool_stack/xcat_repo/cdac_xcat_alma8.9_{{ xcat_version }}"
-  args:
-    chdir: /hpctool_stack/xcat_repo
+  command: >
+    docker load --input /hpctool_stack/xcat_repo/{{ xcat_container_img }}
   register: docker_load
   changed_when: "'Loaded image' in docker_load.stdout or 'Loaded image' in docker_load.stderr"
+
 
 - name: Display Docker load status
   debug:
     msg: "xCAT image version {{ xcat_version }} successfully loaded on {{ inventory_hostname }}"
+
