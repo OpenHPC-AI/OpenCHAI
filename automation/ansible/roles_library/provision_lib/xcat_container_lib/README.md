@@ -5,6 +5,7 @@
 ### 📘 Overview
 
 This Ansible automation framework deploys **xCAT (Extreme Cloud Administration Toolkit)** in a **high-availability (HA)** setup using **Docker Swarm** and **DRBD**.
+
 It ensures persistent storage, automatic failover, and synchronized configuration between two master nodes.
 
 The setup supports:
@@ -15,11 +16,11 @@ The setup supports:
 * Persistent directories for `/xcatdata`, `/var/log/xcat`, and `/var/lib/mysql`
 * Controlled container startup only on the node where `/drbd` is actively mounted
 
----
+
 
 ## 🏗️ Architecture Diagram
 
-```
+
         ┌─────────────────────────────────────────────┐
         │               Docker Swarm HA               │
         │   (Primary Manager)      (Secondary Manager)│
