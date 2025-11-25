@@ -24,7 +24,7 @@ The library is organized into multiple functional parent directories, allowing a
 Below is the explanation of each parent directory and what type of playbooks belong there.
 
 ```
-🥾 bootstrap/ – Initial System Preparation
+🥾 **bootstrap/ – Initial System Preparation**
 
 This directory contains playbooks that must run before any installation or configuration.
 
@@ -43,13 +43,14 @@ Preparing DRBD mount
 Installing Docker Engine/Swarm prerequisites
 
 Initial SSH setup
-
+```
 📄 Example:
 bootstrap/
  ├── pre-requisite.yml
  ├── verify_os.yml
  └── setup_basic_packages.yml
-
+```
+```
 🧩 install/ – Software Installation
 
 Contains playbooks to install infrastructure components.
