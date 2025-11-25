@@ -1,20 +1,19 @@
 ---
 # tasks/main.yml - Generate xCAT container environment file
-# Runs only when /drbd exists and auto-detects key server parameters
+# Runs only if /drbd is mounted
 
-- name: "Check if /drbd directory exists"
-  stat:
-    path: /drbd
-  register: drbd_dir
+# -------------------------------------------------------------
+# Detect if /drbd is mounted
+# -------------------------------------------------------------
+- name: Check if /drbd is mounted
+  command: mountpoint -q /drbd
+  register: drbd_mount_check
+  failed_when: false
+  changed_when: false
 
-- name: "Skip execution if /drbd is not mounted"
-  when: not drbd_dir.stat.exists
-  debug:
-    msg: "⛔ Skipping: /drbd not found on this node."
-  tags: skip_when_no_drbd
 
-- name: "Proceed only if /drbd exists"
-  when: drbd_dir.stat.exists
+- name: "Proceed only if /drbd is mounted"
+  when: drbd_mount_check.rc == 0
   block:
 
     - name: "Gather facts to auto-detect network details"
@@ -40,61 +39,18 @@
         ib_net: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.5\\.') | list | first | default('10.5.0.0') | regex_replace('\\.\\d+$', '.0') }}"
         ib_mask: "255.255.0.0"
 
-    - name: "Prompt for essential xCAT environment variables"
-      vars_prompt:
-        - name: "xcat_vip"
-          prompt: "Enter xCAT Virtual IP (VIP)"
-          private: no
-
-        - name: "mysql_port"
-          prompt: "Enter MySQL port (default: 3307)"
-          private: no
-          default: "3307"
-
-        - name: "mysql_admin_pw"
-          prompt: "Enter MySQL admin password (alphanumeric only)"
-          private: yes
-
-        - name: "mysql_root_pw"
-          prompt: "Enter MySQL root password (alphanumeric only)"
-          private: yes
-
-        - name: "domain_name"
-          prompt: "Enter DNS domain name (default: pune.ac.in)"
-          private: no
-          default: "pune.ac.in"
-
-        - name: "dhcp_interface"
-          prompt: "Enter DHCP interface(s), comma separated (default: ens3f0,ens3f0:0)"
-          private: no
-          default: "ens3f0,ens3f0:0"
-
-        - name: "private_ethernet_interface"
-          prompt: "Enter Private Ethernet interface for xCAT (default: ens3f0)"
-          private: no
-          default: "{{ private_interface }}"
-
-        - name: "gateway_ip"
-          prompt: "Enter Gateway/DHCP server IP (default: same as VIP)"
-          private: no
-          default: "{{ xcat_vip }}"
-
-    - name: "Create /hpctool_stack/xcat_repo/ directory if not exists"
-      file:
-        path: /hpctool_stack/xcat_repo/
-        state: directory
-        mode: '0755'
-
-    - name: "Generate .env file for xCAT container"
-      template:
+    - name: "Generate dev.env from template"
+      ansible.builtin.template:
         src: dev.env.j2
-        dest: /hpctool_stack/xcat_repo/dev.env
+        dest: /drbd/cont_env/dev.env
+        owner: root
+        group: root
         mode: '0644'
 
     - name: "Display confirmation"
       debug:
         msg: |
-          ✅ .env file successfully generated at /hpctool_stack/xcat_repo/dev.env
+          ✅ .env file successfully generated at /drbd/cont_env/dev.env
 
           Auto-detected values:
             Timezone: {{ detected_timezone }}
@@ -103,3 +59,4 @@
             Object Name: {{ object_name }}
             IB Net: {{ ib_net }}
             IB Mask: {{ ib_mask }}
+
