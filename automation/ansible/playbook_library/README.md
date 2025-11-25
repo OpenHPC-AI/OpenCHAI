@@ -1,5 +1,6 @@
-📘 Infrastructure Automation Playbook Library
-(Ansible • HPC • Docker Swarm • xCAT • DRBD • Linux Automation)
+**Infrastructure Automation Playbook Library**
+
+***(Ansible • HPC • Docker Swarm • xCAT • DRBD • Linux Automation)***
 
 This repository contains a well-structured playbook library designed for automating HPC and cloud infrastructure components such as:
 
@@ -17,10 +18,12 @@ Storage, services, and application stack deployment
 
 The library is organized into multiple functional parent directories, allowing administrators and developers to quickly locate the correct automation module.
 
-🗂️ Directory Overview
+
+🗂️**Directory Overview**
 
 Below is the explanation of each parent directory and what type of playbooks belong there.
 
+```
 🥾 bootstrap/ – Initial System Preparation
 
 This directory contains playbooks that must run before any installation or configuration.
@@ -284,3 +287,5 @@ ai_stack/
  ├── install_nccl.yml
  ├── run_hpl.yml
  └── deploy_ai_containers.yml
+
+```
