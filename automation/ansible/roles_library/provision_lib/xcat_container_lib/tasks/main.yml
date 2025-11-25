@@ -30,3 +30,4 @@
 - name: Deploy and verify xCAT container stack on active master
   include_tasks: create_xcat_containers.yml
   when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
