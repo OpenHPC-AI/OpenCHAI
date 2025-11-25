@@ -1,4 +1,13 @@
 ---
+# -------------------------------------------------------------
+# Detect if /drbd is mounted
+# -------------------------------------------------------------
+- name: Check if /drbd is mounted
+  command: mountpoint -q /drbd
+  register: drbd_mount_check
+  failed_when: false
+  changed_when: false
+
 # -------------------------------------------------------------------
 # Deploy xCAT docker-compose file with automatic image detection
 # -------------------------------------------------------------------
@@ -31,31 +40,16 @@
 - name: Generate docker-compose.yml with xCAT image
   template:
     src: docker-compose.yml.j2
-    dest: /hpctool_stack/xcat_repo/docker-compose.yml
+    dest: /drbd/cont_env/docker-compose.yml
     mode: '0644'
+  when: drbd_mount_check.rc == 0
 
 - name: Confirm docker-compose.yml creation
   debug:
-    msg: "✅ docker-compose.yml generated successfully at /hpctool_stack/xcat_repo/docker-compose.yml"
+    msg: "✅ docker-compose.yml generated successfully at /drbd/cont_env/docker-compose.yml"
 
-# -------------------------------------------------------------------
-# Copy dev.env and docker-compose.yml into /drbd/cont_env/
-# -------------------------------------------------------------------
-- name: Ensure /drbd/cont_env directory exists
-  file:
-    path: /drbd/cont_env
-    state: directory
-    mode: '0755'
-
-- name: Copy docker-compose.yml and dev.env to /drbd/cont_env/
-  copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    mode: '0644'
-  loop:
-    - { src: '/hpctool_stack/xcat_repo/docker-compose.yml', dest: '/drbd/cont_env/docker-compose.yml' }
-    - { src: '/hpctool_stack/xcat_repo/dev.env', dest: '/drbd/cont_env/dev.env' }
 
 - name: Display final confirmation
   debug:
     msg: "✅ All files copied to /drbd/cont_env successfully."
+
