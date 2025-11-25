@@ -11,6 +11,7 @@ Ansible (for automated provisioning and failover control)
 
 The system ensures reliable xCAT operation, persistent shared storage, and smooth failover between two master nodes.
 
+```
 🏗️ Architecture Overview
 Docker Swarm Manager Nodes
         ┌───────────────┐          ┌───────────────┐
@@ -30,6 +31,7 @@ The following directories are replicated between both nodes via DRBD and mounted
 /var/log/xcat
 /var/lib/mysql
 
+```
 
 This ensures xCAT configuration, logs, and database remain consistent across failovers.
 
