@@ -16,7 +16,7 @@ The setup supports:
 * Persistent directories for `/xcatdata`, `/var/log/xcat`, and `/var/lib/mysql`
 * Controlled container startup only on the node where `/drbd` is actively mounted
 
-
+---
 
 ## 🏗️ Architecture Diagram
 
