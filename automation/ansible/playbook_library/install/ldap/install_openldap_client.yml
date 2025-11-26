@@ -1,0 +1,25 @@
+---
+- name: Configure OpenLDAP Clients
+  hosts: all
+  become: yes
+
+  vars_files:
+    - ../../../group_vars/all.yml
+
+  vars:
+    ldap_client_replace_configs: true     # overwrite client configs from templates
+    ldap_client_use_sssd: false            # false → nss-pam-ldapd installs required packages
+    ldap_firewalld_manage: false          # clients typically don’t open ports
+    ldap_backend: "nss-pam-ldapd"   # or "sssd"
+    # Server/Bind settings
+    ldap_uri: "ldap://{{ primary_ldap_node_ip }}"
+    ldap_uris: ["ldap://{{ secondary_ldap_node_ip }}"]   # can set multiple
+    ldap_base_dn: "{{ ldap_base_dn }}"
+    ldap_tls_reqcert: "never"             # never|allow|demand (set to demand with proper CA)
+    #ldap_cacert_src: "/files/certs/ca.crt"
+    #ldap_cacert_dest: "/etc/openldap/certs/ca.crt"
+
+
+
+  roles:
+    - "{{ roles_parent_path  }}/install_lib/ldap_client"
