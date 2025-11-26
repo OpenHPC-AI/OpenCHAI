@@ -1,0 +1,25 @@
+---
+- name: Install CUDA Toolkit
+  hosts: all
+  become: true
+  vars_files:
+    - ../../../group_vars/all.yml
+
+  vars:
+    roles_parent_path: ../../roles_library
+
+    # Path where your CUDA installers (.run files) are located
+    cuda_installer_dir: "{{ rpm_stack_path }}/cuda_rpms"
+
+    # Only mention the version (e.g. "12.9", "13.0")
+    cuda_version: "{{ nvidia_cuda_version }}"
+
+    # Install location (can be auto-derived if you like)
+    cuda_install_path: "{{ compiler_dir }}/cuda/{{ cuda_version }}"
+
+    # Force reinstall even if already present
+    cuda_force_reinstall: true
+
+
+  roles:
+    - "{{ roles_parent_path }}/install_lib/cuda_installer"
