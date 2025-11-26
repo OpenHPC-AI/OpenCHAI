@@ -10,6 +10,7 @@
     pyxis_version: "0.14.0"
     pyxis_zip_file: "v0.14.0.zip"
     arch: "x86_64"
+    el_label: "{{ Enterprise_Linux_Label }}"
     enroot_base_url: "https://github.com/NVIDIA/enroot/releases/download/v{{ enroot_version }}"
     pyxis_src_dir: "{{ configuration_dir_path }}/enroot_pyxis_config"
     slurm_lib_dir: "/usr/local/lib/slurm"
