@@ -1,0 +1,76 @@
+---
+- name: Ensure CUDA installer directory exists
+  ansible.builtin.file:
+    path: "{{ cuda_installer_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Find CUDA installer file for requested version
+  ansible.builtin.find:
+    paths: "{{ cuda_installer_dir }}"
+    patterns: "cuda_{{ cuda_version }}*.run"
+  register: cuda_found
+
+- name: Download CUDA installer if not found
+  when: cuda_found.matched == 0
+  block:
+    - name: Get download URL for CUDA version
+      ansible.builtin.set_fact:
+        cuda_download_url: "{{ cuda_download_urls[cuda_version] }}"
+
+    - name: Download CUDA installer
+      ansible.builtin.get_url:
+        url: "{{ cuda_download_url }}"
+        dest: "{{ cuda_installer_dir }}/{{ cuda_download_url | basename }}"
+        mode: '0755'
+
+    - name: Set fact for installer file (downloaded)
+      ansible.builtin.set_fact:
+        cuda_installer_file: "{{ cuda_installer_dir }}/{{ cuda_download_url | basename }}"
+
+- name: Set fact for installer file (local match)
+  when: cuda_found.matched > 0
+  ansible.builtin.set_fact:
+    cuda_installer_file: "{{ (cuda_found.files | sort(attribute='path'))[0].path }}"
+
+- name: Check if CUDA install path exists
+  ansible.builtin.stat:
+    path: "{{ cuda_install_path }}"
+  register: cuda_install_path_stat
+
+- name: Install CUDA Toolkit
+  ansible.builtin.command: >
+    sh {{ cuda_installer_file }}
+    --toolkitpath={{ cuda_install_path }}
+    --silent
+  args:
+    chdir: "{{ cuda_installer_dir }}"
+  when: not cuda_install_path_stat.stat.exists or cuda_force_reinstall | bool
+
+
+# Ensure module directory exists
+- name: Ensure CUDA module directory exists
+  ansible.builtin.file:
+    path: "/home/apps/modulefiles/apps/cuda"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# Create CUDA modulefile
+- name: Create CUDA modulefile
+  ansible.builtin.copy:
+    dest: "/home/apps/modulefiles/apps/cuda/{{ cuda_version }}"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      #%Module 1.0
+      #
+      conflict      cuda
+
+      set              DEPS        {{ cuda_install_path }}
+      setenv           CUDA_BIN       $DEPS/bin
+      setenv           CUDA_INCLUDE   $DEPS/include
+      setenv           CUDA_LIB       $DEPS/lib64
+      prepend-path     PATH           $DEPS/bin
