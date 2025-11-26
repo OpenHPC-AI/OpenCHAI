@@ -1,0 +1,13 @@
+---
+cuda_installer_dir: "../../../rpm-stack/cuda_rpms"
+cuda_version: "12.9"
+cuda_install_path: "/usr/local/cuda-{{ cuda_version }}"
+cuda_force_reinstall: false
+
+
+# Explicit CUDA download links by version
+cuda_download_urls:
+  "13.0": "https://developer.download.nvidia.com/compute/cuda/13.0.0/local_installers/cuda_13.0.0_580.65.06_linux.run"
+  "12.9": "https://developer.download.nvidia.com/compute/cuda/12.9.0/local_installers/cuda_12.9.0_575.51.03_linux.run"
+  "12.8": "https://developer.download.nvidia.com/compute/cuda/12.8.0/local_installers/cuda_12.8.0_570.86.10_linux.run"
+  "12.6": "https://developer.download.nvidia.com/compute/cuda/12.6.0/local_installers/cuda_12.6.0_560.28.03_linux.run"
