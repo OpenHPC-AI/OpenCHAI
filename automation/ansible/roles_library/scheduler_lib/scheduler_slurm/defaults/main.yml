@@ -1,0 +1,38 @@
+# Enable/disable reinstallation
+slurm_reinstall: false
+
+# PMIx version to install (directory must exist)
+pmix_version: "pmix-4.2.8"
+
+# Slurm version to install (directory must exist)
+slurm_version: "slurm-25-05-pmix-4-2-8"
+
+# Node role: master / compute / others
+slurm_node_role: "compute"
+
+# Authentication packages
+auth_packages:
+  - munge
+  - munge-devel
+  - munge-libs
+  - libjwt
+  - libjwt-devel
+  - s-nail
+  - mariadb-server
+
+# Directory base path containing rpm dirs
+slurm_rpm_base: "/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9"
+
+
+
+# Define excluded packages per role
+slurm_excluded_packages:
+  master:
+    - slur
+  compute:
+    - slurm-slurmdbd
+    - slurm-slurmctld
+  others:
+    - slurm-slurmdbd
+    - slurm-slurmctld
+    - slurm-slurmd
