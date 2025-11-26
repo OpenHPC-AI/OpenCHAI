@@ -1,0 +1,16 @@
+---
+- name: Unzip Pyxis source to /root
+  unarchive:
+    src: "{{ pyxis_src_dir }}/{{ pyxis_zip_file }}"
+    dest: /root/
+    remote_src: yes
+
+- name: Build Pyxis RPM
+  make:
+    chdir: "/root/pyxis-{{ pyxis_version }}"
+    target: rpm
+
+- name: Install Pyxis RPM
+  shell: rpm -i nvslurm-plugin-pyxis-*.rpm
+  args:
+    chdir: "/root/pyxis-{{ pyxis_version }}"
