@@ -1,22 +1,54 @@
 ---
-- name: Download Docker Compose
+# 1. Check if local docker-compose binary exists
+- name: Check for local docker-compose binary
+  stat:
+    path: "{{ rpm_stack_path }}/container_rpms/docker-compose"
+  register: local_compose
+
+# 2. Install from local binary if available
+- name: Install docker-compose from local binary
+  copy:
+    src: "{{ rpm_stack_path }}/container_rpms/docker-compose"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+  when: local_compose.stat.exists
+
+# 3. Download docker-compose from specific version (GitHub)
+- name: Download docker-compose from versioned URL
   get_url:
     url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
     dest: /usr/local/bin/docker-compose
     mode: '0755'
+  when: not local_compose.stat.exists
+  register: compose_download
+  ignore_errors: yes
 
+# 4. Fallback: Download docker-compose from latest release URL
+- name: Fallback - Download latest docker-compose binary
+  shell: |
+    curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) \
+    -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+  when:
+    - not local_compose.stat.exists
+    - compose_download is failed
+
+# 5. Ensure docker-compose permissions
 - name: Ensure docker-compose is executable
   file:
     path: /usr/local/bin/docker-compose
     mode: '0755'
     state: file
 
+# 6. Verify docker-compose installation
 - name: Verify docker-compose installation
   command: docker-compose version
   register: compose_version
   changed_when: false
   failed_when: compose_version.rc != 0
 
+# 7. Print docker-compose version
 - name: Show docker-compose version
   debug:
     msg: "{{ compose_version.stdout }}"
+
