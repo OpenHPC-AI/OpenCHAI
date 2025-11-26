@@ -1,0 +1,47 @@
+---
+- name: Ensure Slurm lib directory exists
+  file:
+    path: "{{ slurm_lib_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy Pyxis plugin to slurm lib
+  copy:
+    src: "/root/pyxis-{{ pyxis_version }}/spank_pyxis.so"
+    dest: "{{ slurm_lib_dir }}/spank_pyxis.so"
+    remote_src: yes
+    mode: "0644"
+
+- name: Ensure plugstack.conf has pyxis include
+  lineinfile:
+    path: "{{ slurm_plugstack_conf }}"
+    line: "include {{ slurm_plugstack_conf_d }}/pyxis.conf"
+    create: yes
+
+- name: Ensure plugstack.conf.d directory exists
+  file:
+    path: "{{ slurm_plugstack_conf_d }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure pyxis.conf contains spank plugin
+  lineinfile:
+    path: "{{ slurm_plugstack_conf_d }}/pyxis.conf"
+    line: "required {{ slurm_lib_dir }}/spank_pyxis.so"
+    create: yes
+
+- name: Disable hostname mount in enroot config (if exists)
+  replace:
+    path: "/etc/enroot/mounts.d/20-config.fstab"
+    regexp: '^(\/etc\/hostname.*)$'
+    replace: '# \1'
+  ignore_errors: yes
+
+- name: Add NVIDIA_VISIBLE_DEVICES to root bashrc
+  lineinfile:
+    path: /root/.bashrc
+    line: "export NVIDIA_VISIBLE_DEVICES=void"
