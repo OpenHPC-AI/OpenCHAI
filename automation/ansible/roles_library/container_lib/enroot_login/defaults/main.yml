@@ -1,0 +1,19 @@
+---
+# Defaults for Enroot + Pyxis installation
+enroot_version: "3.4.1"
+arch: "{{ ansible_architecture }}"
+os_version: "alma8.9"
+pyxis_version: "0.14.0"
+pyxis_zip_file: "v0.14.0.zip"
+enroot_packages:
+  - epel-release
+  - jq
+  - parallel
+  - zstd
+
+enroot_base_url: "https://github.com/NVIDIA/enroot/releases/download/v{{ enroot_version }}"
+
+pyxis_src_dir: "/OpenCHAI/hpcsuite_registry/hostmachine_reg/{{ os_version }}/mount/enroot_pyxis_config"
+slurm_lib_dir: "/usr/local/lib/slurm"
+slurm_plugstack_conf: "/etc/slurm/plugstack.conf"
+slurm_plugstack_conf_d: "/etc/slurm/plugstack.conf.d"
