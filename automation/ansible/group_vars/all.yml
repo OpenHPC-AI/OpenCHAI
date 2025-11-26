@@ -89,7 +89,7 @@ xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 ######################## OpenLDAP Tool variable ##########################
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
 secondary_ldap_node_ip: "{{ secondary_master_node_ip }}"
-
+ldap_base_dn: "dc=nsm,dc=in"
 ####################### Application Module Variable #######################
 application_base_dir: "/home/apps"
 compiler_dir: "{{ application_base_dir }}/Compiler"
