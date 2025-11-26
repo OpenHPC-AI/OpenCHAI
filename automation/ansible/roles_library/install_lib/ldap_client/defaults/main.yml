@@ -1,0 +1,31 @@
+# Choose client stack
+ldap_client_use_sssd: true            # false → nss-pam-ldapd
+
+# Server/Bind settings
+ldap_uri: "ldap://ldap01.example.com"
+ldap_uris: ["ldap://ldap01.example.com"]   # can set multiple
+ldap_base_dn: "dc=example,dc=com"
+ldap_bind_dn: ""
+ldap_bind_pw: ""
+ldap_tls_reqcert: "allow"             # never|allow|demand (set to demand with proper CA)
+ldap_cacert_src: "/files/certs/ca.crt"
+ldap_cacert_dest: "/etc/openldap/certs/ca.crt"
+
+# Behavior
+ldap_client_replace_configs: true     # copy templates; if false just ensure files exist
+ldap_firewalld_manage: false          # typically off
+
+# Packages per mode
+sssd_packages:
+  - sssd
+  - sssd-tools
+  - sssd-ldap
+  - oddjob-mkhomedir
+  - authselect
+  - openldap-clients
+
+nslcd_packages:
+  - nss-pam-ldapd
+  - oddjob-mkhomedir
+  - authselect
+  - openldap-clients
