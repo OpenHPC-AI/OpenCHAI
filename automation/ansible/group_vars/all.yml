@@ -87,6 +87,13 @@ xcat_container_img_tar: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
 xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 
 ####################### Application Module Variable #######################
+application_base_dir: "/home/apps"
+compiler_dir: "{{ application_base_dir }}/Compiler"
+
 # lmod
-modulepath_dir: "/home/apps/modulefiles/apps"
+modulepath_dir: "{{ application_base_dir }}/modulefiles/apps"
+
+# nvidia cuda version
+nvidia_cuda_version: "13.0"
+
 
