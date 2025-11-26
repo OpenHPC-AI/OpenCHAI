@@ -1,0 +1,14 @@
+uid nslcd
+#gid nslcd
+
+uri {{ (ldap_uris | length > 0) | ternary(ldap_uris | join(' '), ldap_uri) }}
+base {{ ldap_base_dn }}
+{% if ldap_bind_dn and ldap_bind_pw -%}
+binddn {{ ldap_bind_dn }}
+bindpw {{ ldap_bind_pw }}
+{% endif -%}
+ssl {{ 'start_tls' if ldap_tls_reqcert in ['allow','demand'] else 'off' }}
+tls_reqcert {{ ldap_tls_reqcert }}
+{% if ldap_tls_reqcert in ['allow','demand'] -%}
+tls_cacertfile {{ ldap_cacert_dest }}
+{% endif -%}
