@@ -1,0 +1,20 @@
+---
+- name: Install and configure Slurm
+  hosts: all
+  become: true
+
+  vars_files:
+    - ../../../group_vars/all.yml
+
+  vars:
+    slurm_reinstall: false
+    slurm_replace_configs: true
+    pmix_version: "pmix-4.2.8"
+    slurm_version: "slurm-25.05.1"
+    slurm_node_role: "compute" # can be "master", "compute", or "db"
+    slurm_rpm_base: "{{ rpm_stack_path  }}/slurm_rpms/el8/"
+    slurm_generate_jwt_key: true
+    munge_generate_key: true
+
+  roles:
+    - "{{ roles_parent_path }}/scheduler_lib/scheduler_slurm"
