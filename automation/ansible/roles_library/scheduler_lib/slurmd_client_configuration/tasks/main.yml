@@ -1,0 +1,22 @@
+---
+- name: Backup existing slurm config if present
+  command: mv "{{ slurm_conf_default_src }}" "{{ slurm_conf_default_dest }}_{{ ansible_date_time.date }}_{{ ansible_date_time.time }}"
+  args:
+    removes: "{{ slurm_conf_dest }}"
+  when: ansible_facts['distribution'] is defined and ansible_facts['distribution'] != ""
+
+- name: Copy slurm configuration from source
+  command: cp -ar "{{ slurm_conf_src }}" "{{ slurm_conf_dest }}"
+  notify: Restart slurmd
+
+- name: Ensure munge service is enabled and started
+  systemd:
+    name: munge
+    enabled: yes
+    state: started
+
+- name: Ensure slurmd service is enabled and started
+  systemd:
+    name: slurmd
+    enabled: yes
+    state: started
