@@ -1,0 +1,5 @@
+---
+slurm_conf_src: "{{ configuration_dir_path }}/slurm_config"
+slurm_conf_dest: "/etc/slurm/"
+slurm_conf_default_src: "/etc/slurm"
+slurm_conf_default_dest: "/etc/slurm.bk"
