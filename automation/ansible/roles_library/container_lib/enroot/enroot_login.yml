@@ -1,0 +1,22 @@
+---
+- name: Enroot and Pyxis Setup on Login Node
+  hosts: all
+  become: true
+  vars_files:
+    - ../../../group_vars/all.yml
+
+  vars:
+    enroot_version: "3.4.1"
+    pyxis_version: "0.14.0"
+    pyxis_zip_file: "v0.14.0.zip"
+    arch: "x86_64"
+    enroot_base_url: "https://github.com/NVIDIA/enroot/releases/download/v{{ enroot_version }}"
+    pyxis_src_dir: "{{ configuration_dir_path }}/enroot_pyxis_config"
+    slurm_lib_dir: "/usr/local/lib/slurm"
+    slurm_plugstack_conf: "/etc/slurm/plugstack.conf"
+    slurm_plugstack_conf_d: "/etc/slurm/plugstack.conf.d"
+
+
+
+  roles:
+    - "{{ roles_parent_path }}/container_lib/enroot_login"
