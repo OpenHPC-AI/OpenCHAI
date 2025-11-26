@@ -1,0 +1,125 @@
+- name: Choose package list
+  ansible.builtin.set_fact:
+    _client_pkgs: "{{ sssd_packages if ldap_client_use_sssd | bool else nslcd_packages }}"
+
+- name: Install client packages
+  ansible.builtin.yum:
+    name: "{{ _client_pkgs }}"
+    state: present
+
+# CA cert if desired
+- name: Ensure /etc/openldap/certs exists
+  ansible.builtin.file:
+    path: /etc/openldap/certs
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy CA certificate (optional)
+  ansible.builtin.copy:
+    src: "{{ ldap_cacert_src }}"
+    dest: "{{ ldap_cacert_dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ldap_tls_reqcert in ['allow','demand']
+
+# /etc/openldap/ldap.conf (client)
+- name: Deploy /etc/openldap/ldap.conf
+  ansible.builtin.template:
+    src: ldap.conf.j2
+    dest: /etc/openldap/ldap.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: ldap_client_replace_configs | bool
+
+# SSSD path
+- name: Deploy /etc/sssd/sssd.conf
+  ansible.builtin.template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: root
+    mode: "0600"
+  when: ldap_client_use_sssd | bool and ldap_client_replace_configs | bool
+
+# nslcd path
+- name: Deploy /etc/nslcd.conf
+  ansible.builtin.template:
+    src: nslcd.conf.j2
+    dest: /etc/nslcd.conf
+    owner: root
+    group: root
+    mode: "0600"
+  when: (not ldap_client_use_sssd | bool) and ldap_client_replace_configs | bool
+
+# authselect (RHEL 8/9)
+- name: Configure authselect for SSSD (+mkhomedir)
+  ansible.builtin.command: >
+    authselect select sssd with-mkhomedir --force
+  when: ldap_client_use_sssd | bool
+  changed_when: "'enabled' in authselect_out.stdout or authselect_out.rc == 0"
+  register: authselect_out
+
+
+- name: Configure PAM for nss-pam-ldapd (system-auth)
+  ansible.builtin.replace:
+    path: /etc/pam.d/system-auth
+    regexp: 'pam_sss.so'
+    replace: 'pam_ldap.so'
+  when: ldap_backend == "nss-pam-ldapd"
+
+- name: Configure PAM for nss-pam-ldapd (password-auth)
+  ansible.builtin.replace:
+    path: /etc/pam.d/password-auth
+    regexp: 'pam_sss.so'
+    replace: 'pam_ldap.so'
+  when: ldap_backend == "nss-pam-ldapd"
+
+- name: Configure nsswitch.conf for LDAP (passwd, group, shadow)
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^{{ item.key }}:'
+    line: "{{ item.key }}:     files ldap systemd"
+    state: present
+  loop:
+    - { key: "passwd" }
+    - { key: "group" }
+    - { key: "shadow" }
+  when: ldap_backend == "nss-pam-ldapd"
+
+- name: Configure nsswitch.conf for LDAP (netgroup, automount, services)
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^{{ item.key }}:'
+    line: "{{ item.key }}:     ldap files"
+    state: present
+  loop:
+    - { key: "netgroup" }
+    - { key: "automount" }
+    - { key: "services" }
+  when: ldap_backend == "nss-pam-ldapd"
+
+
+# Ensure services running
+- name: Enable/Start SSSD
+  ansible.builtin.service:
+    name: sssd
+    state: started
+    enabled: true
+  when: ldap_backend == "sssd"
+
+- name: Enable/Start nslcd
+  ansible.builtin.service:
+    name: nslcd
+    state: started
+    enabled: true
+  when: ldap_backend == "nss-pam-ldapd"
+
+- name: Enable/Start oddjobd
+  ansible.builtin.service:
+    name: oddjobd
+    state: started
+    enabled: true
