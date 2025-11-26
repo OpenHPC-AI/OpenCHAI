@@ -1,0 +1,12 @@
+---
+# Step 1: Install Enroot RPM packages
+- name: Install Enroot RPM packages
+  include_tasks: enroot_install.yml
+
+# Step 2: Install Pyxis
+- name: Install Pyxis RPM packages
+  include_tasks: pyxis_install.yml
+
+# Step 3: Configure Pyxis with Slurm so Enroot jobs can be submitted through Slurm
+- name: Configure Pyxis integration with Slurm for Enroot
+  include_tasks: pyxis_slurm_config.yml
