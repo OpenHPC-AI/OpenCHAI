@@ -1,0 +1,48 @@
+# tasks/install.yml
+# Install PMIx
+- name: Find PMIx RPMs
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}/{{ pmix_version }}"
+    patterns: "*.rpm"
+  register: pmix_rpms
+
+- name: Install PMIx RPMs
+  ansible.builtin.yum:
+    name: "{{ pmix_rpms.files | map(attribute='path') | list }}"
+    state: present
+    disable_gpg_check: true
+  tags: pmix
+
+# Find all Slurm RPMs
+- name: Gather all RPMs from slurm_version dir
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}/{{ slurm_version }}"
+    patterns: "*.rpm"
+  register: slurm_rpm_files
+
+- name: Build package install list based on node role
+  ansible.builtin.set_fact:
+    slurm_install_list: >-
+      {{ slurm_rpm_files.files
+         | map(attribute='path')
+         | reject('search', (slurm_excluded_packages[slurm_node_role] | join('|')))
+         | list }}
+
+- name: Debug final install list
+  ansible.builtin.debug:
+    var: slurm_install_list
+
+# 🔹 Remove excluded packages only if reinstall requested
+- name: Remove excluded packages for this role
+  ansible.builtin.yum:
+    name: "{{ slurm_excluded_packages[slurm_node_role] }}"
+    state: absent
+  when:
+    - slurm_reinstall | default(false) | bool
+    - slurm_excluded_packages[slurm_node_role] | length > 0
+
+- name: Install allowed Slurm packages
+  ansible.builtin.yum:
+    name: "{{ slurm_install_list }}"
+    state: present
+    disable_gpg_check: true
