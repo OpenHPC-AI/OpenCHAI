@@ -1,6 +1,7 @@
 ####################### OpenCHAI Manager Tool Variable #####################
 base_dir: /OpenCHAI
 os_version: alma8.9
+Enterprise_Linux_Label: el8
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
 rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}"
 configuration_dir_path: "{{ rpm_stack_path }}/mount"
