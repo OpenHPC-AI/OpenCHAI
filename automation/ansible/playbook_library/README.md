@@ -1,6 +1,6 @@
 # 📘 Infrastructure Automation Playbook Library
 
-### *Ansible • HPC • Docker Swarm • xCAT • DRBD • Linux Automation*
+### *Ansible • HPC • Docker Swarm • xCAT • DRBD • Linux Automation • Network • Slurm • K8S • Storage*
 
 This repository contains a well-structured **Ansible playbook library** for automating High-Performance Computing (HPC) and cloud infrastructure components, including:
 
