@@ -1,0 +1,69 @@
+---
+# Step 1: Install required dependency packages
+- name: Install required base packages for Enroot
+  yum:
+    name: "{{ enroot_packages }}"
+    state: present
+
+# Step 2: Check if local Enroot RPMs exist
+- name: Check for local Enroot hardened package
+  stat:
+    path: "{{ rpm_stack_path }}/enroot_rpms/enroot-hardened-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+  register: local_hardened
+
+- name: Check for local Enroot hardened+caps package
+  stat:
+    path: "{{ rpm_stack_path }}/enroot_rpms/enroot-hardened+caps-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+  register: local_hardened_caps
+
+# Step 3: Remove any existing Enroot installations
+- name: Remove existing Enroot RPMs
+  yum:
+    name:
+      - enroot-hardened
+      - enroot-hardened+caps
+    state: absent
+
+# Step 4: Install Enroot hardened from local RPM (if exists)
+- name: Install Enroot hardened from local RPM
+  yum:
+    name: "{{ rpm_stack_path }}/enroot_rpms/enroot-hardened-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+    state: present
+    disable_gpg_check: yes
+  when: local_hardened.stat.exists
+
+# Step 5: Install Enroot hardened from remote if local not available
+- name: Download Enroot hardened package (remote)
+  get_url:
+    url: "{{ enroot_base_url }}/enroot-hardened-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+    dest: "/tmp/enroot-hardened.rpm"
+  when: not local_hardened.stat.exists
+
+- name: Install Enroot hardened from downloaded RPM
+  yum:
+    name: "/tmp/enroot-hardened.rpm"
+    state: present
+    disable_gpg_check: yes
+  when: not local_hardened.stat.exists
+
+# Step 6: Install Enroot hardened+caps from local RPM (if exists)
+- name: Install Enroot hardened+caps from local RPM
+  yum:
+    name: "{{ rpm_stack_path }}/enroot_rpms/enroot-hardened+caps-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+    state: present
+    disable_gpg_check: yes
+  when: local_hardened_caps.stat.exists
+
+# Step 7: Install Enroot hardened+caps from remote if local not available
+- name: Download Enroot hardened+caps package (remote)
+  get_url:
+    url: "{{ enroot_base_url }}/enroot-hardened+caps-{{ enroot_version }}-1.{{ enterprise_linux_label }}.{{ arch }}.rpm"
+    dest: "/tmp/enroot-hardened-caps.rpm"
+  when: not local_hardened_caps.stat.exists
+
+- name: Install Enroot hardened+caps from downloaded RPM
+  yum:
+    name: "/tmp/enroot-hardened-caps.rpm"
+    state: present
+    disable_gpg_check: yes
+  when: not local_hardened_caps.stat.exists
