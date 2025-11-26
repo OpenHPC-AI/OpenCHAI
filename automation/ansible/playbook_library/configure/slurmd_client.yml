@@ -1,0 +1,14 @@
+---
+- name: Configure Slurm login nodes
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    slurm_conf_src: "{{ configuration_dir_path }}/slurm_config"
+    slurm_conf_dest: "/etc/slurm"
+    slurm_conf_default_src: "/etc/slurm"
+    slurm_conf_default_dest: "/etc/slurm.bk"
+    
+  roles:
+    - "{{ roles_parent_path }}/scheduler_lib/slurmd_client_configuration"
