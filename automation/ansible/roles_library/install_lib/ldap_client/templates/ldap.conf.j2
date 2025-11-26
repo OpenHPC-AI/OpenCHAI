@@ -1,0 +1,6 @@
+URI {{ (ldap_uris | length > 0) | ternary(ldap_uris | join(' '), ldap_uri) }}
+BASE {{ ldap_base_dn }}
+TLS_REQCERT {{ ldap_tls_reqcert }}
+{% if ldap_tls_reqcert in ['allow','demand'] -%}
+TLS_CACERT {{ ldap_cacert_dest }}
+{% endif -%}
