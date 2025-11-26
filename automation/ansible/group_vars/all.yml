@@ -3,7 +3,7 @@ base_dir: /OpenCHAI
 os_version: alma8.9
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
 rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}"
-configuration_dir_path: "{{ hpcsuite_registry_mount_path }}/rpm-stack/mount"
+configuration_dir_path: "{{ rpm_stack_path }}/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
