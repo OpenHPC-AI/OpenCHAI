@@ -1,0 +1,35 @@
+[sssd]
+services = nss, pam
+config_file_version = 2
+domains = default
+
+[domain/default]
+id_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+
+ldap_uri = {{ (ldap_uris | length > 0) | ternary(ldap_uris | join(','), ldap_uri) }}
+ldap_search_base = {{ ldap_base_dn }}
+
+#{% if ldap_bind_dn and ldap_bind_pw %} optional bind:
+ldap_default_bind_dn = {{ ldap_bind_dn }}
+ldap_default_authtok_type = password
+ldap_default_authtok = {{ ldap_bind_pw }}
+#{% endif %}
+
+cache_credentials = True
+enumerate = False
+ldap_id_use_start_tls = {{ ('true' if ldap_tls_reqcert in ['allow','demand'] else 'false') }}
+ldap_tls_reqcert = {{ ldap_tls_reqcert }}
+{% if ldap_tls_reqcert in ['allow','demand'] -%}
+ldap_tls_cacert = {{ ldap_cacert_dest }}
+{% endif -%}
+
+access_provider = simple
+simple_allow_groups =
+
+[pam]
+offline_credentials_expiration = 0
+
+[nss]
+homedir_substring = /home
