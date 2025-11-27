@@ -1,0 +1,10 @@
+---
+# ---------------- CLIENT MODE ----------------
+- name: Configure rsyslog client
+  ansible.builtin.template:
+    src: rsyslog_client.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: '0644'
+    backup: yes
+  when: rsyslog_mode == "client"
+  notify: Restart rsyslog
