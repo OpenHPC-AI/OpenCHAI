@@ -1,0 +1,10 @@
+---
+- name: Monitoring baseline ALL
+  hosts: all
+  become: yes
+  vars_files:
+    - ../../group_vars/all.yml
+
+
+  roles:
+    - "{{ roles_parent_path }}/monitoring_lib/mcelog_configure"
