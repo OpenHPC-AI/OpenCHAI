@@ -1,0 +1,25 @@
+# /etc/rsyslog.conf - server configuration
+
+module(load="imuxsock")    # system logging
+module(load="imklog")      # kernel logging
+module(load="imudp")       # UDP syslog reception
+input(type="imudp" port="514")
+module(load="imtcp")       # TCP syslog reception
+input(type="imtcp" port="514")
+
+$template RemoteLogs,"/var/log/remotelogs/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?RemoteLogs
+& ~
+
+# Preserve FQDN
+$PreserveFQDN on
+
+# Include config files
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+# Standard local logging (still keep system logs locally too)
+*.info;mail.none;authpriv.none;cron.none    /var/log/messages
+authpriv.*                                  /var/log/secure
+mail.*                                      -/var/log/maillog
+cron.*                                      /var/log/cron
+local7.*                                    /var/log/boot.log
