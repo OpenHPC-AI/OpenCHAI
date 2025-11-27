@@ -1,0 +1,34 @@
+---
+# ---------------- SERVER MODE ----------------
+- name: Configure rsyslog server
+  ansible.builtin.template:
+    src: rsyslog_server.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: '0644'
+    backup: yes
+  when: rsyslog_mode == "server"
+  notify: Restart rsyslog
+
+- name: Configure rsyslog server rules
+  ansible.builtin.template:
+    src: 01-remote-logging.conf.j2
+    dest: /etc/rsyslog.d/01-remote-logging.conf
+    mode: '0644'
+  when: rsyslog_mode == "server"
+  notify: Restart rsyslog
+
+- name: Create remote log directory
+  ansible.builtin.file:
+    path: /var/log/remotelogs
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: rsyslog_mode == "server"
+
+- name: Setup logrotate for remote logs
+  ansible.builtin.template:
+    src: remotelogs_logrotate.j2
+    dest: /etc/logrotate.d/remotelogs
+    mode: '0644'
+  when: rsyslog_mode == "server"
