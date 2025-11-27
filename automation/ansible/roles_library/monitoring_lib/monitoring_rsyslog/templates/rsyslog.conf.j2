@@ -1,0 +1,18 @@
+# /etc/rsyslog.conf - customized
+
+module(load="imuxsock")    # system logging
+module(load="imklog")      # kernel logging
+module(load="imudp")       # UDP syslog reception
+input(type="imudp" port="514")
+module(load="imtcp")       # TCP syslog reception
+input(type="imtcp" port="514")
+
+$ModLoad immark
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+$RepeatedMsgReduction on
+
+# Preserve FQDN
+$PreserveFQDN on
+
+# Include config files
+$IncludeConfig /etc/rsyslog.d/*.conf
