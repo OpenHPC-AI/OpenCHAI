@@ -1,0 +1,34 @@
+- name: Install mcelog package
+  ansible.builtin.package:
+    name: mcelog
+    state: present
+
+- name: Ensure /var/log directory exists
+  ansible.builtin.file:
+    path: "{{ mcelog_log_file | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: Deploy mcelog configuration file
+  ansible.builtin.copy:
+    src: mcelog.conf
+    dest: /etc/mcelog.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy custom systemd service to run mcelog in foreground
+  ansible.builtin.template:
+    src: mcelog.service.j2
+    dest: /etc/systemd/system/mcelog.service
+    mode: '0644'
+
+- name: Reload systemd to apply changes
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start mcelog service
+  ansible.builtin.systemd:
+    name: mcelog.service
+    enabled: yes
+    state: started
