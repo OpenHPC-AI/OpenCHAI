@@ -1,0 +1,15 @@
+# /etc/rsyslog.conf - client configuration
+
+module(load="imuxsock")    # local system logging
+module(load="imjournal")   # journald support
+module(load="imklog")      # kernel logs
+
+# Forward all logs to remote rsyslog server (TCP reliable)
+*.* @@{{ rsyslog_server_ip }}:514
+
+# Keep local copies as well
+*.info;mail.none;authpriv.none;cron.none    /var/log/messages
+authpriv.*                                  /var/log/secure
+mail.*                                      -/var/log/maillog
+cron.*                                      /var/log/cron
+local7.*                                    /var/log/boot.log
