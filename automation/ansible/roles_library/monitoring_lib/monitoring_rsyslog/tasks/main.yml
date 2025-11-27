@@ -1,0 +1,19 @@
+---
+- name: Install rsyslog if not present
+  ansible.builtin.yum:
+    name: rsyslog
+    state: present
+
+- name: Enable and start rsyslog service
+  ansible.builtin.service:
+    name: rsyslog
+    enabled: true
+    state: started
+
+# ---------------- SERVER MODE ----------------
+- name: Configuring rsyslog server
+  include_tasks: server_mode.yml
+
+# ---------------- CLIENT MODE ----------------
+- name: Configuring rsyslog client
+  include_tasks: client_mode.yml
