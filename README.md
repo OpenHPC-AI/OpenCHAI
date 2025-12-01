@@ -71,13 +71,13 @@ ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9.tar.xz
 
 Configure the Ansible inventory on the head node to enable communication with all service nodes in the HPC-AI cluster, including:
 
-Master nodes
+-Master nodes
 
-Management nodes
+-Management nodes
 
-AI/Kubernetes nodes
+-AI/Kubernetes nodes
 
-Login nodes
+-Login nodes
 
 This setup allows the head node to orchestrate tasks, deploy configurations, and manage the cluster using Ansible.
 ```python
