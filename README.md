@@ -66,6 +66,20 @@ Make sure the **rpm-stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostma
 ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9.tar.xz
 ```
 
+
+**Ansible Inventory Setup**
+
+Configure the Ansible inventory on the head node to enable communication with all service nodes in the HPC-AI cluster, including:
+
+Master nodes
+
+Management nodes
+
+AI/Kubernetes nodes
+
+Login nodes
+
+This setup allows the head node to orchestrate tasks, deploy configurations, and manage the cluster using Ansible.
 ```python
 
 #Update the inventory file with all service node details for your cluster, based on your environment configuration.
