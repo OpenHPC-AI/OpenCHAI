@@ -86,10 +86,16 @@ This setup allows the head node to orchestrate tasks, deploy configurations, and
 
 $ vim chai_setup/inventory_def.txt
 
+```
+
+**Proceed to CHAI-Manager Head Node Setup**
+
+After completing all the above configurations, you can now begin the setup of the CHAI-Manager Head Node. This step initializes the primary control node responsible for managing the HPC-AI cluster services, deployments, and orchestration workflows.
+
+```bash
 #Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
 
 $ bash ./openchai_configure.sh
-
 ```
 
 
