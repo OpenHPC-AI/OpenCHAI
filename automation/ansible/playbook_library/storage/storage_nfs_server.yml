@@ -11,7 +11,7 @@
     nfs_server_install_if_missing: true
     nfs_export_paths:
       - "{{ rpm_stack_path }}/"
-    nfs_export_options: rw,sync,no_root_squash
+    nfs_export_options: ro,sync,no_root_squash
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_nfs_server"
