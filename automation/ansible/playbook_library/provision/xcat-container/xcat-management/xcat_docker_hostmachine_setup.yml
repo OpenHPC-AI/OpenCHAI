@@ -1,0 +1,19 @@
+---
+- name: Configure xCAT on docker host machine
+  hosts: all
+  become: yes
+  gather_facts: yes   # <--- must gather facts for ansible_architecture
+
+  vars_files:
+    - ../../../../group_vars/all.yml
+
+  vars:
+    xcat_version: "{{ xcat_version_tag }}"
+    xcat_baseos: "{{ rhel_linux_label }}"
+    xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+    # Correct Jinja2 conditional instead of Bash
+    xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
+    os_architecture: "{{ os_arch }}"
+
+  roles:
+    - role: "{{ roles_parent_path }}/provision_lib/xcat_hostmachine_setup"
