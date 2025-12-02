@@ -104,6 +104,9 @@ After completing all the above configurations, you can now begin the setup of th
 $ bash ./openchai_configure.sh
 ```
 
-
-
+**Post-Setup Verification of Manager Tool Configuration**
+- Inventory Setup
+```bash
+ansible-inventory --list
+```
 
