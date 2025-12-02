@@ -3,7 +3,8 @@ The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automa
 
 # OpenCHAI Flow Diagram for HPC-AI Cluster Provisioning, Deployment & Configuration
 
-![OpenCHAI Flow Diagram](https://user-images.githubusercontent.com/238632070/521157180-628349db-1770-4f7e-a34c-dda62829d8d5.png)
+
+![Flow Diagram](images/HPC-AI Cluster Provisioning, Deployment & Configuration Architecture.png)
 
 
 # OpenCHAI Deployment and Quickstart Guide
