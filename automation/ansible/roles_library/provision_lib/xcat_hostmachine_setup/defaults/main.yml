@@ -1,0 +1,4 @@
+---
+xcat_version: "latest"
+xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+xcat_baseos: "rh8"
