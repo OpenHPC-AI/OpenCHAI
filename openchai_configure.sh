@@ -386,6 +386,7 @@ ALL_YML="$BASE_DIR/automation/ansible/group_vars/all.yml"
 INVENTORY_SCRIPT="$BASE_DIR/automation/ansible/inventory/inventory.sh"
 INVENTORY_DEF="$BASE_DIR/chai_setup/inventory_def.txt"
 INVENTORY_TARGET="$BASE_DIR/automation/ansible/inventory/inventory_def.txt"
+INVENTORY_LINE="inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh"
 
 echo ""
 info "Inventory file check"
@@ -436,15 +437,21 @@ fi
 # 4) Update system-wide /etc/ansible/ansible.cfg
 if [[ -f "$SYSTEM_ANSIBLE_CFG" ]]; then
     info "Checking system Ansible configuration: $SYSTEM_ANSIBLE_CFG"
-    if grep -q "^inventory" "$SYSTEM_ANSIBLE_CFG" 2>/dev/null || true; then
-        sed -i "s|^[[:space:]]*inventory[[:space:]]*=.*|inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh|" "$SYSTEM_ANSIBLE_CFG" || warn "Could not update inventory line in $SYSTEM_ANSIBLE_CFG"
+
+    # Check if inventory line exists
+    if grep -q "^[[:space:]]*inventory[[:space:]]*=" "$SYSTEM_ANSIBLE_CFG"; then
+        sed -i "s|^[[:space:]]*inventory[[:space:]]*=.*|$INVENTORY_LINE|" "$SYSTEM_ANSIBLE_CFG" \
+            || warn "Could not update inventory line in $SYSTEM_ANSIBLE_CFG"
     else
-        if grep -q "^\[defaults\]" "$SYSTEM_ANSIBLE_CFG" 2>/dev/null || true; then
-            sed -i "/^\[defaults\]/a inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh" "$SYSTEM_ANSIBLE_CFG" || warn "Could not append inventory to $SYSTEM_ANSIBLE_CFG"
+        # Check if [defaults] section exists
+        if grep -q "^\[defaults\]" "$SYSTEM_ANSIBLE_CFG"; then
+            sed -i "/^\[defaults\]/a $INVENTORY_LINE" "$SYSTEM_ANSIBLE_CFG" \
+                || warn "Could not append inventory to $SYSTEM_ANSIBLE_CFG"
         else
+            # Create [defaults] section with inventory line
             {
                 echo "[defaults]"
-                echo "inventory = $BASE_DIR/automation/ansible/inventory/inventory.sh"
+                echo "$INVENTORY_LINE"
             } >> "$SYSTEM_ANSIBLE_CFG" || warn "Could not create [defaults] in $SYSTEM_ANSIBLE_CFG"
         fi
     fi
