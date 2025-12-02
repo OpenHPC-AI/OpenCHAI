@@ -105,7 +105,7 @@ $ bash ./openchai_configure.sh
 ```
 
 **Post-Setup Verification of Manager Tool Configuration**
-- Inventory Setup
+- **Inventory Setup**
 ```bash
 ansible-inventory --list
 ```
