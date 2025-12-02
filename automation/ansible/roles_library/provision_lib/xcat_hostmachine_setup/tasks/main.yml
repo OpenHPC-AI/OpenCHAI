@@ -1,0 +1,105 @@
+---
+# tasks/main.yml - xCAT Local Host Machine Setup
+
+# Expected variables (define in defaults/main.yml or inventory):
+# xcat_version: "latest"
+# xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+# xcat_baseos: "rh8"
+# xcat_vip_ip: "10.x.x.x"
+
+###############################################################
+# 1. Install prerequisite packages
+###############################################################
+
+- name: "Install required packages (wget, which)"
+  yum:
+    name:
+      - wget
+      - which
+    state: present
+
+###############################################################
+# 2. Determine xCAT core repo type
+###############################################################
+
+- name: "Determine xCAT core repo type (core-snap only for devel)"
+  set_fact:
+    xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
+
+###############################################################
+# 3. Configure Yum Repository Files
+###############################################################
+
+- name: "Determine xCAT core repo type"
+  set_fact:
+    xcat_core_type: "{{ 'core-snap' if (xcat_version|default('')) == 'devel' else 'xcat-core' }}"
+
+- name: "Download xCAT core repo file"
+  get_url:
+    url: "{{ xcat_reporoot }}/{{ xcat_version }}/{{ xcat_core_type }}/xcat-core.repo"
+    dest: /etc/yum.repos.d/xcat-core.repo
+    mode: "0644"
+    force: yes         # overwrite if changed
+    validate_certs: yes
+  register: xcat_core_repo
+  retries: 3
+  delay: 5
+  until: xcat_core_repo is succeeded
+
+- name: "Download xCAT dependency repo file"
+  get_url:
+    url: "{{ xcat_reporoot }}/{{ xcat_version }}/xcat-dep/{{ xcat_baseos }}/{{ os_architecture }}/xcat-dep.repo"
+    dest: /etc/yum.repos.d/xcat-dep.repo
+    mode: "0644"
+    force: yes
+    validate_certs: yes
+  register: xcat_dep_repo
+  retries: 3
+  delay: 5
+  until: xcat_dep_repo is succeeded
+
+###############################################################
+# 4. Install xCAT packages on host
+###############################################################
+
+- name: "Install perl-xCAT-* packages"
+  yum:
+    name: "perl-xCAT-*"
+    state: present
+
+###############################################################
+# 5. Copy xCAT /etc/profile.d environment script
+###############################################################
+
+- name: "Copy xcat.sh profile script"
+  copy:
+    src: xcat.sh        # This must exist in role: files/xcat.sh
+    dest: /etc/profile.d/xcat.sh
+    mode: "0755"
+
+###############################################################
+# 6. Create global xCAT VIP environment variable
+###############################################################
+
+- name: "Create global XCATHOST variable"
+  copy:
+    dest: /etc/profile.d/xcat_vip.sh
+    mode: "0755"
+    content: |
+      export XCATHOST={{ xcat_vip_ip }}:3001
+
+###############################################################
+# 7. Source environment scripts for current execution (optional)
+###############################################################
+
+- name: "Source xcat.sh for the current session"
+  shell: source /etc/profile.d/xcat.sh
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: "Source xcat_vip.sh for the current session"
+  shell: source /etc/profile.d/xcat_vip.sh
+  args:
+    executable: /bin/bash
+  changed_when: false
