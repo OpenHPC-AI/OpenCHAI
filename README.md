@@ -109,4 +109,7 @@ $ bash ./openchai_configure.sh
 ```bash
 ansible-inventory --list
 ```
-
+- **Ping ALL Cluster hosts in inventory**
+```bash
+ansible all -m ping
+```
