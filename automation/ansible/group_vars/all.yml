@@ -1,10 +1,15 @@
 ####################### OpenCHAI Manager Tool Variable #####################
+openchai_version: openchai_v1.24.0
 base_dir: /OpenCHAI
 os_version: alma8.9
 os_arch: x86_64
-rhel_linux_label: el8
+rhel_linux_label: rh8
+enterprise_linux_label: el8
+
+
+# OpenCHAI Manager Environment Setup 
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
-rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}"
+rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ openchai_version }}"
 configuration_dir_path: "{{ rpm_stack_path }}/mount"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
@@ -14,11 +19,24 @@ primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 
 secondary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[0] }}"
 headnode_inventory_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[0] }}"
 
-####################### HeadNode Variable ###########################
+####################### HPC Master and Management Nodes IP and Hostname Variables ###########################
 # Extract headnode IP dynamically from inventory
 headnode_ip: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[1] }}"
 headnode_hostname: "{{ (lookup('pipe', 'grep ^headnode ' + inventory_file)).split()[5] }}"
 
+#Service Nodes IP's
+primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
+secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
+
+primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
+secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
+
+#Service Nodes Hostname
+primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
+secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
+
+primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
+secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
 ####################### Lustre Variable ###########################
 # Lustre Server IPs and Network Configurations
@@ -30,17 +48,17 @@ storage_vm_server_ha_ip_two: 10.5.41.12
 lnet_networks: o2ib
 lnet_networks_ha: o2ib1
 
-# Lustre Mount Source String
-lustre_mount_server_src: "{{ storage_vm_server_ip_one }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_one }}@{{ lnet_networks_ha }}:{{ storage_vm_server_ip_two }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_two }}@{{ lnet_networks_ha }}"
-
 # Lustre Mount Paths
 lustre_mounts_dest_primary_path: /home
 lustre_mounts_src_primary_path: /home
 lustre_mounts_dest_secondary_path: /scratch
 lustre_mounts_src_secondary_path: /scratch
 
-####################### HPC Master and Management Nodes IP and Hostname Variables ###########################
-# DRBD High Availability Nodes Hostname and their Netwrok IPs
+# Lustre Mount Source String
+lustre_mount_server_src: "{{ storage_vm_server_ip_one }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_one }}@{{ lnet_networks_ha }}:{{ storage_vm_server_ip_two }}@{{ lnet_networks }},{{ storage_vm_server_ha_ip_two }}@{{ lnet_networks_ha }}"
+
+
+####################### DRBD High Availability Nodes Hostname and their Netwrok IPs #######################
 # xCAT VIP IP
 private_interface : "eth2:0"
 
@@ -62,21 +80,7 @@ pcs_cluster_password: "StrongPass123"
 pcs_cluster_name: "drbd_xCAT"
 
 
-#Service Nodes IP's
-primary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[1] }}"
-secondary_master_node_ip: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[1] }}"
-
-primary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[1] }}"
-secondary_mgmt_node_ip: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[1] }}"
-
-#Service Nodes Hostname
-primary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[5] }}"
-secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inventory_file)).split()[5] }}"
-
-primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
-secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
-
-# Docker Swarm Manager
+####################### Docker Swarm Manager #######################
 primary_swarm_manager_ip: "{{ primary_master_node_ip }}"
 primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
 secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
@@ -86,6 +90,9 @@ tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be
 xcat_version_tag: "2.17.0"
 xcat_container_img_tar: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
 xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
+
+####################### Slurm Workload Manager Variable #####################
+
 
 ######################## OpenLDAP Tool variable ##########################
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
