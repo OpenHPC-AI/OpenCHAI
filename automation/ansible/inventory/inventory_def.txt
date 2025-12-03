@@ -22,13 +22,13 @@
 
 # Example entries:
 
-ansible_hostname        ip              ansible_user  ansible_password      group          hostname
-headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode
-hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01
-hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02
-hpc-mgmt01               192.168.1.4     root          Admin#@#$             hpc_mgmt       mgmt01
-hpc-mgmt02               192.168.1.5     root          Admin#@#$             hpc_mgmt       mgmt02
-login01                  192.168.1.11    root          Admin#@#$             login          login01
-login02                  192.168.1.12    root          Admin#@#$             login          login02
-login03                  192.168.1.13    root          Admin#@#$             login          login03
-login04                  192.168.1.14    root          Admin#@#$             login          login04
+#ansible_hostname         ip             ansible_user  ansible_password      group          hostname   ssh_port
+headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode   4411
+hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01   22
+hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02   22
+hpc-mgmt01               192.168.1.4     root          Admin#@#$             hpc_mgmt       mgmt01     22
+hpc-mgmt02               192.168.1.5     root          Admin#@#$             hpc_mgmt       mgmt02     22
+login01                  192.168.1.11    root          Admin#@#$             login          login01    4422
+login02                  192.168.1.12    root          Admin#@#$             login          login02    4422
+login03                  192.168.1.13    root          Admin#@#$             login          login03    4422
+login04                  192.168.1.14    root          Admin#@#$             login          login04    4422
