@@ -112,4 +112,6 @@ ansible-inventory --list
 - **Ping ALL Cluster hosts in inventory**
 ```bash
 ansible all -m ping
+# Verify Cluster connection with ssh port, adjust ssh port according to your environment
+ansible all -m ping -e "ansible_port=22"
 ```
