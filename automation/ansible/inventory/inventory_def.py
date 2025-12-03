@@ -6,11 +6,11 @@ import os
 
 def parse_input_file(filename):
     """
-    Parse inventory_def.txt file where each line is:
-    ansible_hostname ip ansible_user ansible_password group hostname
-    
+    Parse inventory_def.txt where each line is:
+    ansible_hostname ip ansible_user ansible_password group hostname ssh_port
+
     Example:
-    hpc-master01 192.168.1.10 root mypass hpc_master master01
+    hpc-master01 192.168.1.10 root mypass hpc_master master01 4411
     """
     groups = {}
     hostvars = {}
@@ -26,22 +26,32 @@ def parse_input_file(filename):
                 continue
 
             parts = line.split()
-            if len(parts) != 6:
+
+            # Expecting 7 columns now
+            if len(parts) != 7:
                 print(f"Warning: Invalid line {lineno} in {filename}: {line}", file=sys.stderr)
                 continue
 
-            ansible_hostname, ip, user, password, group, hostname = parts
+            ansible_hostname, ip, user, password, group, hostname, ssh_port = parts
 
-            # Initialize group if not present
+            # Convert port -> integer, fallback to 22
+            try:
+                ssh_port = int(ssh_port)
+            except ValueError:
+                print(f"Warning: Invalid SSH port on line {lineno}. Using default port 22.")
+                ssh_port = 22
+
+            # Initialize group structure
             if group not in groups:
                 groups[group] = {"hosts": [], "vars": {}}
             groups[group]["hosts"].append(ansible_hostname)
 
-            # Add host variables
+            # Host variables
             hostvars[ansible_hostname] = {
                 "ansible_host": ip,
                 "ansible_user": user,
                 "ansible_password": password,
+                "ansible_port": ssh_port,
                 "hostname": hostname,
                 "group": group
             }
@@ -67,9 +77,11 @@ def main():
     if args.list:
         inventory = generate_inventory(args.input_file)
         print(json.dumps(inventory, indent=2))
+
     elif args.host:
         _, hostvars = parse_input_file(args.input_file)
         print(json.dumps(hostvars.get(args.host, {}), indent=2))
+
     else:
         parser.print_help()
         sys.exit(1)
@@ -77,4 +89,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
