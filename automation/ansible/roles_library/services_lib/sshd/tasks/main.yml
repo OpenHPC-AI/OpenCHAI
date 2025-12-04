@@ -1,0 +1,6 @@
+---
+- name: Manage SSHD service state
+  service:
+    name: "{{ sshd_service_name }}"
+    state: "{{ sshd_service_state }}"
+    enabled: "{{ sshd_service_enabled }}"
