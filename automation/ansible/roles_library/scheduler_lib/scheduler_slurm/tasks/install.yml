@@ -1,4 +1,187 @@
 # tasks/install.yml
+
+- name: Download EPEL GPG key
+  ansible.builtin.get_url:
+    url: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+    dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+    mode: '0644'
+  ignore_errors: true
+
+- name: Ensure EPEL release is installed
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  ignore_errors: true
+
+
+# 1. Ensure CRB repo enabled
+- name: Ensure CRB repository is enabled
+  ansible.builtin.shell: |
+    dnf config-manager --set-enabled crb || dnf config-manager --set-enabled powertools
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+
+# -----------------------------------------
+# 1. Try installing authentication packages from local folder
+# -----------------------------------------
+
+- name: Find local authentication RPMs
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}{{ slurm_version }}/../auth"
+    patterns: "*.rpm"
+  register: auth_find
+
+
+- name: Find all local RPMs for installation
+  find:
+    paths:
+      - "{{ slurm_rpm_base }}{{ slurm_version }}/../auth"
+      - "{{ slurm_rpm_base }}/{{ pmix_version }}"
+      - "{{ slurm_rpm_base }}/{{ slurm_version }}"
+    patterns: "*.rpm"
+    file_type: file
+  register: found_rpms
+
+- name: Combine all RPM paths into one list
+  set_fact:
+    local_all_rpms: "{{ found_rpms.files | map(attribute='path') | list }}"
+
+
+- name: Set list of local_auth_rpms (always a list)
+  set_fact:
+    local_auth_rpms: "{{ auth_find.files | default([]) }}"
+
+- name: Sort local authentication RPMs (libs → others → main)
+  set_fact:
+    sorted_auth_rpms: >-
+      {{
+        (local_auth_rpms
+         | selectattr('path','search','lib')
+         | list)
+        +
+        (local_auth_rpms
+         | rejectattr('path','search','lib')
+         | list)
+      }}
+  when: local_auth_rpms | length > 0
+
+
+- debug:
+    var: local_auth_rpms.files
+
+
+- name: Install ALL local RPMs in one transaction (dependency-safe)
+  command: >
+    rpm -Uvh --force --replacepkgs --replacefiles
+    {{ local_all_rpms | join(' ') }}
+  when: local_all_rpms | length > 0
+
+
+
+######################
+
+# ================================================================
+# Install Authentication Packages (Local RPMs → Online Fallback)
+# ================================================================
+
+# Required auth packages
+# Expect this variable from defaults/main.yml:
+# auth_packages:
+#   - mariadb
+#   - pam_slurm
+#   - munge
+#   ...
+
+# ---------------------------------------------------------------
+# 1. Check installed auth packages
+# ---------------------------------------------------------------
+- name: Check installed authentication packages
+  ansible.builtin.command: "rpm -q {{ item }}"
+  loop: "{{ auth_packages }}"
+  register: auth_installed
+  ignore_errors: true
+  changed_when: false
+
+
+# ---------------------------------------------------------------
+# 2. Create list of missing packages
+# ---------------------------------------------------------------
+- name: Identify missing authentication packages
+  ansible.builtin.set_fact:
+    missing_auth_pkgs: >-
+      {{ auth_installed.results
+         | selectattr('rc', '!=', 0)
+         | map(attribute='item')
+         | list
+      }}
+
+
+# ---------------------------------------------------------------
+# 3. Find Local Authentication RPMs
+# ---------------------------------------------------------------
+- name: Locate local authentication RPMs
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}/auth"
+    patterns: "*.rpm"
+  register: auth_rpm_files
+
+
+- name: Flatten list of local RPM file paths
+  ansible.builtin.set_fact:
+    local_auth_rpms: "{{ auth_rpm_files.files | map(attribute='path') | list }}"
+
+
+# ---------------------------------------------------------------
+# 4. Install missing packages from Local RPMs first
+# ---------------------------------------------------------------
+- name: Install missing authentication packages from local RPMs
+  ansible.builtin.command: >
+    rpm -Uvh --force {{ local_auth_rpms | join(' ') }}
+  when:
+    - missing_auth_pkgs | length > 0
+    - local_auth_rpms | length > 0
+  register: install_local
+  ignore_errors: true
+
+
+# ---------------------------------------------------------------
+# 5. Re-check missing packages after Local RPM install
+# ---------------------------------------------------------------
+- name: Re-check missing packages after local install
+  ansible.builtin.command: "rpm -q {{ item }}"
+  loop: "{{ missing_auth_pkgs }}"
+  register: auth_post_local
+  ignore_errors: true
+  changed_when: false
+
+
+- name: Identify still-missing packages after local install
+  ansible.builtin.set_fact:
+    still_missing_auth_pkgs: >-
+      {{ auth_post_local.results
+         | selectattr('rc', '!=', 0)
+         | map(attribute='item')
+         | list
+      }}
+
+
+# ---------------------------------------------------------------
+# 6. Install remaining missing auth packages from online repos
+# ---------------------------------------------------------------
+- name: Install authentication packages from online repos
+  ansible.builtin.dnf:
+    name: "{{ still_missing_auth_pkgs }}"
+    state: present
+  when:
+    - still_missing_auth_pkgs | length > 0
+
+
+######################
+
+
+
 # Install PMIx
 - name: Find PMIx RPMs
   ansible.builtin.find:
@@ -12,6 +195,86 @@
     state: present
     disable_gpg_check: true
   tags: pmix
+
+
+# 3. Install PMIx RPMs
+- name: Install PMIx packages
+  ansible.builtin.yum:
+    name: "{{ lookup('fileglob', slurm_rpm_base + '/' + pmix_version + '/*.rpm', wantlist=True) }}"
+    state: present
+    disable_gpg_check: true
+
+# 4. Gather list of Slurm RPMs
+- name: Find Slurm RPMs
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}/{{ slurm_version }}"
+    patterns: "*.rpm"
+  register: slurm_rpms
+
+- debug:
+    var: slurm_rpms
+
+
+# 5. Filter Slurm RPMs based on role
+- name: Extract basenames of slurm rpms
+  set_fact:
+    slurm_rpm_basenames: "{{ slurm_rpms.files | map(attribute='path') | map('basename') | list }}"
+
+- debug:
+    var: slurm_rpm_basenames
+
+- name: Set filtered slurm packages
+  set_fact:
+    slurm_install_list: >-
+      {{ slurm_rpm_basenames
+         | reject('search', (slurm_excluded_packages[slurm_node_role] | map('regex_escape') | join('|')))
+         | list }}
+
+- name: Build install list with full paths
+  set_fact:
+    slurm_install_list: >-
+      {{ slurm_rpms.files
+         | map(attribute='path')
+         | select('search', (slurm_install_list | join('|')))
+         | list }}
+
+
+
+- debug:
+    var: slurm_rpms.files
+
+
+- debug:
+    var: slurm_install_list
+
+
+# 🔹 Remove excluded packages only if reinstall requested
+- name: Remove excluded packages for this role
+  ansible.builtin.yum:
+    name: "{{ slurm_excluded_packages[slurm_node_role] }}"
+    state: absent
+  when:
+    - slurm_reinstall | default(false) | bool
+    - slurm_excluded_packages[slurm_node_role] | length > 0
+
+- name: Install allowed Slurm packages
+  ansible.builtin.yum:
+    name: "{{ slurm_install_list }}"
+    state: present
+    disable_gpg_check: true
+
+
+
+# 6. Backup existing Slurm configs
+- name: Backup existing slurm configs
+  ansible.builtin.shell: >
+    if [ -d /etc/slurm ]; then
+      tar czf /etc/slurm_backup_$(date +%F_%H-%M-%S).tar.gz /etc/slurm/*.conf || true;
+    fi
+  args:
+    executable: /bin/bash
+  when: slurm_reinstall
+
 
 # Find all Slurm RPMs
 - name: Gather all RPMs from slurm_version dir
