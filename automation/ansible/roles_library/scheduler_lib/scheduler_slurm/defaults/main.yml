@@ -28,7 +28,7 @@ slurm_rpm_base: "/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9"
 # Define excluded packages per role
 slurm_excluded_packages:
   master:
-    - slur
+    - slurm
   compute:
     - slurm-slurmdbd
     - slurm-slurmctld
