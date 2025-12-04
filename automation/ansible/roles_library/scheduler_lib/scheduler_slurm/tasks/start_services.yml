@@ -1,0 +1,214 @@
+---
+
+
+- name: Ensure munge group exists
+  ansible.builtin.group:
+    name: munge
+    gid: 968
+    state: present
+
+- name: Ensure munge user exists
+  ansible.builtin.user:
+    name: munge
+    uid: 971
+    group: munge
+    comment: "MUNGE Uid 'N' Gid Emporium"
+    home: /var/lib/munge
+    shell: /sbin/nologin
+    create_home: yes
+    state: present
+
+- name: Ensure slurm group exists
+  ansible.builtin.group:
+    name: slurm
+    gid: 900
+    state: present
+
+- name: Ensure slurm user exists
+  ansible.builtin.user:
+    name: slurm
+    uid: 900
+    group: slurm
+    comment: "SLURM workload manager"
+    home: /var/lib/slurm
+    shell: /bin/bash
+    create_home: yes
+    state: present
+
+# Ensure required directories exist
+- name: Ensure Munge directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: munge
+    group: munge
+    mode: '0755'
+  loop:
+    - /etc/munge
+    - /var/log/munge
+    - /run/munge
+
+
+
+# Ensure required directories exist
+- name: Ensure Slurm directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: '0755'
+  loop:
+    - /etc/slurm
+    - /var/log/slurm
+    - /var/share/slurm
+    - /var/share/slurm/d
+    - /var/share/slurm/ctld
+    - /var/spool/slurmctld
+    - /etc/slurm/plugstack.conf.d
+
+
+# 🔹 Override: Copy real files if replacement is enabled
+- name: Deploy Munge Key
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: munge
+    group: munge
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - { src: "configs/munge.key",    dest: "/etc/munge/munge.key" }
+
+
+# 🔹 Override: Copy real files if replacement is enabled
+- name: Deploy Slurm config and helper scripts
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: slurm
+    group: slurm
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - { src: "configs/slurm.conf",       dest: "/etc/slurm/slurm.conf" }
+    - { src: "configs/slurmdbd.conf",    dest: "/etc/slurm/slurmdbd.conf" }
+    - { src: "configs/plugstack.conf",    dest: "/etc/slurm/plugstack.conf.d" }
+    - { src: "configs/pyxis.conf",    dest: "/etc/slurm/plugstack.conf.d/pyxis.conf" }
+    - { src: "scripts/cli_filter.lua",    dest: "/etc/slurm/cli_filter.lua" }
+    - { src: "scripts/job_submit.lua",    dest: "/etc/slurm/job_submit.lua" }
+    - { src: "scripts/slurm-prolog",  dest: "/var/share/slurm/slurm-prolog", mode: "0755" }
+    - { src: "scripts/slurm-epilog",  dest: "/var/share/slurm/slurm-epilog", mode: "0755" }
+    - { src: "scripts/slurm.taskprolog", dest: "/var/share/slurm/slurm.taskprolog", mode: "0755" }
+    - { src: "scripts/slurmctld-prolog", dest: "/var/share/slurm/slurmctld-prolog", mode: "0755" }
+  when: slurm_replace_configs | default(false)
+
+
+# Ensure required files exist
+- name: Ensure Slurm files exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    owner: slurm
+    group: slurm
+    mode: '0644'
+  loop:
+    - /var/log/slurm/slurmctld.log
+    - /var/log/slurm/slurmdbd.log
+    - /var/share/slurm/slurm-prolog
+    - /var/share/slurm/slurm-epilog
+    - /var/share/slurm/slurm.taskprolog
+    - /etc/slurm/slurmdbd.conf
+    - /etc/slurm/slurm.conf
+
+# Ensure required files exist
+- name: Ensure Slurmdbd files exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    owner: slurm
+    group: slurm
+    mode: '0600'
+  loop:
+    - /etc/slurm/slurmdbd.conf
+
+
+# Generate or copy slurm JWT key
+# Generate slurm JWT key if enabled
+- name: Generate slurm JWT key if enabled
+  ansible.builtin.command: >
+    dd if=/dev/urandom of=/var/share/slurm/ctld/jwt_hs256.key bs=32 count=1
+  args:
+    creates: /var/share/slurm/ctld/jwt_hs256.key
+  when: slurm_generate_jwt_key | default(true)
+
+# Ensure slurm JWT key ownership and permissions
+- name: Ensure slurm JWT key ownership and permissions
+  ansible.builtin.file:
+    path: /var/share/slurm/ctld/jwt_hs256.key
+    owner: slurm
+    group: slurm
+    mode: '0600'
+  when: slurm_generate_jwt_key | default(true)
+
+# Generate munge key if enabled
+- name: Generate munge key if enabled
+  ansible.builtin.command: /usr/sbin/create-munge-key
+  args:
+    creates: /etc/munge/munge.key
+  when: munge_generate_key | default(true)
+
+- name: Ensure munge key ownership and permissions
+  ansible.builtin.file:
+    path: /etc/munge/munge.key
+    owner: munge
+    group: munge
+    mode: '0400'
+
+# Ensure slurm.conf exists before starting services
+- name: Check if slurm.conf exists
+  ansible.builtin.stat:
+    path: /etc/slurm/slurm.conf
+  register: slurm_conf
+
+- name: Fail if slurm.conf is missing
+  ansible.builtin.fail:
+    msg: "/etc/slurm/slurm.conf is missing! Please ensure it is created before starting services."
+  when: not slurm_conf.stat.exists
+
+# Validate syntax of slurm.conf using slurmctld --test
+#- name: Validate slurm.conf syntax (only on master)
+#  ansible.builtin.command: "slurmctld -C -f /etc/slurm/slurm.conf"
+#  register: slurm_validate
+#  changed_when: false
+#  failed_when: slurm_validate.rc != 0
+#  when: slurm_node_role == "master"
+
+# Start Slurm controller (master only)
+- name: Enable and start Munge (master only)
+  ansible.builtin.systemd:
+    name: munge
+    state: started
+    enabled: true
+
+# Start Slurm controller (master only)
+- name: Enable and start slurmctld (master only)
+  ansible.builtin.systemd:
+    name: slurmctld
+    state: started
+    enabled: true
+  when: slurm_node_role == "master"
+
+# Start Slurm compute daemon (compute nodes only)
+- name: Enable and start slurmd (compute only)
+  ansible.builtin.systemd:
+    name: slurmd
+    state: started
+    enabled: true
+  when: slurm_node_role == "master"
+
+# Optional: For "others" group (login or utility nodes)
+#- name: Enable and start slurmdbd (db only)
+#  ansible.builtin.systemd:
+#    name: slurmdbd
+#    state: started
+#    enabled: true
+#  when: slurm_node_role == "master"
