@@ -1,14 +1,34 @@
-# Enter the hostname, IP address, Ansible user, and password for each node.
-# You can add multiple nodes by specifying their respective details.
-## Format: ansible_hostname    ip_address        ansible_user    ansible_password    group_name       hostname
-ansible_hostname         ip              ansible_user  ansible_password      group          hostname
+# ================================
+# Ansible Node Details File
+# ================================
+# This file contains connection details for all nodes that Ansible will manage.
+# Each line represents one node in your cluster (for example, headnode, master, compute node, etc.)
 
-headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode
-hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01
-hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02
-hpc-mgmt01               192.168.1.4     root          Admin#@#$             hpc_mgmt       mgmt01
-hpc-mgmt02               192.168.1.5     root          Admin#@#$             hpc_mgmt       mgmt02
-login01                  192.168.1.11    root          Admin#@#$             login          login01
-login02                  192.168.1.12    root          Admin#@#$             login          login02
-login03                  192.168.1.13    root          Admin#@#$             login          login03
-login04                  192.168.1.14    root          Admin#@#$             login          login04
+# -------------------------------------------------------------------------
+# COLUMN MEANINGS (Fill carefully)
+# -------------------------------------------------------------------------
+# ansible_hostname   →  The name Ansible uses to identify this node.
+# ip                 →  The node's IP address (used to connect to it over SSH).
+# ansible_user       →  The login username used by Ansible (example: root).
+# ansible_password   →  The password for the user mentioned above.
+# group              →  Logical group name (like headnode, hpc_master, compute).
+# hostname           →  The actual hostname configured on the node (output of `hostname` command).
+#
+# NOTE:
+# - Each column should be separated by spaces or tabs.
+# - You can add as many nodes as you want — one per line.
+# - If using SSH keys (no password login), you can leave the password column blank.
+# -------------------------------------------------------------------------
+
+# Example entries:
+
+#ansible_hostname         ip             ansible_user  ansible_password      group          hostname   ssh_port
+headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode   4411
+hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01   22
+hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02   22
+hpc-mgmt01               192.168.1.4     root          Admin#@#$             hpc_mgmt       mgmt01     22
+hpc-mgmt02               192.168.1.5     root          Admin#@#$             hpc_mgmt       mgmt02     22
+login01                  192.168.1.11    root          Admin#@#$             login          login01    4422
+login02                  192.168.1.12    root          Admin#@#$             login          login02    4422
+login03                  192.168.1.13    root          Admin#@#$             login          login03    4422
+login04                  192.168.1.14    root          Admin#@#$             login          login04    4422
