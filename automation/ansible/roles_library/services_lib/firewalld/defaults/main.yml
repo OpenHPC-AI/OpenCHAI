@@ -1,6 +1,4 @@
----
-- name: Manage firewalld service state
-  service:
-    name: "{{ fw_service_name }}"
-    state: "{{ fw_service_state }}"
-    enabled: "{{ fw_service_enabled }}"
+fw_service_name: firewalld
+fw_service_state: started     # started, stopped, restarted
+fw_service_enabled: true      # true or false
+
