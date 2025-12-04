@@ -1,0 +1,3 @@
+sshd_service_name: sshd
+sshd_service_state: started      # started, stopped, restarted
+sshd_service_enabled: true       # true or false
