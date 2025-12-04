@@ -1,0 +1,14 @@
+---
+- name: Harden SSHD and manage SSH keys
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    sshd_service_name: sshd
+    sshd_service_state: started      # started, stopped, restarted
+    sshd_service_enabled: true       # true or false
+
+  roles:
+    - "{{ roles_parent_path }}/services_lib/sshd"
