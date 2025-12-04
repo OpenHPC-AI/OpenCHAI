@@ -7,7 +7,7 @@
   vars:
     fw_package_name: firewalld
     fw_service_name: firewalld
-    fw_service_state: started     # started, stopped, restarted
+    fw_service_state: stopped     # started, stopped, restarted
     fw_service_enabled: true      # true or false
     fw_install_if_missing: true   # true or false
 
