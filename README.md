@@ -63,13 +63,13 @@ You may also download it directly from the online source using:
 # https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
 
 # Example: Downloading the AlmaLinux 8.9 rpm-stack
-wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/alma8.9.tar.xz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg
+wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.24.0.tgz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
 
-Make sure the **rpm-stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg** !
+Make sure the **rpm-stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/<os-version>/** !
 
 ```bash
-ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9.tar.xz
+ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
 
 
