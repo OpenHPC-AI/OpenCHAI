@@ -4,7 +4,7 @@
   vars_files:
     - ../../group_vars/all.yml
   vars:
-    kernel_rpm_dir: "{{ base_dir  }}/rpm-stack/kernel_rpms"
+    kernel_rpm_dir: "{{ rpm_stack_path  }}/kernel_rpms"
     default_kernel_version: "4.18.0-513.5.1.el8_9"
 
   roles:
