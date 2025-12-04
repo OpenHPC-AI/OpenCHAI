@@ -5,7 +5,7 @@
   vars_files:
     - ../../group_vars/all.yml
   vars:
-    selinux_mode: enforcing        # enforcing, permissive, disabled
+    selinux_mode: disabled        # enforcing, permissive, disabled
     selinux_install_if_missing: true
 
 
