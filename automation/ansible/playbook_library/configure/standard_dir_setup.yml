@@ -11,4 +11,4 @@
     hpc_cluster_suite_dir: /root/hpc_cluster_suite
 
   roles:
-    - "{{ roles_parent_path }}/configure_lib/standard_dir_setup
+    - "{{ roles_parent_path }}/configure_lib/standard_dir_setup"
