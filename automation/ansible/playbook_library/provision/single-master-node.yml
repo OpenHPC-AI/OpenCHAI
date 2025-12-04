@@ -1,0 +1,131 @@
+# playbook_library/master_provision.yml
+---
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+
+# ---------------------------------------------------------------------------
+# Deploy Web Server to Host Local RPM Repo
+# ---------------------------------------------------------------------------
+#- import_playbook: ../../playbook_library/utility/utility_web_host.yml
+  #vars:
+   #web_server: nginx
+   #web_port: 8080
+
+# ---------------------------------------------------------------------------
+# Clone Hosted Repositories to Client Nodes
+# ---------------------------------------------------------------------------
+- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+  vars:
+    repo_server: "http://{{ headnode_ip }}:8080"
+    clone_dest: "{{ rpm_stack_path }}/"
+    download_tool: wget
+
+
+
+# ---------------------------------------------------------------------------
+# Monitoring Baseline
+# ---------------------------------------------------------------------------
+#- import_playbook: ../../playbook_library/monitoring/configure_monitoring.yml
+#  vars:
+#    rsyslog_mode: server
+#    rsyslog_server_ip: "{{ primary_master_node_ip }}"
+
+
+# ============================================================
+# ===  PHASE 1: BOOTSTRAP CONFIGURATION  =====================
+# ============================================================
+#- import_playbook: ../bootstrap/configure_chrony_client.yml
+#  vars:
+#    chrony_conf_src: "{{ configuration_dir_path }}/chrony.conf"
+#    chrony_conf_dest: "/etc/chrony.conf"
+#    chrony_conf_backup: "/etc/chrony.conf.bk"
+
+
+# ============================================================
+# ===  PHASE 2: KERNEL & UTILITIES  ==========================
+# ============================================================
+- import_playbook: ../utility/update_kernel.yml
+  vars:
+    kernel_rpm_dir: "{{ base_dir }}/hpcsuite_registry/rpm-stack/kernel_rpms"
+    # default_kernel_version: "5.14.0-570.17.1.el9_6"
+
+
+
+# ============================================================
+# ===  PHASE 3: NETWORK CONFIGURATION  =======================
+# ============================================================
+#- import_playbook: ../network/setup_mellanox.yml
+#  vars:
+#    install_mellanox: true
+    # mellanox_repo_url: rhel9_4_repo
+
+
+# ============================================================
+# ===  PHASE 4: CORE SERVICES  ===============================
+# ============================================================
+- import_playbook: ../services/firewalld.yml
+  vars:
+    fw_service_name: firewalld
+    fw_service_state: started
+    fw_service_enabled: true
+
+- import_playbook: ../services/sshd.yml
+  vars:
+    sshd_service_name: sshd
+    sshd_service_state: started
+    sshd_service_enabled: true
+
+# ============================================================
+# ===  PHASE 5: SECURITY & HARDENING  ========================
+# ============================================================
+
+- import_playbook: ../security/configure_firewall.yml
+  vars:
+    fw_service_name: firewalld
+    fw_service_state: stopped       # 🧠 Example of overriding variable
+    fw_service_enabled: false       # 🧠 Custom value
+    fw_install_if_missing: true
+
+- import_playbook: ../security/configure_selinux.yml
+  vars:
+    selinux_mode: enforcing
+    selinux_install_if_missing: true
+
+- import_playbook: ../security/security_sshd.yml
+  vars:
+    sshd_packages:
+      - openssh-server
+      - openssh-clients
+    sshd_service_name: sshd
+    sshd_service_state: started
+    sshd_service_enabled: true
+    ssh_key_generate: true
+    ssh_key_path: /root/.ssh/id_rsa
+    ssh_key_type: rsa
+    ssh_key_bits: 4096
+    ssh_key_force: no
+    ssh_hardening_enable: true
+    sshd_hardening_block: |
+      PermitRootLogin yes
+      PasswordAuthentication yes
+      PermitEmptyPasswords no
+      ChallengeResponseAuthentication no
+      UseDNS no
+      X11Forwarding yes
+      AllowTcpForwarding no
+      PrintMotd no
+      Banner none
+      VersionAddendum none
+      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+      MACs hmac-sha2-512,hmac-sha2-256
+      KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+
