@@ -19,3 +19,4 @@
   roles:
     - "{{ roles_parent_path }}/scheduler_lib/scheduler_slurm"
 
+
