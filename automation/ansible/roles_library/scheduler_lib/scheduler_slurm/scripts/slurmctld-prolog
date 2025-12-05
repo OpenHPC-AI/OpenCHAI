@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Get the list of all nodes in the cluster
+nodes=$(sinfo -h -o "%N" | tr -s " " "\n")
+
+# Iterate over each node and perform a health check
+for node in $nodes; do
+  # Run health check on each node (you can replace this with your own
+health check/benchmark)
+  HEALTH_CHECK_RESULT=$(ssh $node "sysbench cpu --cpu-max-prime=20000
+run")
+
+  # If health check fails, drain the node
+  if [[ "$HEALTH_CHECK_RESULT" != *"done"* ]]; then
+    echo "Node $node failed health check, draining node."
+    scontrol update NodeName=$node State=DRAIN Reason="Failed health cc
+heck"
+  else
+    echo "Node $node passed health check."
+  fi
+done
