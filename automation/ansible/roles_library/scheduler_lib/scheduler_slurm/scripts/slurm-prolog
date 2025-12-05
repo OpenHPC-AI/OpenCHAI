@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# Sample TaskProlog script that will print a batch job's
+# job ID and node list to the job's stdout
+#
+/usr/bin/echo 3 >/proc/sys/vm/drop_caches
+#/usr/bin/chmod 4755 /usr/bin/turbostat
+
+if [ X"$SLURM_STEP_ID" = "X" -a X"$SLURM_PROCID" = "X"0 ]
+then
+  echo "print =========================================="
+  echo "print CUDA_VISIBLE_DEVICES = $CUDA_VISIBLE_DEVICES"
+  echo "print SLURM_JOB_GPUS = $SLURM_JOB_GPUS"
+  echo "print CUDA_MPS_ACTIVE_THREAD_PERCENTAGE = $CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"
+  echo "print SLURM_CPUS_ON_NODE = $SLURM_CPUS_ON_NODE"
+  echo "print SLURM_NTASKS = $SLURM_NTASKS"
+  echo "print SLURM_TASK_PID = $SLURM_TASK_PID"
+  echo "print SLURM_MEM_PER_CPU = $SLURM_MEM_PER_CPU"
+  echo "print =========================================="
+fi
