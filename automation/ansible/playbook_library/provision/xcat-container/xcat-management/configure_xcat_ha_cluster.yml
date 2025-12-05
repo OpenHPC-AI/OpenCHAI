@@ -55,4 +55,4 @@
     xcat_container_img: "{{ xcat_container_img_tar }}"
 
   roles:
-    - role: "{{ roles_parent_path }}/provision_lib/xcat_ha_container"
+    - role: "{{ roles_parent_path }}/provision_lib/xcat_container_lib"
