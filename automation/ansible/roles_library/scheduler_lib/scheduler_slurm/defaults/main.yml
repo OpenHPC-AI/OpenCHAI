@@ -19,9 +19,20 @@ auth_packages:
   - libjwt-devel
   - s-nail
   - mariadb-server
+  - perl-Switch
+  - libaec
+    #  - perl-autouse
+  - freeipmi
+  - hdf5-mpich
+  - libgfortran
+    #  - perl-deprecate
+  - libquadmath
+  - mpich
+  - hdf5
+
 
 # Directory base path containing rpm dirs
-slurm_rpm_base: "/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9"
+#slurm_rpm_base: "/home/CHAI_Sk/rpm-stack"
 
 
 
@@ -36,3 +47,4 @@ slurm_excluded_packages:
     - slurm-slurmdbd
     - slurm-slurmctld
     - slurm-slurmd
+
