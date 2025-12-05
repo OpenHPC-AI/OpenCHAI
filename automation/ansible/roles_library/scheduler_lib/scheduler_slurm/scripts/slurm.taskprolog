@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Sample TaskProlog script that will print a batch job's
+# job ID and node list to the job's stdout
+#
+if [ X"$SLURM_STEP_ID" = "X" -a X"$SLURM_PROCID" = "X"0 ]
+then
+  echo "print =========================================="
+  echo "print SLURM_CLUSTER_NAME = $SLURM_CLUSTER_NAME"
+  echo "print SLURM_ARRAY_JOB_ID = $SLURM_ARRAY_JOB_ID"
+  echo "print SLURM_ARRAY_TASK_ID = $SLURM_ARRAY_TASK_ID"
+  echo "print SLURM_ARRAY_TASK_COUNT = $SLURM_ARRAY_TASK_COUNT"
+  echo "print SLURM_ARRAY_TASK_MAX = $SLURM_ARRAY_TASK_MAX"
+  echo "print SLURM_ARRAY_TASK_MIN = $SLURM_ARRAY_TASK_MIN"
+  echo "print SLURM_JOB_ACCOUNT = $SLURM_JOB_ACCOUNT"
+  echo "print SLURM_JOB_ID = $SLURM_JOB_ID"
+  echo "print SLURM_JOB_NAME = $SLURM_JOB_NAME"
+  echo "print SLURM_JOB_NODELIST = $SLURM_JOB_NODELIST"
+  echo "print SLURM_JOB_USER = $SLURM_JOB_USER"
+  echo "print SLURM_JOB_UID = $SLURM_JOB_UID"
+  echo "print SLURM_JOB_PARTITION = $SLURM_JOB_PARTITION"
+  echo "print SLURM_TASK_PID = $SLURM_TASK_PID"
+  echo "print SLURM_SUBMIT_DIR = $SLURM_SUBMIT_DIR"
+  echo "print SLURM_CPUS_ON_NODE = $SLURM_CPUS_ON_NODE"
+  echo "print SLURM_NTASKS = $SLURM_NTASKS"
+  echo "print SLURM_TASK_PID = $SLURM_TASK_PID"
+  echo "print =========================================="
+fi
