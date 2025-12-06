@@ -98,6 +98,9 @@ xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
 secondary_ldap_node_ip: "{{ secondary_master_node_ip }}"
 ldap_base_dn: "dc=nsm,dc=in"
+ldap_version_tag: 
+ldap_container_img_tar: "cdac_openldap_multi-replication_{{ os_version}}_{{ ldap_version_tag }}"
+openldap_container_image: ""
 
 ####################### Monitoring Tools Variables #############################
 monitoring_log_server_ip: "{{ secondary_mgmt_node_ip }}"  # It can be any login nodes or mgmt nodes 
