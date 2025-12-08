@@ -1,0 +1,28 @@
+# ldap_docker_hostmachine_setup.yml
+---
+- name: Configure LDAP on docker host machine
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars_files:
+    - ../../../../group_vars/all.yml
+
+  vars:
+    ldap_version: "{{ ldap_version_tag }}"
+
+  pre_tasks:
+
+    - name: Determine LDAP server role based on IP
+      set_fact:
+        ldap_var:
+          SERVER_ROLE: >-
+            {{ '1' if ansible_host == PRIMARY_LDAP_SERVER_IP
+               else ('2' if ansible_host == SECONDARY_LDAP_SERVER_IP else '0') }}
+
+    - name: Set LDAP container name
+      set_fact:
+        ldap_container_name: "ldap_server_{{ ldap_var.SERVER_ROLE }}"
+
+  roles:
+    - role: "{{ roles_parent_path }}/configure_lib/ldap_container_host_machine_setup"
