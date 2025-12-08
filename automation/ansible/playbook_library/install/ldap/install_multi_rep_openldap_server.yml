@@ -1,0 +1,52 @@
+---
+- name: Configure and Deploy OpenLDAP Container
+  hosts: all
+  become: yes
+
+  vars_files:
+    - ../../../group_vars/all.yml
+
+  vars_prompt:
+    - name: LDAP_ROOT_PASSWD
+      prompt: "Enter LDAP root password"
+      private: yes
+    - name: BASE_PRIMARY_DC
+      prompt: "Enter base primary DC (example: IN)"
+    - name: BASE_SECONDARY_DC
+      prompt: "Enter base secondary DC (example: NSM)"
+    - name: BASE_SUBDOMAIN_DC
+      prompt: "Enter base subdomain DC (example: CDAC)"
+    - name: OU1
+      prompt: "Enter OU1 name (default: People)"
+      default: "People"
+    - name: OU2
+      prompt: "Enter OU2 name (default: Group)"
+      default: "Group"
+    - name: OU3
+      prompt: "Enter OU3 name (default: CDAC)"
+      default: "CDAC"
+    - name: OU4
+      prompt: "Enter OU4 name (default: support)"
+      default: "support"
+    - name: OU5
+      prompt: "Enter OU5 name (default: nsmext)"
+      default: "nsmext"
+    - name: OU6
+      prompt: "Enter OU6 name (default: nsmapp)"
+      default: "nsmapp"
+    - name: OU7
+      prompt: "Enter OU7 name (default: IIT)"
+      default: "IIT"
+
+
+  vars:
+    ldap_pv_dir: "/hpc_container_pv/ldapdata"
+    openldap_image: "{{ openldap_container_image }}"
+    ldap_container_img: "{{ ldap_container_img_tar }}"
+    ldap_version: "{{ ldap_version_tag }}"
+    ldap_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
+    PRIMARY_LDAP_SERVER_IP: "{{ primary_ldap_server_ip }}"
+    SECONDARY_LDAP_SERVER_IP: "{{ secondary_ldap_server_ip }}"
+
+  roles:
+    - "{{ roles_parent_path }}/install_lib/multi_rep_ldap_server_container"
