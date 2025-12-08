@@ -1,0 +1,55 @@
+---
+# -------------------------------------------------------------------
+# Deploy LDAP docker-compose file with automatic image detection
+# -------------------------------------------------------------------
+
+# Detect LDAP Docker image only when ldap_image is not provided
+- name: Detect LDAP Docker image (if ldap_image not provided)
+  shell: |
+    docker images --format '{{ "{{.Repository}}:{{.Tag}}" }}' | grep -i 'cdac_openldap_multi-replication' | head -n 1
+  register: detected_ldap_image
+  changed_when: false
+  when: ldap_image is not defined or ldap_image | length == 0
+
+# Fail if no image found
+- name: Fail if no LDAP image found locally
+  fail:
+    msg: "❌ No LDAP image found locally. Please load or pull the LDAP container image first."
+  when:
+    - ldap_image is not defined or ldap_image | length == 0
+    - detected_ldap_image.stdout | trim == ""
+
+# Set ldap_image fact
+- name: Set LDAP image fact
+  set_fact:
+    ldap_image: "{{ detected_ldap_image.stdout | trim if (ldap_image is not defined or ldap_image | length == 0) else ldap_image }}"
+
+- name: Display selected LDAP image
+  debug:
+    msg: "✅ Using LDAP image: {{ ldap_image }}"
+
+# -------------------------------------------------------------------
+# Detect server role based on IP
+# -------------------------------------------------------------------
+- name: Merge LDAP environment variables and assign SERVER_ROLE
+  set_fact:
+    ldap_var:
+      SERVER_ROLE: "{{ '1' if ansible_host == PRIMARY_LDAP_SERVER_IP else ('2' if ansible_host == SECONDARY_LDAP_SERVER_IP else '0') }}"
+
+
+- name: Display LDAP server role
+  debug:
+    msg: "LDAP SERVER_ROLE for {{ inventory_hostname }} → {{ ldap_var.SERVER_ROLE }}"
+
+# -------------------------------------------------------------------
+# Generate docker-compose.yml using template
+# -------------------------------------------------------------------
+- name: Generate docker-compose.yml with LDAP image
+  template:
+    src: docker-compose.yml.j2
+    dest: /hpctool_stack/ldap_repo/docker-compose.yml
+    mode: '0644'
+
+- name: Confirm docker-compose.yml creation
+  debug:
+    msg: "✅ docker-compose.yml generated successfully at /hpctool_stack/ldap_repo/"
