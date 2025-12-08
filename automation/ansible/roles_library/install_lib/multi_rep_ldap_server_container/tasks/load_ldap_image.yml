@@ -1,0 +1,56 @@
+---
+# tasks/load_ldap_image.yml
+# Purpose: Ensure LDAP Docker image is present and loaded
+- name: Ensure LDAP repo directory exists
+  file:
+    path: /hpctool_stack/ldap_repo   # LDAP repo directory for docker-compose and persistent data
+    state: directory                 # Create if it doesn't exist
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Check if LDAP image already exists locally
+  stat:
+    path: "/hpctool_stack/ldap_repo/{{ ldap_container_img }}"
+  register: ldap_img_local
+
+- name: Copy LDAP image from mounted registry if available
+  copy:
+    src: "{{ hpcsuite_registry_mount_path }}/container_img_reg/ldap_reg/{{ ldap_container_img }}"
+    dest: "/hpctool_stack/ldap_repo/"
+    mode: '0644'
+  when:
+    - not ldap_img_local.stat.exists
+    - hpcsuite_registry_mount_path is defined
+  ignore_errors: yes
+
+- name: Check again if image exists after copy attempt
+  stat:
+    path: "/hpctool_stack/ldap_repo/{{ ldap_container_img }}"
+  register: ldap_img_after_copy
+
+- name: Download LDAP image from URL if not present locally or copied
+  get_url:
+    url: "{{ ldap_reg_network_url }}"
+    dest: "/hpctool_stack/ldap_repo/{{ ldap_container_img }}"
+    mode: '0644'
+  when: not ldap_img_after_copy.stat.exists
+  retries: 3
+  delay: 5
+  register: download_result
+  until: download_result is succeeded
+
+- name: Verify LDAP image file presence
+  stat:
+    path: "/hpctool_stack/ldap_repo/{{ ldap_container_img }}"
+  register: ldap_img_check
+  failed_when: not ldap_img_check.stat.exists
+
+- name: Load LDAP Docker image
+  command: docker load --input /hpctool_stack/ldap_repo/{{ ldap_container_img }}
+  register: docker_load
+  changed_when: "'Loaded image' in docker_load.stdout or 'Loaded image' in docker_load.stderr"
+
+- name: Display Docker load status
+  debug:
+    msg: "✅ LDAP image {{ ldap_version }} successfully loaded on {{ inventory_hostname }}"
