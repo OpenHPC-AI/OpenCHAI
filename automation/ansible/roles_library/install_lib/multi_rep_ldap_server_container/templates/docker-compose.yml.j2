@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  ldap_container:
+    image: {{ openldap_image }}
+    container_name: ldap_server_{{ ldap_var.SERVER_ROLE }}
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      - "{{ ldap_pv_dir }}:/ldapdata"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
