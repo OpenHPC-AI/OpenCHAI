@@ -1,0 +1,34 @@
+---
+# -------------------------------------------------------------------
+# Deploy LDAP container using docker compose
+# -------------------------------------------------------------------
+- name: Deploy LDAP container using docker compose
+  command: docker-compose -f /hpctool_stack/ldap_repo/docker-compose.yml up -d
+
+# -------------------------------------------------------------------
+# Verify LDAP container services
+# -------------------------------------------------------------------
+- name: Verify LDAP Container is running
+  shell: docker container ls
+  register: stack_status
+  changed_when: false
+
+- name: Show stack verification output
+  debug:
+    msg: "{{ stack_status.stdout_lines }}"
+
+# -------------------------------------------------------------------
+# Wait until LDAP container reaches running state
+# -------------------------------------------------------------------
+- name: Wait for LDAP container service to reach running state
+  shell: docker inspect -f '{{ "{{.State.Status}}" }}' ldap_1
+  register: ldap_state
+  until: ldap_state.stdout == "running"
+  retries: 30
+  delay: 10
+  changed_when: false
+  failed_when: false
+
+- name: Show LDAP service task state
+  debug:
+    msg: "LDAP service state: {{ ldap_state.stdout }}"
