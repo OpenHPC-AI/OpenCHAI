@@ -16,4 +16,4 @@
     os_architecture: "{{ os_arch }}"
 
   roles:
-    - role: "{{ roles_parent_path }}/provision_lib/xcat_hostmachine_setup"
+    - role: "{{ roles_parent_path }}/configure_lib/xcat_hostmachine_setup"
