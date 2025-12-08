@@ -1,0 +1,31 @@
+---
+# tasks/main.yml
+# Purpose: Set up LDAP persistent volume, environment, image, and container
+
+- name: Ensure LDAP persistent volume directory exists
+  file:
+    path: "{{ ldap_pv_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure LDAP repo directory exists
+  file:
+    path: /hpctool_stack/ldap_repo
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Update the dev .env file
+  include_tasks: ldap_dev_env.yml
+
+- name: Load LDAP container image
+  include_tasks: load_ldap_image.yml
+
+- name: Create docker-compose.yml for LDAP container
+  include_tasks: deploy_ldap_docker_compose.yml
+
+- name: Create and start LDAP container
+  include_tasks: create_ldap_container.yml
