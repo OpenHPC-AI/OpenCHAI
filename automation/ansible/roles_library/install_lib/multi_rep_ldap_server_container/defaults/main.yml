@@ -1,0 +1,22 @@
+# Default persistent volume path (can be overridden)
+ldap_pv_dir: "/hpc_container_pv/ldapdata"
+
+# Ask for env values interactively
+ldap_env:
+  LDAP_ROOT_PASSWD: ""
+  base_primary_dc: ""
+  base_secondary_dc: ""
+  base_subdomain_dc: ""
+  cn: "Manager"
+  ou1: "People"
+  ou2: "Group"
+  ou3: "CDAC"
+  ou4: "support"
+  ou5: "nsmext"
+  ou6: "nsmapp"
+  ou7: "IIT"
+  primary_ldap_server_ip: ""
+  secondary_ldap_server_ip: ""
+  uidNumber: "15000"
+  gidNumber: "15000"
+  SERVER_ROLE: ""
