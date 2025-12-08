@@ -1,0 +1,50 @@
+---
+# -------------------------------------------------------------------
+# Merge user input into ldap_env dictionary and assign SERVER_ROLE automatically
+# -------------------------------------------------------------------
+- name: Merge LDAP environment variables and assign SERVER_ROLE
+  set_fact:
+    ldap_env:
+      LDAP_ROOT_PASSWD: "{{ LDAP_ROOT_PASSWD }}"
+      BASE_PRIMARY_DC: "{{ BASE_PRIMARY_DC }}"
+      BASE_SECONDARY_DC: "{{ BASE_SECONDARY_DC }}"
+      BASE_SUBDOMAIN_DC: "{{ BASE_SUBDOMAIN_DC }}"
+      CN: "Manager"
+      OU1: "{{ OU1 }}"
+      OU2: "{{ OU2 }}"
+      OU3: "{{ OU3 }}"
+      OU4: "{{ OU4 }}"
+      OU5: "{{ OU5 }}"
+      OU6: "{{ OU6 }}"
+      OU7: "{{ OU7 }}"
+      PRIMARY_LDAP_SERVER_IP: "{{ PRIMARY_LDAP_SERVER_IP }}"
+      SECONDARY_LDAP_SERVER_IP: "{{ SECONDARY_LDAP_SERVER_IP }}"
+      UIDNUMBER: "15000"
+      GIDNUMBER: "15000"
+      SERVER_ROLE: "{{ '1' if ansible_host == PRIMARY_LDAP_SERVER_IP else ('2' if ansible_host == SECONDARY_LDAP_SERVER_IP else '0') }}"
+
+# -------------------------------------------------------------------
+# Create .env file for docker-compose
+# -------------------------------------------------------------------
+- name: Create .env file
+  template:
+    src: env.j2
+    dest: /hpctool_stack/ldap_repo/.env
+    mode: '0644'
+
+# -------------------------------------------------------------------
+# Display confirmation
+# -------------------------------------------------------------------
+- name: Display confirmation
+  debug:
+    msg: |
+      ✅ .env file generated successfully at /hpctool_stack/ldap_repo/.env
+      Values used:
+        BASE_PRIMARY_DC: {{ ldap_env.BASE_PRIMARY_DC }}
+        BASE_SECONDARY_DC: {{ ldap_env.BASE_SECONDARY_DC }}
+        BASE_SUBDOMAIN_DC: {{ ldap_env.BASE_SUBDOMAIN_DC }}
+        PRIMARY_LDAP_SERVER_IP: {{ ldap_env.PRIMARY_LDAP_SERVER_IP }}
+        SECONDARY_LDAP_SERVER_IP: {{ ldap_env.SECONDARY_LDAP_SERVER_IP }}
+        UIDNUMBER: {{ ldap_env.UIDNUMBER }}
+        GIDNUMBER: {{ ldap_env.GIDNUMBER }}
+        SERVER_ROLE: {{ ldap_env.SERVER_ROLE }}
