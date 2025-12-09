@@ -1,0 +1,10 @@
+- name: Setup selected Intel OneApi
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    #default_kernel_version: "4.18.0-513.5.1.el8_9"
+
+  roles:
+    - "{{ roles_parent_path }}/hpc_applications_lib/applications_oneapi"
