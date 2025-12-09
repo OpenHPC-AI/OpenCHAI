@@ -1,0 +1,28 @@
+---
+- name: Ensure Intel install directory exists
+  file:
+    path: "{{ intel_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Run Intel OneAPI Offline Installer
+  command: >
+    bash {{ intel_installer }}
+    -a
+    --silent
+    --install-dir {{ intel_install_dir }}
+    --eula accept
+    --intel-sw-improvement-program-consent decline
+  args:
+    chdir: "{{ local_rpm_dir }}"
+  register: intel_install_status
+  changed_when: "'completed successfully' in intel_install_status.stdout"
+
+- name: Run modulefiles-setup.sh
+  command: >
+    bash {{ intel_module_script }}
+    --output-dir={{ intel_module_output_dir }}
+    --ignore-latest
+    --force
+  register: module_setup_status
+  changed_when: "'completed' in module_setup_status.stdout"
