@@ -1,0 +1,31 @@
+# Local RPM directory
+#
+#
+
+####################### Application Module Variable #######################
+
+apps_parent_path: "/home/apps"
+
+# lmod
+modulepath_dir: "{{ apps_parent_path }}/modulefiles/apps"
+
+
+####################### Intel Module Variable #######################
+# Intel OneAPI installer path
+intel_installer: "{{ rpm_stack_path }}/oneapi_rpms/intel-oneapi-hpc-toolkit-2025.2.0.575_offline.sh"
+
+# Installation arguments
+intel_install_dir: "{{ rpm_stack_path }}/intel"
+
+# Module setup script
+intel_module_script: "{{ intel_install_dir }}/modulefiles-setup.sh"
+
+# Arguments for module script
+intel_module_output_dir: "{{ rpm_stack_path }}/modulefiles/hpc/intel"
+
+
+
+# Packages to install
+required_packages:
+  - patch
+  - git
