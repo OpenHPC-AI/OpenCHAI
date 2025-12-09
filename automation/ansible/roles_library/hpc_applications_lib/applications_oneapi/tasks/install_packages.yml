@@ -1,0 +1,20 @@
+---
+- name: Find local RPM files
+  find:
+    paths: "{{ rpm_stack_path }}/developement_rpms/"
+    patterns: "*.rpm"
+  register: local_rpms
+
+- name: Install packages from local directory if available
+  yum:
+    name: "{{ item.path }}"
+    state: present
+  loop: "{{ local_rpms.files }}"
+  when: local_rpms.files | length > 0
+  register: rpm_local_install
+  ignore_errors: yes
+
+- name: Install missing packages from yum online repo
+  yum:
+    name: "{{ required_packages }}"
+    state: present
