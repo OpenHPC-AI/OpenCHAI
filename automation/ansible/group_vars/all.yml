@@ -92,7 +92,7 @@ xcat_container_img_tar: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
 xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 
 ####################### Slurm Workload Manager Variable #####################
-
+slurm_version: "slurm-25.11.0-pmix-all"
 
 ######################## OpenLDAP Tool variable ##########################
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
