@@ -191,8 +191,10 @@ esac
 info "Detected OS: ${OS_NAME} ${OS_VERSION_ID}"
 info "Suggested OS option: ${DETECTED_OS}"
 confirm_yes_no "Proceed with detected OS version (${DETECTED_OS})? (yes/no): " os_version
-OS_VERSION="${DETECTED_OS}"
-notice "Selected OS version: ${DETECTED_OS}"
+DEF_OS_VERSION="${DETECTED_OS}"
+notice "Default Selected OS version: ${DETECTED_OS}"
+echo
+notice "You can modify the OS version in the upcoming steps if required !"
 
 # -------------------------------------------------------
 # Auto-detect server values
@@ -208,26 +210,30 @@ OS_VERSION_ID_NUM=$(grep "^VERSION_ID" /etc/os-release | cut -d= -f2 | tr -d '"'
 DEF_RHEL_LABEL="rh${OS_VERSION_ID_NUM}"
 DEF_EL_LABEL="el${OS_VERSION_ID_NUM}"
 DEF_KERNEL=$(uname -r)
-
 # -------------------------------------------------------
 # Ask user for overrides
 # -------------------------------------------------------
+echo
 echo "Press ENTER to accept default values."
 echo
 
-read -p "OS Architecture         [$DEF_OS_ARCH]: " USER_OS_ARCH
+read -p "Specify OS Architecture          [default: $DEF_OS_ARCH]: " USER_OS_ARCH
 OS_ARCH="${USER_OS_ARCH:-$DEF_OS_ARCH}"
 
-read -p "RHEL Label              [$DEF_RHEL_LABEL]: " USER_RHEL_LABEL
+read -p "Specify OS Version               [default: $DEF_OS_VERSION]: " DEF_OS_VERSION
+OS_VERSION="${USER_OS_VERSION:-$DEF_OS_VERSION}"
+
+read -p "Specify RHEL Label               [default: $DEF_RHEL_LABEL]: " USER_RHEL_LABEL
 RHEL_LABEL="${USER_RHEL_LABEL:-$DEF_RHEL_LABEL}"
 
-read -p "Enterprise EL Label     [$DEF_EL_LABEL]: " USER_EL_LABEL
+read -p "Enterprise EL Label              [default: $DEF_EL_LABEL]: " USER_EL_LABEL
 EL_LABEL="${USER_EL_LABEL:-$DEF_EL_LABEL}"
 
-read -p "Kernel Version          [$DEF_KERNEL]: " USER_KERNEL
+read -p "Kernel Version                   [default: $DEF_KERNEL]: " USER_KERNEL
 KERNEL_VERSION="${USER_KERNEL:-$DEF_KERNEL}"
 
-
+echo
+echo
 # -------------------------
 # Defining the Network Path for OpenCHAI Registry
 # -------------------------
@@ -445,6 +451,7 @@ echo -e "${CYAN}-----------------------------------------------------"
 echo "         Final Selected Base Variables"
 echo "-----------------------------------------------------"
 echo "OS Architecture        = $OS_ARCH"
+echo "OS Version             = $OS_VERSION"
 echo "RHEL Label             = $RHEL_LABEL"
 echo "Enterprise EL Label    = $EL_LABEL"
 echo "Kernel Version         = $KERNEL_VERSION"
@@ -459,7 +466,7 @@ echo
 if [[ -f "$ALL_YML" ]]; then
     sed -i "s|^openchai_version:.*|openchai_version: $OPENCHAI_VERSION|" "$ALL_YML" || warn "Failed to update openchai_version"
     sed -i "s|^base_dir:.*|base_dir: $BASE_DIR|" "$ALL_YML" || warn "Failed to update base_dir"
-    sed -i "s|^os_version:.*|os_version: alma${OS_VERSION_ID_NUM}|" "$ALL_YML" || warn "Failed to update os_version"
+    sed -i "s|^os_version:.*|os_version: $OS_VERSION|" "$ALL_YML" || warn "Failed to update os_version"
     sed -i "s|^os_arch:.*|os_arch: $OS_ARCH|" "$ALL_YML" || warn "Failed to update os_arch"
     sed -i "s|^rhel_linux_label:.*|rhel_linux_label: $RHEL_LABEL|" "$ALL_YML" || warn "Failed to update rhel_linux_label"
     sed -i "s|^enterprise_linux_label:.*|enterprise_linux_label: $EL_LABEL|" "$ALL_YML" || warn "Failed to update enterprise_linux_label"
