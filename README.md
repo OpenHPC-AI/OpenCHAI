@@ -101,7 +101,7 @@ After completing all the above configurations, you can now begin the setup of th
 ```bash
 #Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
 
-$ bash ./openchai_configure.sh
+$ bash ./configure_openchai_manager.sh
 ```
 
 **Post-Setup Verification of Manager Tool Configuration**
