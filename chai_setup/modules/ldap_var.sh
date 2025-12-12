@@ -1,15 +1,14 @@
 #!/bin/bash
-ALL_YML="../../automation/ansible/group_vars/all.yml"
+
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
+
 
 echo ">>> Configuring OpenLDAP Variables"
 
 fields=(
-  primary_ldap_node_ip
-  secondary_ldap_node_ip
   ldap_base_dn
   ldap_version_tag
-  ldap_container_img_tar
-  openldap_container_image
 )
 
 for key in "${fields[@]}"; do
