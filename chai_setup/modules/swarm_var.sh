@@ -1,12 +1,12 @@
 #!/bin/bash
-ALL_YML="../../automation/ansible/group_vars/all.yml"
 
-echo ">>> Configuring Docker Swarm Variables (Module 4)"
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
+
+echo ">>> Configuring Third Docker Swarm Variables, Give ansible-inventory-hostname "
+
 
 fields=(
-  primary_swarm_manager_ip
-  primary_swarm_manager
-  secondary_swarm_manager
   tertiary_swarm_manager
 )
 
