@@ -30,7 +30,8 @@ run_module "drbd_vars.sh"
 run_module "swarm_vars.sh"
 run_module "xcat_vars.sh"
 run_module "ldap_vars.sh"
+run_module "slurm_vars.sh"
+run_module "application_lmod_vars.sh"
 
 echo -e "\n🎉 All configuration modules completed!"
 echo "Your ../automation/ansible/group_vars/all.yml has been fully updated."
-
