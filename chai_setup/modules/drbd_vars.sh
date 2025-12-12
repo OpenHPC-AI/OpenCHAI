@@ -1,5 +1,7 @@
 #!/bin/bash
-ALL_YML="../../automation/ansible/group_vars/all.yml"
+
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
 echo ">>> Configuring DRBD / HA Variables"
 
