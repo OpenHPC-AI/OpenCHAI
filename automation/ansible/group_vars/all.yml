@@ -60,7 +60,7 @@ lustre_mount_server_src: "{{ storage_vm_server_ip_one }}@{{ lnet_networks }},{{ 
 
 ####################### DRBD High Availability Nodes Hostname and their Netwrok IPs #######################
 # xCAT VIP IP
-private_interface : "ens1f2"
+private_interface: "ens1f2"
 
 xcat_vip_ip: "172.10.3.111"
 xcat_vip_interface: "ens1f2:0"
