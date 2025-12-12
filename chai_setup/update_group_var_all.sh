@@ -1,7 +1,8 @@
 #!/bin/bash
 
-MODULE_DIR="./modules"
-ALL_YML="../automation/ansible/group_vars/all.yml"
+base_dir="/OpenCHAI"
+MODULE_DIR="$base_dir/chai_setup/modules"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
 echo "=========================================="
 echo "      OpenCHAI / Headnode CLI Installer"
@@ -32,3 +33,4 @@ run_module "ldap_vars.sh"
 
 echo -e "\n🎉 All configuration modules completed!"
 echo "Your ../automation/ansible/group_vars/all.yml has been fully updated."
+
