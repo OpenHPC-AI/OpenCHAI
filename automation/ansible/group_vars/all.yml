@@ -60,10 +60,10 @@ lustre_mount_server_src: "{{ storage_vm_server_ip_one }}@{{ lnet_networks }},{{ 
 
 ####################### DRBD High Availability Nodes Hostname and their Netwrok IPs #######################
 # xCAT VIP IP
-private_interface : "eth2:0"
+private_interface : "ens1f2"
 
 xcat_vip_ip: "172.10.3.111"
-xcat_vip_interface: "ens1f2"
+xcat_vip_interface: "ens1f2:0"
 xcat_vip_subnet_prefix: "22"
 xcat_vip_resource_name: "vip_xCAT"
 
@@ -84,7 +84,7 @@ pcs_cluster_name: "drbd_xCAT"
 primary_swarm_manager_ip: "{{ primary_master_node_ip }}"
 primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
 secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
-tertiary_swarm_manager: "{{ headnode_inventory_hostname }}"           #It can be a login node, head node, or management node used solely to maintain quorum.
+tertiary_swarm_manager: "headnode"           #It can be a login node, head node, or management node used solely to maintain quorum.
 
 ####################### xCAT Management Tool Variable #######################
 xcat_version_tag: "2.17.0"
@@ -98,9 +98,9 @@ slurm_version: "slurm-25.11.0-pmix-all"
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
 secondary_ldap_node_ip: "{{ secondary_master_node_ip }}"
 ldap_base_dn: "dc=nsm,dc=in"
-ldap_version_tag: 
+ldap_version_tag: "2.6.8"
 ldap_container_img_tar: "cdac_openldap_multi-replication_{{ os_version}}_{{ ldap_version_tag }}"
-openldap_container_image: ""
+openldap_container_image: "cdac_openldap_multi-replication/{{ os_version}}/{{ ldap_version_tag }}"
 
 ####################### Monitoring Tools Variables #############################
 monitoring_log_server_ip: "{{ secondary_mgmt_node_ip }}"  # It can be any login nodes or mgmt nodes 
