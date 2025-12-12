@@ -2,7 +2,7 @@
 # -------------------------------------------------------------------
 # Script Name : configure_openchai_manager.sh
 # Purpose     : Configure OpenCHAI manager tool for cluster setup
-# Author      : Satish Gupta (Optimized & Hardened) - corrected version
+# Author      : Satish Gupta 
 # -------------------------------------------------------------------
 
 set -euo pipefail
@@ -220,7 +220,7 @@ echo
 read -p "Specify OS Architecture          [default: $DEF_OS_ARCH]: " USER_OS_ARCH
 OS_ARCH="${USER_OS_ARCH:-$DEF_OS_ARCH}"
 
-read -p "Specify OS Version               [default: $DEF_OS_VERSION]: " DEF_OS_VERSION
+read -p "Specify OS Version               [default: $DEF_OS_VERSION]: " USER_OS_VERSION
 OS_VERSION="${USER_OS_VERSION:-$DEF_OS_VERSION}"
 
 read -p "Specify RHEL Label               [default: $DEF_RHEL_LABEL]: " USER_RHEL_LABEL
