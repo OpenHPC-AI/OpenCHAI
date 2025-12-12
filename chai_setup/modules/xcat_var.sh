@@ -1,12 +1,12 @@
 #!/bin/bash
-ALL_YML="../../automation/ansible/group_vars/all.yml"
 
-echo ">>> Configuring xCAT Variables (Module 5)"
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
+
+echo ">>> Configuring xCAT Variables "
 
 fields=(
   xcat_version_tag
-  xcat_container_img_tar
-  xcat_docker_img
 )
 
 for key in "${fields[@]}"; do
