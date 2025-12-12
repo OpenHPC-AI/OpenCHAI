@@ -74,8 +74,8 @@ drbd_device: "/dev/drbd0"
 drbd_mount_dir: "/drbd"
 drbd_fstype: "ext4"
 
-pcs_primary_master_node_hostname: "{{ primary_master_node_hostname }}"
-pcs_secondary_master_node_hostname: "{{ secondary_master_node_hostname }}"
+pcs_primary_master_node_hostname: "hpc-master01"
+pcs_secondary_master_node_hostname: "hpc-master02"
 pcs_cluster_password: "StrongPass123"
 pcs_cluster_name: "drbd_xCAT"
 
