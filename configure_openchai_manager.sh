@@ -192,9 +192,9 @@ info "Detected OS: ${OS_NAME} ${OS_VERSION_ID}"
 info "Suggested OS option: ${DETECTED_OS}"
 confirm_yes_no "Proceed with detected OS version (${DETECTED_OS})? (yes/no): " os_version
 DEF_OS_VERSION="${DETECTED_OS}"
-notice "Default Selected OS version: ${DETECTED_OS}"
+notice "Default Selected OS version from Headnode: ${DETECTED_OS}"
 echo
-notice "You can modify the OS version in the upcoming steps if required !"
+notice "You can adjust the OS version for the HPC-AI Master Nodes in the upcoming steps if it differs from the Headnode!"
 
 # -------------------------------------------------------
 # Auto-detect server values
@@ -476,6 +476,26 @@ if [[ -f "$ALL_YML" ]]; then
 else
     warn "Group vars file not found at: $ALL_YML (skipping all.yml updates)"
 fi
+
+
+# ---------------------------
+# Update the base_dir path value in chai_setup/modules
+#----------------------------
+SCRIPT_FILES=(
+    "$BASE_DIR/chai_setup/update_group_var_all.sh"
+    "$BASE_DIR/chai_setup/modules/"*.sh
+)
+
+for file in "${SCRIPT_FILES[@]}"; do
+    if [[ -f "$file" ]]; then
+        echo "Updating: $file"
+
+        # Replace ANY form of base_dir= with correct format
+        sed -Ei \
+            "s|^base_dir[ ]*=[ ]*.*|base_dir=\"${BASE_DIR}\"|" \
+            "$file"
+    fi
+done
 
 # -------------------------
 # Update ansible / OpenCHAI paths
