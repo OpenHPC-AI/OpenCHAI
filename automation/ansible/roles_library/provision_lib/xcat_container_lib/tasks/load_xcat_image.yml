@@ -20,6 +20,7 @@
     src: "{{ hpcsuite_registry_mount_path }}/container_img_reg/xCAT_reg/{{ xcat_container_img }}"
     dest: "/hpctool_stack/xcat_repo/"
     mode: '0644'
+    validate_certs: "{{ ssl_certificate_check }}"
   when:
     - not xcat_img_local.stat.exists
     - hpcsuite_registry_mount_path is defined
