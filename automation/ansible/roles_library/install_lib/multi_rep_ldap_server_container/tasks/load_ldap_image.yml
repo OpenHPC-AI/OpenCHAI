@@ -34,6 +34,7 @@
     url: "{{ ldap_reg_network_url }}"
     dest: "/hpctool_stack/ldap_repo/{{ ldap_container_img }}"
     mode: '0644'
+    validate_certs: "{{ ssl_certificate_check }}"
   when: not ldap_img_after_copy.stat.exists
   retries: 3
   delay: 5
