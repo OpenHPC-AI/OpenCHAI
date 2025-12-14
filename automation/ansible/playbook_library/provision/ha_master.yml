@@ -232,7 +232,7 @@
 # ===  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
 # ===================================================================================
 
-- import_playbook:
+- import_playbook: ../install/slurm/install_slurm_master.yml
   vars:
     slurm_reinstall: false
     slurm_replace_configs: true
