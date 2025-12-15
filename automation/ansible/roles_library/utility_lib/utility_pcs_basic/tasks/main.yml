@@ -1,5 +1,25 @@
 ---
 
+# ------------------------------------------------------------
+# Load DRBD kernel module
+# ------------------------------------------------------------
+- name: Load DRBD kernel module
+  ansible.builtin.command: modprobe drbd
+  register: drbd_modprobe
+  changed_when: drbd_modprobe.rc == 0
+  failed_when: drbd_modprobe.rc != 0
+
+
+# ------------------------------------------------------------
+# Verify DRBD kernel module is loaded (safe, no shell)
+# ------------------------------------------------------------
+- name: Verify DRBD kernel module is loaded
+  ansible.builtin.command: lsmod
+  register: lsmod_out
+  changed_when: false
+  failed_when: "'drbd' not in lsmod_out.stdout"
+
+
 # Ensure DRBD directory exists
 - name: Ensure DRBD mount directory exists
   ansible.builtin.file:
@@ -9,7 +29,84 @@
     group: root
     mode: '0755'
 
-# Create Virtual IP network alias configuration file
+- name: Force gather network facts
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+
+
+
+# ------------------------------------------------------------
+# Collect interface list
+# ------------------------------------------------------------
+- name: Collect interface list
+  command: ip -o link show
+  register: interface_list
+  changed_when: false
+
+
+# ------------------------------------------------------------
+# Verify vip_interface exists (kernel name or altname)
+# ------------------------------------------------------------
+- name: Check if vip_interface exists
+  set_fact:
+    interface_exists: >-
+      {{ vip_interface in interface_list.stdout
+         or 'altname ' ~ vip_interface in interface_list.stdout }}
+
+- name: Fail if vip_interface does not exist
+  fail:
+    msg: "Interface {{ vip_interface }} not found on this system"
+  when: not interface_exists
+
+
+# ------------------------------------------------------------
+# Normalize altname → kernel name
+# ------------------------------------------------------------
+- name: Normalize vip_interface if altname is provided
+  set_fact:
+    vip_interface: >-
+      {{
+        (
+          interface_list.stdout
+          | regex_findall(
+              '^\\d+: ([^:]+):.*altname ' ~ vip_interface,
+              multiline=True
+            )
+          | first
+        )
+        | default(vip_interface, true)
+      }}
+  when: "'altname ' ~ vip_interface in interface_list.stdout"
+
+
+# ------------------------------------------------------------
+# Get MAC address safely (NO regex_search)
+# ------------------------------------------------------------
+- name: Get link info for {{ vip_interface }}
+  command: ip -o link show {{ vip_interface }}
+  register: vip_link_info
+  changed_when: false
+
+- name: Extract MAC address for {{ vip_interface }}
+  set_fact:
+    vip_mac: >-
+      {{
+        vip_link_info.stdout
+        | regex_findall('link/(?:ether|infiniband) ([0-9a-f:]{17})')
+        | first
+        | default('')
+      }}
+
+- name: Validate MAC address
+  fail:
+    msg: "MAC address not found for interface {{ vip_interface }}"
+  when: vip_mac == ''
+
+
+# ------------------------------------------------------------
+# Create Virtual IP alias config
+# ------------------------------------------------------------
 - name: Configure virtual IP interface for cluster
   ansible.builtin.template:
     src: ifcfg-virtual.j2
@@ -19,14 +116,7 @@
     mode: '0644'
 
 
-- name: Restart NetworkManager to bring up virtual IP interface
-  ansible.builtin.systemd:
-    name: NetworkManager
-    state: restarted
-    enabled: true
-  register: nm_restart
-  changed_when: nm_restart.state == "restarted"
-  tags: [initscript]
+
 
 
 - name: Restart pcsd to bring up pcs service for further processes
@@ -70,7 +160,7 @@
 - name: Setup PCS cluster
   ansible.builtin.command: >
     pcs cluster setup {{ pcs_cluster_name }}
-    {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}
+    {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }} --force
   when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
   register: pcs_cluster_setup
   changed_when: "'already configured' not in pcs_cluster_setup.stderr and 'already set up' not in pcs_cluster_setup.stderr"
@@ -78,6 +168,34 @@
                "'already configured' not in pcs_cluster_setup.stderr and
                'already set up' not in pcs_cluster_setup.stderr"
 
+
+
+
+- name: Ensure PCS cluster services are started and enabled
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - pcsd
+    - pacemaker
+    - corosync
+
+
+
+- name: Check status of PCS cluster services
+  ansible.builtin.command: "systemctl status {{ item }}"
+  register: pcs_services_status
+  changed_when: false
+  loop:
+    - pcsd
+    - pacemaker
+    - corosync
+
+- name: Display PCS cluster service status output
+  ansible.builtin.debug:
+    msg: "{{ item.stdout }}"
+  loop: "{{ pcs_services_status.results }}"
 
 
 # 6. Enable & start the cluster
@@ -100,71 +218,237 @@
 
 
 
+# Create Virtual IP network alias configuration file
+- name: Configure virtual IP interface for cluster
+  ansible.builtin.template:
+    src: ifcfg-virtual.j2
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ vip_interface }}:0"
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Ensure VIP not bound to wrong interfaces
+  ansible.builtin.command: ip addr del {{ vip_ip }}/{{ vip_prefix }} dev {{ item }}
+  loop: "{{ ansible_interfaces }}"
+  ignore_errors: true
+  when: item != vip_interface
+
+
+
+
+
+
+
+- name: Restart NetworkManager to bring up virtual IP interface
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+    enabled: true
+  register: nm_restart
+  changed_when: nm_restart.state == "restarted"
+  tags: [initscript]
+
+
+
+# Check existing filesystem (primary only)
+- name: Check existing filesystem on DRBD device
+  command: "blkid -o value -s TYPE {{ drbd_device }}"
+  register: drbd_fs_check
+  failed_when: false
+  changed_when: false
+  when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+# Format DRBD device only on primary & only if empty
+- name: Format DRBD device with ext4
+  command: "mkfs.ext4 {{ drbd_device }}"
+  register: drbd_format
+  when:
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+   #- drbd_fs_check.stdout == ""
+  changed_when: drbd_format.rc == 0
+
+- name: Show filesystem creation result
+  debug:
+    msg: "DRBD device {{ drbd_device }} formatted on primary node."
+  when:
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+   #- drbd_fs_check.stdout == ""
+
+
+- name: Wait until PCS cluster is clean and nodes are online
+  command: pcs status
+  register: pcs_status
+  retries: 20
+  delay: 5
+  until:
+    #    - "'Current DC:' in pcs_status.stdout"
+    #    - "'UNCLEAN' not in pcs_status.stdout"
+    - "'Online:' in pcs_status.stdout"
+  changed_when: false
+
+
+
+
+
+# -------------------------------------------------------------
+# Create mount directory
+# -------------------------------------------------------------
+- name: Create /drbd mountpoint
+  file:
+    path: /drbd
+    state: directory
+    mode: "0755"
+
+# -------------------------------------------------------------
+# Mount DRBD device
+# -------------------------------------------------------------
+- name: Mount DRBD device to /drbd
+  mount:
+    path: /drbd
+    src: "{{ drbd_device }}"
+    fstype: ext4
+    state: mounted
+  when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+
+
+
 #######################################################################
 # Execute following PCS configuration tasks only on the PRIMARY NODE #
 #######################################################################
+# ==== VARIABLES ====
+# drbd_primitive_name: drbdfs
+# drbd_conf_resource: rudra_drbd
+# drbd_clone_name: drbdfs-clone
+# drbd_fs_resource_name: xcatfs
+# vip_resource_name: vip_xCAT
 
+
+# =============================
 # 7. Disable STONITH
-- name: Disable STONITH (fencing)
-  ansible.builtin.command: pcs property set stonith-enabled=false
+# =============================
+- name: Disable STONITH
+  command: pcs property set stonith-enabled=false
   when: ansible_hostname == primary_master_node_hostname
-  register: stonith_disable
-  changed_when: stonith_disable.rc == 0
 
-# 8. Set default resource properties
-- name: Set PCS resource defaults
-  ansible.builtin.command: >
-    pcs resource defaults update migration-threshold=10 resource-stickiness=100 start-delay=45s
+
+# =============================
+# 8. Set resource defaults
+# =============================
+- name: Set PCS defaults
+  command: >
+    pcs resource defaults update
+    migration-threshold=10
+    resource-stickiness=100
+    startdelay=45s
   when: ansible_hostname == primary_master_node_hostname
-  register: pcs_defaults
-  changed_when: pcs_defaults.rc == 0
 
-# 9. Create Virtual IP resource
-- name: Create Virtual IP resource for xCAT
-  ansible.builtin.command: >
+
+# =============================
+# 9. Create VIP
+# =============================
+- name: Create VIP resource
+  command: >
     pcs resource create {{ vip_resource_name }} ocf:heartbeat:IPaddr2
-    ip={{ vip_ip }} cidr_netmask={{ vip_prefix }}
-    op monitor interval=20s timeout=20s
-       start interval=0s timeout=20s
-       stop interval=0s timeout=20s --force
+    cidr_netmask={{ vip_prefix }}
+    ip={{ vip_ip }}
+    op monitor interval=10s timeout=20s
+    start interval=0s timeout=20s
+    stop interval=0s timeout=20s
   when: ansible_hostname == primary_master_node_hostname
-  register: vip_create
-  changed_when: vip_create.rc == 0
 
-# 10. Create DRBD resource
-- name: Create DRBD resource
-  ansible.builtin.command: >
-    pcs resource create {{ drbd_resource_name }} ocf:linbit:drbd
+
+# =============================
+# 10. Create DRBD primitive
+# =============================
+- name: Create DRBD primitive (with promotable flag)
+  command: >
+    pcs resource create {{ drbd_primitive_name }} ocf:linbit:drbd
     drbd_resource={{ drbd_resource_name }}
-    op demote interval=0s timeout=90
-       monitor interval=60s notify interval=0s timeout=90
-       promote interval=0s timeout=90
-       reload interval=0s timeout=30
-       start interval=0s timeout=240
-       stop interval=0s timeout=100
+    op monitor role=Master interval=20s timeout=90
+    op monitor role=Slave interval=30s timeout=90
+    op start timeout=240
+    op stop timeout=100
+    op reload timeout=30
+    promotable
   when: ansible_hostname == primary_master_node_hostname
-  register: drbd_create
-  changed_when: drbd_create.rc == 0
 
-# 11. Promote DRBD resource to Master/Slave
-- name: Promote DRBD resource to Master/Slave
-  ansible.builtin.command: >
-    pcs resource promotable {{ drbd_resource_name }} {{ drbd_clone_name }}
-    master-node-max=1 clone-max=2 notify=true master-max=1 clone-node-max=1
-  when: ansible_hostname == primary_master_node_hostname
-  register: drbd_promote
-  changed_when: drbd_promote.rc == 0
 
-# 12. Create Filesystem resource for DRBD mount
-- name: Create Filesystem resource for DRBD mount
-  ansible.builtin.command: >
+# =============================
+# 11. Create Filesystem resource
+# =============================
+- name: Create DRBD Filesystem resource
+  command: >
     pcs resource create {{ drbd_fs_resource_name }} ocf:heartbeat:Filesystem
     device={{ drbd_device }}
     directory={{ drbd_mount_dir }}
     fstype={{ drbd_fstype }}
     op monitor interval=20s timeout=40s
-       start interval=0s timeout=60s
-       stop interval=0s timeout=60s --force
+    op start interval=0s timeout=60s
+    op stop interval=0s timeout=60s
   when: ansible_hostname == primary_master_node_hostname
-  register: fs_create
-  changed_when: fs_create.rc == 0
+
+
+# =============================
+# 12. Convert DRBD primitive into clone
+# Equivalent to:
+# pcs resource promotable drbdfs drbdfs-clone ...
+#   command: pcs resource promotable {{ drbd_primitive_name }} {{ drbd_clone_name }} master-node-max=1 clone-max=2 notify=true master-max=1 clone-node-max=1
+#   command: pcs resource update drbdfs-clone promotable=true clone-max=2 clone-node-max=1 master-node-max=1 master-max=1 notify=true
+#            pcs resource update drbdfs-clone notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
+
+
+# =============================
+#- name: Make clone promotable
+#  command: pcs resource update {{ drbd_clone_name }}  promotable=true notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
+#  when: ansible_hostname == primary_master_node_hostname
+
+
+# =============================
+# 13. Constraints
+# =============================
+
+- name: Colocate FS with DRBD master
+  command: pcs constraint colocation add {{ drbd_fs_resource_name }} with master {{ drbd_clone_name }}
+  when: ansible_hostname == primary_master_node_hostname
+
+- name: DRBD must be promoted before FS mounts
+  command: pcs constraint order promote {{ drbd_clone_name }} then {{ drbd_fs_resource_name }}
+  when: ansible_hostname == primary_master_node_hostname
+
+- name: Prefer DRBD master on primary node
+  command: pcs constraint location {{ drbd_clone_name }} prefers {{ primary_master_node_hostname }}=100
+  when: ansible_hostname == primary_master_node_hostname
+
+- name: Colocate DRBD clone with VIP
+  command: pcs constraint colocation add {{ drbd_clone_name }} with {{ vip_resource_name }}
+  when: ansible_hostname == primary_master_node_hostname
+
+- name: Prefer VIP on secondary (50)
+  command: pcs constraint location {{ vip_resource_name }} prefers {{ secondary_master_node_hostname }}=50
+  when: ansible_hostname == primary_master_node_hostname
+
+
+- name: Prefer VIP on primary (100)
+  command: pcs constraint location {{ vip_resource_name }} prefers {{ primary_master_node_hostname }}=100
+  when: ansible_hostname == primary_master_node_hostname
+
+
+# =============================
+# 14. Update promotable clone options
+# =============================
+- name: Update DRBD clone properties
+  command: >
+    pcs resource update {{ drbd_clone_name }}
+    notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
+  when: ansible_hostname == primary_master_node_hostname
+
+
+# =============================
+# 15. Global ordering set
+# VIP → DRBD clone → FS
+# =============================
+#- name: Global ordering VIP → DRBD → FS
+#  command: pcs constraint order set {{ vip_resource_name }} {{ drbd_clone_name }} {{ drbd_fs_resource_name }}
+#  when: ansible_hostname == primary_master_node_hostname
