@@ -36,6 +36,16 @@
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
 
+- import_playbook: ../../playbook_library/configure/config_mount_nfs_client.yml
+  vars:
+    nfs_client_packages:
+      - nfs-utils
+    nfs_client_service: nfs-client.target
+    nfs_client_state: started        # started, stopped, restarted
+    nfs_client_enabled: true         # true or false
+    nfs_client_install_if_missing: true
+    nfs_mounts:                       # server:path mount_point
+      - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
 # ---------------------------------------------------------------------------
 # Monitoring Baseline
 # ---------------------------------------------------------------------------
