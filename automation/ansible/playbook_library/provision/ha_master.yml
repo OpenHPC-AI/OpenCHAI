@@ -46,13 +46,23 @@
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
+
+# ---------------------------------------------------------------------------
+# Standard Directory setup 
+# ---------------------------------------------------------------------------
+- import_playbook: ../configure/standard_dir_setup.yml
+  vars:
+    hpc_container_pv_dir: /hpc_container_pv
+    hpctool_stack_dir: /hpctool_stack
+    hpc_cluster_suite_dir: /root/hpc_cluster_suite
+
 # ---------------------------------------------------------------------------
 # Monitoring Baseline
 # ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/monitoring/configure_monitoring.yml
-  vars:
-    rsyslog_mode: server
-    rsyslog_server_ip: "{{ primary_master_node_ip }}"
+#- import_playbook: ../../playbook_library/monitoring/configure_monitoring.yml
+#  vars:
+#    rsyslog_mode: server
+#    rsyslog_server_ip: "{{ primary_master_node_ip }}"
 
 
 # ============================================================
@@ -70,8 +80,8 @@
 # ============================================================
 - import_playbook: ../utility/update_kernel.yml
   vars:
-    kernel_rpm_dir: "{{ base_dir }}/hpcsuite_registry/rpm-stack/kernel_rpms"
-    default_kernel_version: "5.14.0-570.17.1.el9_6"
+    kernel_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/kernel_rpms"
+    # default_kernel_version: "5.14.0-570.17.1.el9_6"
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +93,7 @@
     pcs_manage_services: true
     allow_package_removal: false
     pcs_reinstall_packages: false
-    drbd_rpm_dir: "{{ base_dir }}/rpm-stack/drbd_pcs_rpms"
+    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/drbd_pcs_rpms"
 
 # ---------------------------------------------------------------------------
 # DRBD Storage Replication Setup
@@ -128,7 +138,7 @@
 
 - import_playbook: ../utility/utility_lmod.yml
   vars:
-    local_rpm_base: "{{ rpm_stack_path }}/utilities_rpm"
+    local_rpm_base: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/utilities_rpm"
     modulepath_dir: "{{ modulepath_dir }}"
 
 
@@ -147,8 +157,8 @@
 - import_playbook: ../services/firewalld.yml
   vars:
     fw_service_name: firewalld
-    fw_service_state: started
-    fw_service_enabled: true
+    fw_service_state: stopped
+    fw_service_enabled: false
 
 - import_playbook: ../services/sshd.yml
   vars:
@@ -169,7 +179,7 @@
 
 - import_playbook: ../security/configure_selinux.yml
   vars:
-    selinux_mode: enforcing
+    selinux_mode: disabled
     selinux_install_if_missing: true
 
 - import_playbook: ../security/security_sshd.yml
@@ -201,6 +211,7 @@
       MACs hmac-sha2-512,hmac-sha2-256
       KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
 
+
 # =================================================================================================
 # ===  PHASE 6: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
 # =================================================================================================
@@ -227,7 +238,7 @@
 # ===  PHASE 6: Provisioning: xCAT Installation   ============
 # ============================================================
 
-- import_playbook: ./xcat-container/xcat-management/configure_xcat_ha_cluster.yml
+- import_playbook: ../provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
   vars:
     swarm_label_key: xcat_master
     swarm_label_value: true
@@ -246,6 +257,14 @@
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
     os_architecture: "{{ os_arch }}"
 
+- import_playbook: ../configure/xcat_docker_hostmachine_setup.yml
+  vars:
+    xcat_version: "{{ xcat_version_tag }}"
+    xcat_baseos: "{{ rhel_linux_label }}"
+    xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+    xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
+    os_architecture: "{{ os_arch }}"
+
 # ============================================================================
 # ===  PHASE 7: Authentication: OpenLDAP Container Installation   ============
 # ============================================================================
@@ -259,6 +278,10 @@
     ldap_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
     PRIMARY_LDAP_SERVER_IP: "{{ primary_ldap_server_ip }}"
     SECONDARY_LDAP_SERVER_IP: "{{ secondary_ldap_server_ip }}"
+
+- import_playbook: ../configure/ldap_docker_hostmachine_setup.yml
+  vars:
+    ldap_version: "{{ ldap_version_tag }}"
 
 # ===================================================================================
 # ===  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
@@ -274,4 +297,3 @@
     slurm_rpm_base: "{{ rpm_stack_path  }}/slurm_rpms/{{ enterprise_linux_label }}/"
     slurm_generate_jwt_key: true
     munge_generate_key: true
-
