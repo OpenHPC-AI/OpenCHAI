@@ -1,0 +1,18 @@
+---
+- name: Configure NFS Client
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    nfs_client_packages:
+      - nfs-utils
+    nfs_client_service: nfs-client.target
+    nfs_client_state: started        # started, stopped, restarted
+    nfs_client_enabled: true         # true or false
+    nfs_client_install_if_missing: true
+    nfs_mounts:                       # server:path mount_point
+      - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
+
+  roles:
+    - "{{ roles_parent_path }}/storage_lib/storage_nfs_client"
