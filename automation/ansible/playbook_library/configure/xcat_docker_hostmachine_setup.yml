@@ -5,7 +5,7 @@
   gather_facts: yes   # <--- must gather facts for ansible_architecture
 
   vars_files:
-    - ../../../../group_vars/all.yml
+    - ../../group_vars/all.yml
 
   vars:
     xcat_version: "{{ xcat_version_tag }}"
