@@ -72,6 +72,8 @@
   when:
     - missing_rpms | length > 0
     - expected_rpm_paths is defined
+  ignore_errors: yes
+
 
 
 
