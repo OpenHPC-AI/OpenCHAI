@@ -14,7 +14,7 @@
         echo "Warning: Node with hostname $host not found in docker swarm"
       fi
     done
-  when: inventory_hostname == primary_master_node_hostname
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
   args:
     executable: /bin/bash
 
@@ -22,5 +22,3 @@
   debug:
     msg: "Swarm label 'xcat_master=true' successfully applied to primary and secondary nodes: [{{ primary_swarm_manager }}, {{ secondary_swarm_manager }}]"
   run_once: true
-
-
