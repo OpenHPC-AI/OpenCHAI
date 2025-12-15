@@ -515,6 +515,7 @@ fi
 if [[ -f "$ALL_YML" ]]; then
     sed -i "s|^base_dir: .*|base_dir: $BASE_DIR|" "$ALL_YML" || warn "Unable to modify $ALL_YML"
     sed -i "s|^os_version: .*|os_version: $OS_VERSION|" "$ALL_YML" || warn "Unable to modify $ALL_YML"
+    sed -i "s|^openchai_version: .*|openchai_version: $OPENCHAI_VERSION|" "$ALL_YML" || warn "Unable to modify $ALL_YML"
     notice "Updated: $ALL_YML"
 fi
 
