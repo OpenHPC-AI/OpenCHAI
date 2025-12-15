@@ -74,6 +74,8 @@
     (wget_results is defined and
      wget_results.results | map(attribute='stdout') | join('') | regex_search('(saved|downloaded|retrieved)', multiline=True))
   failed_when: wget_results is failed
+  ignore_errors: true
+
 
 
 
