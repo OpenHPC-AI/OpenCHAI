@@ -1,0 +1,68 @@
+---
+# tasks file for ldap_container_host_machine_setup
+- name: Install required LDAP client packages
+  package:
+    name:
+      - nss-pam-ldapd
+      - authconfig
+      - openldap
+      - openldap-clients
+    state: present
+
+- name: Backup /etc/nsswitch.conf
+  command: mv /etc/nsswitch.conf /etc/nsswitch.conf.bk
+  args:
+    creates: /etc/nsswitch.conf.bk
+
+- name: Backup /etc/nslcd.conf
+  command: mv /etc/nslcd.conf /etc/nslcd.conf.bk
+  args:
+    creates: /etc/nslcd.conf.bk
+
+- name: Backup /etc/openldap
+  command: mv /etc/openldap /etc/openldap.bk
+  args:
+    creates: /etc/openldap.bk
+  ignore_errors: true   # folder may not exist
+
+- name: Backup /var/lib/ldap
+  command: mv /var/lib/ldap /var/lib/ldap.bk
+  args:
+    creates: /var/lib/ldap.bk
+  ignore_errors: true
+
+- name: Copy nsswitch.conf from LDAP container
+  command: docker cp {{ ldap_container_name }}:/etc/nsswitch.conf /etc/nsswitch.conf
+  when: ldap_container_name is defined
+
+- name: Copy nslcd.conf from LDAP container
+  command: docker cp {{ ldap_container_name }}:/etc/nslcd.conf /etc/nslcd.conf
+  when: ldap_container_name is defined
+
+- name: Remove existing /var/lib/ldap to allow symlink
+  file:
+    path: /var/lib/ldap
+    state: absent
+
+- name: Remove existing /etc/openldap to allow symlink
+  file:
+    path: /etc/openldap
+    state: absent
+
+- name: Create symlink for /var/lib/ldap
+  file:
+    src: /hpc_container_pv/ldapdata/var/lib/ldap
+    dest: /var/lib/ldap
+    state: link
+
+- name: Create symlink for /etc/openldap
+  file:
+    src: /hpc_container_pv/ldapdata/etc/openldap
+    dest: /etc/openldap
+    state: link
+
+- name: Enable and start nslcd service
+  service:
+    name: nslcd
+    enabled: yes
+    state: started
