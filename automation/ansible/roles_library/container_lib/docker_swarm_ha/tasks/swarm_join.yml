@@ -2,13 +2,13 @@
 
 - name: Ensure swarm token directory exists
   file:
-    path: "{{ rpm_stack_path }}/docker_swarm"
+    path: "{{ configuration_dir_path }}/docker_swarm"
     state: directory
     mode: '0755'
 
 - name: Read swarm manager join token from NFS mount
   slurp:
-    src: "{{ rpm_stack_path }}/docker_swarm/swarm_token_file"
+    src: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   register: swarm_token_data
 
 - name: Set swarm join token fact
