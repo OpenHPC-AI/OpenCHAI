@@ -452,3 +452,4 @@
 #- name: Global ordering VIP → DRBD → FS
 #  command: pcs constraint order set {{ vip_resource_name }} {{ drbd_clone_name }} {{ drbd_fs_resource_name }}
 #  when: ansible_hostname == primary_master_node_hostname
+
