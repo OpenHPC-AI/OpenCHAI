@@ -1,3 +1,4 @@
+
 ---
 
 - name: Detect OS major version
@@ -22,14 +23,16 @@
 # 2. Install Development Tools group
 - name: Install Development Tools group
   ansible.builtin.yum:
-    name: "@Development Tools"
-    state: present
+   name: "@Development Tools"
+   state: present
+  ignore_errors: yes
 
 # 3. Install extra packages
 - name: Install extra development packages
   ansible.builtin.yum:
     name: "{{ extra_packages }}"
     state: present
+  ignore_errors: yes
 
 # 4. Remove old environment-modules
 - name: Remove old environment-modules package
@@ -37,21 +40,64 @@
     name: "{{ old_modules_package }}"
     state: absent
     autoremove: no
+  ignore_errors: yes
+
+
+# Determine DRBD RPM path based on RHEL version
+- name: Set Development RPM directory path
+  ansible.builtin.set_fact:
+    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/developement_rpms"
+
+# Check if DRBD RPM directory exists
+- name: Check if Development RPM directory exists
+  ansible.builtin.stat:
+    path: "{{ drbd_rpm_dir }}"
+  register: drbd_rpm_dir_stat
+
+# Find local RPMs only if directory exists
+- name: Find local RPM files
+  ansible.builtin.find:
+    paths: "{{ drbd_rpm_dir }}"
+    patterns: "*.rpm"
+  register: local_rpms
+  when: drbd_rpm_dir_stat.stat.exists
+
+# Install PCS + DRBD packages from local RPMs using rpm
+- name: Install Development packages from local RPMs
+  ansible.builtin.command: >
+    rpm -Uvh --force --nodeps --nosignature {{ item.path }}
+  loop: "{{ local_rpms.files }}"
+  register: drbd_rpm_install_results
+
 
 # 5. Try to install lmod-hpc from local RPMs
+#     paths: "{{ local_rpm_base }}/el{{ os_major_version }}"
+
 - name: Find local Lmod RPMs
   ansible.builtin.find:
-    paths: "{{ local_rpm_base }}/el{{ os_major_version }}"
-    patterns: "lmod-hpc*.rpm"
+    paths: "{{ local_rpm_base }}/"
+    patterns:
+      - "lmod-hpc*.rpm"
+      - "Lmod*.rpm"
+      - "lua*.rpm"
   register: local_lmod_rpms
   when: lmod_check.stdout == ""
 
-- name: Install Lmod from local RPMs
+
+- name: Install Lmod from local RPMs using rpm command
+  ansible.builtin.command:
+    cmd: "rpm -Uvh --force {{ local_lmod_rpms.files | map(attribute='path') | join(' ') }}"
+  when: lmod_check.stdout == "" and local_lmod_rpms.matched > 0
+  register: local_rpm_install
+
+
+- name: Install Lmod from local RPMs using yum
   ansible.builtin.yum:
     name: "{{ local_lmod_rpms.files | map(attribute='path') | list }}"
     state: present
   when: lmod_check.stdout == "" and local_lmod_rpms.matched > 0
   register: local_rpm_install
+  ignore_errors: yes
 
 # 6. Fallback: install Lmod from EPEL if local RPMs not found
 - name: Install epel-release if needed
