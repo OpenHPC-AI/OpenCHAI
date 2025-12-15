@@ -23,7 +23,7 @@
 # Create directory for storing swarm token
 - name: Create directory for storing swarm token
   file:
-    path: "{{ rpm_stack_path }}/docker_swarm"
+    path: "{{ configuration_dir_path }}/docker_swarm"
     state: directory
     mode: '0755'
   when: inventory_hostname == primary_swarm_manager
@@ -47,7 +47,7 @@
 - name: Save swarm token to NFS shared location
   copy:
     content: "{{ manager_token.stdout }}"
-    dest: "{{ rpm_stack_path }}/docker_swarm/swarm_token_file"
+    dest: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   when:
     - inventory_hostname == primary_swarm_manager
     - manager_token.stdout | length > 0
@@ -55,5 +55,5 @@
 # Debug confirmation
 - name: Display saved token path
   debug:
-    msg: "Swarm manager token saved at {{ rpm_stack_path }}/docker_swarm/swarm_token_file"
+    msg: "Swarm manager token saved at {{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   when: inventory_hostname == primary_swarm_manager
