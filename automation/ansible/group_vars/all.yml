@@ -118,4 +118,6 @@ modulepath_dir: "{{ application_base_dir }}/modulefiles/apps"
 # nvidia cuda version
 nvidia_cuda_version: "13.0"
 
+####################### Monitoring Tools Variable #######################
+monitoring_log_server_ip: "172.10.3.25"
 
