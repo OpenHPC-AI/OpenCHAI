@@ -57,4 +57,3 @@
   debug:
     msg: "Swarm manager token saved at {{ rpm_stack_path }}/docker_swarm/swarm_token_file"
   when: inventory_hostname == primary_swarm_manager
-
