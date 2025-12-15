@@ -1,13 +1,16 @@
 ---
-- name: Setup Lmod and configure MODULEPATH
+- name: Provision baseline ALL
   hosts: all
-  become: true
+  become: yes
   vars_files:
     - ../../group_vars/all.yml
 
   vars:
-    local_rpm_base: "{{ rpm_stack_path }}/utilities_rpm"
-    modulepath_dir: "{{ modulepath_dir }}"
+    drbd_use_local_rpms: true
+    pcs_manage_services: true
+    allow_package_removal: false
+    pcs_reinstall_packages: false
+    drbd_rpm_dir: "{{ base_dir }}/rpm-stack/drbd_pcs_rpms/"
 
   roles:
-    - "{{ roles_parent_path }}/utility_lib/utility_lmod"
+    - "{{ roles_parent_path }}/utility_lib/utility_pcs_drbd"
