@@ -1,6 +1,5 @@
 ---
 # tasks/main.yml
-#
 - name: Create a directory for swarm token save
   include_tasks: swarm_token_dir.yml
   when: inventory_hostname == primary_swarm_manager
