@@ -191,6 +191,28 @@
       MACs hmac-sha2-512,hmac-sha2-256
       KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
 
+# =================================================================================================
+# ===  PHASE 6: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
+# =================================================================================================
+- import_playbook: ../container/docker-engine/install_docker_latest.yml
+  vars:
+    docker_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
+    docker_remove_exiting: true # or false
+    docker_install: true # or false
+    at_install_allow_erasing: false # or true
+    docker_service_enable: yes # or no
+
+- import_playbook: ../container/docker-compose/install_docker_compose.yml
+
+- import_playbook: ../container/docker-swarm/swarm_ha_setup.yml
+  vars:
+    primary_manager: "{{ primary_swarm_manager }}"
+    swarm_managers:
+      - "{{ primary_swarm_manager }}"
+      - "{{ secondary_swarm_manager }}"
+      - "{{ tertiary_swarm_manager }}"
+    swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
+
 # ============================================================
 # ===  PHASE 6: Provisioning: xCAT Installation   ============
 # ============================================================
