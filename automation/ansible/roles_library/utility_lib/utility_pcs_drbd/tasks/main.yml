@@ -8,7 +8,3 @@
 
 - name: Include installation tasks
   ansible.builtin.include_tasks: install.yml
-
-- name: Manage PCS/DRBD services
-  ansible.builtin.include_tasks: services.yml
-  when: pcs_manage_services
