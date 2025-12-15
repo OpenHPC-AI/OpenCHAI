@@ -1,0 +1,37 @@
+---
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+
+- import_playbook: ../../playbook_library/utility/utility_web_host.yml
+  vars:
+   web_server: nginx
+   web_port: 8080
+
+- import_playbook: ../../playbook_library/storage/storage_nfs_server.yml
+  vars:
+   nfs_server_service: nfs-server
+   nfs_server_state: started       # started, stopped, restarted
+   nfs_server_enabled: true        # true or false
+   nfs_server_install_if_missing: true
+   nfs_export_paths:
+     - "{{ rpm_stack_path }}/"
+   nfs_export_options: ro,sync,no_root_squash
+
+- import_playbook: ../../playbook_library/configure/config_mount_nfs_server.yml
+  vars:
+   nfs_server_service: nfs-server
+   nfs_server_state: started       # started, stopped, restarted
+   nfs_server_enabled: true        # true or false
+   nfs_server_install_if_missing: true
+   nfs_export_paths:
+     - "{{ configuration_dir_path }}/"
+   nfs_export_options: ro,sync,no_root_squash
