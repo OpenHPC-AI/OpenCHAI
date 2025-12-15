@@ -28,7 +28,8 @@ fi
 export BASH_ENV=/opt/hpc/admin/lmod/lmod/init/bash
 
 # Initialize modules system
-. /opt/hpc/admin/lmod/lmod/init/bash >/dev/null
+. /usr/share/lmod/lmod/init/bash > /dev/null
+#. /opt/hpc/admin/lmod/lmod/init/bash >/dev/null
 
 # Load baseline OpenHPC environment
 module try-add hpc
