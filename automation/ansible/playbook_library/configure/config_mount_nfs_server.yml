@@ -1,0 +1,17 @@
+---
+- name: Configure NFS Server
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+  vars:
+    nfs_server_service: nfs-server
+    nfs_server_state: started       # started, stopped, restarted
+    nfs_server_enabled: true        # true or false
+    nfs_server_install_if_missing: true
+    nfs_export_paths:
+      - "{{ configuration_dir_path }}/"
+    nfs_export_options: rw,sync,no_root_squash
+
+  roles:
+    - "{{ roles_parent_path }}/storage_lib/storage_nfs_server"
