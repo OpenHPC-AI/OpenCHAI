@@ -1,0 +1,3 @@
+---
+# defaults file for ldap_container_host_machine_setup
+ldap_container_name: "ldap_server"
