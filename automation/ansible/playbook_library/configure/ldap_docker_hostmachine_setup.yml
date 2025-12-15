@@ -6,7 +6,7 @@
   gather_facts: yes
 
   vars_files:
-    - ../../../../group_vars/all.yml
+    - ../../group_vars/all.yml
 
   vars:
     ldap_version: "{{ ldap_version_tag }}"
@@ -25,4 +25,4 @@
         ldap_container_name: "ldap_server_{{ ldap_var.SERVER_ROLE }}"
 
   roles:
-    - role: "{{ roles_parent_path }}/configure_lib/ldap_container_host_machine_setup"
+    - "{{ roles_parent_path }}/configure_lib/ldap_container_host_machine_setup"
