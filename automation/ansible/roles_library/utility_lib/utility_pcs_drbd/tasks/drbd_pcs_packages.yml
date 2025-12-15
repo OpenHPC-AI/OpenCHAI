@@ -1,0 +1,72 @@
+---
+
+- name: Enable required repo for ELRepo (extras on EL8, crb on EL9)
+  ansible.builtin.command: >
+    dnf config-manager --set-enabled {{ 'crb' if ansible_distribution_major_version | int >= 9 else 'extras' }}
+  changed_when: false
+
+- name: Import ELRepo GPG key
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+
+
+- name: Install ELRepo repository
+  ansible.builtin.yum:
+    name: elrepo-release
+    state: present
+
+- name: Enable HighAvailability repo on RHEL
+  ansible.builtin.command: dnf config-manager --set-enabled HighAvailability
+  when:
+    - ansible_distribution == "RedHat"
+
+- name: Enable HighAvailability repo on Rocky/Alma
+  ansible.builtin.command: dnf config-manager --set-enabled ha
+  when:
+    - ansible_distribution in ["Rocky", "AlmaLinux"]
+
+
+
+- name: Ensure DRBD RPM directory exists
+  ansible.builtin.file:
+    path: "{{ drbd_rpm_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if DRBD RPM already exists
+  ansible.builtin.find:
+    paths: "{{ drbd_rpm_dir }}"
+    patterns: "{{ item }}*.rpm"
+  loop: "{{ drbd_packages }}"
+  register: drbd_existing_rpms
+
+- name: Set list of packages that need to be downloaded
+  ansible.builtin.set_fact:
+    drbd_missing_packages: >-
+      {{
+        drbd_existing_rpms.results
+        | zip(drbd_packages)
+        | selectattr(0, 'equalto', {'matched': []})
+        | map(attribute=1)
+        | list
+      }}
+
+- name: Download missing DRBD packages with yumdownloader
+  ansible.builtin.shell: >
+    yumdownloader --downloadonly --downloaddir={{ drbd_rpm_dir }} {{ item }}
+  loop: "{{ drbd_missing_packages }}"
+  args:
+    executable: /bin/bash
+  when: drbd_missing_packages | length > 0
+
+- name: Re-scan all DRBD RPMs after download
+  ansible.builtin.find:
+    paths: "{{ drbd_rpm_dir }}"
+    patterns: "*.rpm"
+  register: found_drbd_rpms
+
+- name: Install DRBD packages from downloaded RPMs
+  ansible.builtin.yum:
+    name: "{{ found_drbd_rpms.files | map(attribute='path') | list }}"
+    state: present
