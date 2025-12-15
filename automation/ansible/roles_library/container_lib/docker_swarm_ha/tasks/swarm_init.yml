@@ -38,7 +38,7 @@
 - name: Save swarm token to local file
   copy:
     content: "{{ manager_token.stdout }}"
-    dest: "{{ swarm_token_file }}"
+    dest: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   when:
     - inventory_hostname == primary_swarm_manager
     - manager_token.stdout | length > 0
@@ -57,3 +57,4 @@
   debug:
     msg: "Swarm manager token saved at {{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   when: inventory_hostname == primary_swarm_manager
+
