@@ -35,3 +35,6 @@
    nfs_export_paths:
      - "{{ configuration_dir_path }}/"
    nfs_export_options: ro,sync,no_root_squash
+
+# Make sure first docker swarm run on HPC-Master Nodes
+#- import_playbook: ../../playbook_library/container/docker-swarm/swarm_ha_setup.yml
