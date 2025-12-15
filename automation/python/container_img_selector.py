@@ -95,16 +95,34 @@ def recursive_list_registry(url):
 
 
 def get_all_versions_recursive(tool_name):
-    """Recursively detect version folders under tool_name."""
+    """
+    Detect ALL version directories under tool_name.
+    Supports:
+      - digits        (1, 2024)
+      - alphabets     (alpha, stable)
+      - words         (release, latest)
+      - mixed         (v1.2.3, rocky9.6, beta_01)
+    """
     tool_url = f"{BASE_URL}/{tool_name}/"
     html_items = recursive_list_registry(tool_url)
 
     version_dirs = []
 
     for item in html_items:
-        # Accept any folder containing a version-like token
-        if re.search(r'v\d', item):
-            version_dirs.append(item.rstrip('/'))
+        # Only directories
+        if not item.endswith("/"):
+            continue
+
+        name = item.rstrip("/")
+
+        # Ignore parent/current dirs
+        if name in ("..", "."):
+            continue
+
+        # Accept ANY alphanumeric folder name
+        # (letters, digits, dot, dash, underscore)
+        if re.match(r'^[A-Za-z0-9._-]+$', name):
+            version_dirs.append(name)
 
     return sorted(set(version_dirs))
 
