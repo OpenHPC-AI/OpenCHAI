@@ -10,7 +10,7 @@
     pcs_manage_services: true
     allow_package_removal: false
     pcs_reinstall_packages: false
-    drbd_rpm_dir: "{{ base_dir }}/rpm-stack/drbd_pcs_rpms/"
+    drbd_rpm_dir: "{{ rpm_stack_path }}/drbd_pcs_rpms/"
 
   roles:
     - "{{ roles_parent_path }}/utility_lib/utility_pcs_drbd"
