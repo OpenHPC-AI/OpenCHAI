@@ -2,18 +2,16 @@
 # Remove conflicting DRBD packages if allowed
 - name: Remove conflicting DRBD packages if allowed
   ansible.builtin.package:
-    name: >-
-      {{ conflicting_drbd_pkg_rhel9 if rhel_major_version == 9 else conflicting_drbd_pkg_rhel8 }}
+    name: "{{ conflicting_drbd_pkg_rhel9 if rhel_major_version == 9 else conflicting_drbd_pkg_rhel8 }}"
     state: absent
   when: allow_package_removal | default(false)
 
 # Determine DRBD RPM path based on RHEL version
 - name: Set DRBD RPM directory path
   ansible.builtin.set_fact:
-    drbd_rpm_dir: "{{ base_dir }}/hpcsuite_registry/rpm-stack/drbd_pcs_rpms/"
-    #drbd_rpm_dir: "{{ base_dir }}/rpm-stack/drbd_pcs_rpms/el{{ rhel_major_version }}"
+    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/drbd_pcs_rpms"
 
-# Verify the directory exists
+# Check if DRBD RPM directory exists
 - name: Check if DRBD RPM directory exists
   ansible.builtin.stat:
     path: "{{ drbd_rpm_dir }}"
@@ -27,7 +25,6 @@
   register: local_rpms
   when: drbd_rpm_dir_stat.stat.exists
 
-# Then: install from local source using rpm
 # Install PCS + DRBD packages from local RPMs using rpm
 - name: Install PCS + DRBD packages from local RPMs
   ansible.builtin.command: >
@@ -36,18 +33,15 @@
   register: drbd_rpm_install_results
   changed_when: true
   failed_when: >
-    (
-      drbd_rpm_install_results.rc is defined
-      and drbd_rpm_install_results.rc != 0
-    ) and (
-      'NOKEY' not in (drbd_rpm_install_results.stdout | default(''))
-      and 'NOKEY' not in (drbd_rpm_install_results.stderr | default(''))
-    )
+    (drbd_rpm_install_results.rc | default(0) != 0)
+    and ('NOKEY' not in (drbd_rpm_install_results.stdout | default('')))
+    and ('NOKEY' not in (drbd_rpm_install_results.stderr | default('')))
   when:
     - drbd_use_local_rpms | default(false)
     - local_rpms is defined
     - local_rpms.files | length > 0
 
+# Debug output (optional)
 - name: Debug RPM install output (optional)
   ansible.builtin.debug:
     var: drbd_rpm_install_results.results
