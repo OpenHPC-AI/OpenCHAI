@@ -362,12 +362,12 @@
 # =============================
 # 10. Create DRBD primitive
 # =============================
-- name: Create DRBD primitive (with promotable flag)
+- name: Create DRBD primitive (promotable)
   command: >
     pcs resource create {{ drbd_primitive_name }} ocf:linbit:drbd
     drbd_resource={{ drbd_resource_name }}
-    op monitor role=Master interval=20s timeout=90
-    op monitor role=Slave interval=30s timeout=90
+    op monitor role=Promoted interval=20s timeout=90
+    op monitor role=Unpromoted interval=30s timeout=90
     op start timeout=240
     op stop timeout=100
     op reload timeout=30
@@ -409,40 +409,46 @@
 # 13. Constraints
 # =============================
 
-- name: Colocate FS with DRBD master
-  command: pcs constraint colocation add {{ drbd_fs_resource_name }} with master {{ drbd_clone_name }}
+- name: Colocate filesystem with DRBD master
+  command: >
+    pcs constraint colocation add
+    {{ drbd_fs_resource_name }} with master {{ drbd_clone_name }}
   when: ansible_hostname == primary_master_node_hostname
 
-- name: DRBD must be promoted before FS mounts
-  command: pcs constraint order promote {{ drbd_clone_name }} then {{ drbd_fs_resource_name }}
+- name: Promote DRBD before filesystem mount
+  command: >
+    pcs constraint order
+    promote {{ drbd_clone_name }} then start {{ drbd_fs_resource_name }}
+  when: ansible_hostname == primary_master_node_hostname
+
+
+- name: Colocate VIP with filesystem
+  command: >
+    pcs constraint colocation add
+    {{ vip_resource_name }} with {{ drbd_fs_resource_name }}
+  when: ansible_hostname == primary_master_node_hostname
+
+- name: Start filesystem before VIP
+  command: >
+    pcs constraint order
+    start {{ drbd_fs_resource_name }} then start {{ vip_resource_name }}
   when: ansible_hostname == primary_master_node_hostname
 
 - name: Prefer DRBD master on primary node
-  command: pcs constraint location {{ drbd_clone_name }} prefers {{ primary_master_node_hostname }}=100
-  when: ansible_hostname == primary_master_node_hostname
-
-- name: Colocate DRBD clone with VIP
-  command: pcs constraint colocation add {{ drbd_clone_name }} with {{ vip_resource_name }}
-  when: ansible_hostname == primary_master_node_hostname
-
-- name: Prefer VIP on secondary (50)
-  command: pcs constraint location {{ vip_resource_name }} prefers {{ secondary_master_node_hostname }}=50
-  when: ansible_hostname == primary_master_node_hostname
-
-
-- name: Prefer VIP on primary (100)
-  command: pcs constraint location {{ vip_resource_name }} prefers {{ primary_master_node_hostname }}=100
+  command: >
+    pcs constraint location
+    {{ drbd_clone_name }} prefers {{ primary_master_node_hostname }}=100
   when: ansible_hostname == primary_master_node_hostname
 
 
 # =============================
 # 14. Update promotable clone options
 # =============================
-- name: Update DRBD clone properties
-  command: >
-    pcs resource update {{ drbd_clone_name }}
-    notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
-  when: ansible_hostname == primary_master_node_hostname
+#- name: Update DRBD clone properties
+#  command: >
+#    pcs resource update {{ drbd_clone_name }}
+#    notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
+#  when: ansible_hostname == primary_master_node_hostname
 
 
 # =============================
@@ -452,4 +458,3 @@
 #- name: Global ordering VIP → DRBD → FS
 #  command: pcs constraint order set {{ vip_resource_name }} {{ drbd_clone_name }} {{ drbd_fs_resource_name }}
 #  when: ansible_hostname == primary_master_node_hostname
-
