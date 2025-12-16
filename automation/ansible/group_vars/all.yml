@@ -7,12 +7,15 @@ rhel_linux_label: rh8
 enterprise_linux_label: el8
 default_kernel_version: "5.14.0-570.17.1.el9_6"
 
-# OpenCHAI Manager Environment Setup 
+# OpenCHAI Manager Environment Setup
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
-rpm_stack_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ openchai_version }}"
-configuration_dir_path: "{{ rpm_stack_path }}/mount"
+openchai_vault_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ openchai_version }}"
+rpm_stack_path: "{{ openchai_vault_path }}/rpm-stack"
+configuration_dir_path: "{{ openchai_vault_path }}/mount"
+bin_dir_path: "{{ openchai_vault_path }}/bin"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
+
 
 # Ansible inventroy hostname
 primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
