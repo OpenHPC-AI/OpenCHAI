@@ -7,7 +7,7 @@
     - ../../group_vars/all.yml
 
   vars:
-    vip_interface: "{{ xcat_vip_interface }}"
+    vip_interface: "{{ private_interface }}"
     vip_ip: "{{ xcat_vip_ip }}"
     vip_prefix: "{{ xcat_vip_subnet_prefix }}"
     vip_resource_name: "{{ xcat_vip_resource_name }}"
