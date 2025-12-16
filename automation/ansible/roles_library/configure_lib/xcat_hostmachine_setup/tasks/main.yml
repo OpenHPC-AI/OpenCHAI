@@ -122,3 +122,14 @@
   args:
     executable: /bin/bash
   changed_when: false
+
+###############################################################
+# 8. Create .xcat key symlink for command execution
+###############################################################
+
+- name: Create xCAT config symlink for root
+  file:
+    src: /drbd/xcatdata/.xcat
+    dest: /root/.xcat
+    state: link
+    force: yes
