@@ -7,6 +7,13 @@
   vars_files:
     - ../../group_vars/all.yml
 
+      #  vars:
+      #    roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
+
+    #  vars_files:
+    #   - /OpenCHAI/automation/ansible/group_vars/all.yml
+
+
   tasks:
     - name: Display starting banner
       ansible.builtin.debug:
@@ -48,9 +55,9 @@
       - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
 
 # ---------------------------------------------------------------------------
-# Standard Directory setup 
+# Standard Directory setup
 # ---------------------------------------------------------------------------
-- import_playbook: ../configure/standard_dir_setup.yml
+- import_playbook: ../../playbook_library/configure/standard_dir_setup.yml
   vars:
     hpc_container_pv_dir: /hpc_container_pv
     hpctool_stack_dir: /hpctool_stack
@@ -59,10 +66,13 @@
 # ---------------------------------------------------------------------------
 # Monitoring Baseline
 # ---------------------------------------------------------------------------
-#- import_playbook: ../../playbook_library/monitoring/configure_monitoring.yml
-#  vars:
-#    rsyslog_mode: server
-#    rsyslog_server_ip: "{{ primary_master_node_ip }}"
+- import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
+
+
+- import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
+  vars:
+    rsyslog_mode: server
+    rsyslog_server_ip: "{{ primary_master_node_ip }}"
 
 
 # ============================================================
@@ -78,9 +88,9 @@
 # ============================================================
 # ===  PHASE 2: KERNEL & UTILITIES  ==========================
 # ============================================================
-- import_playbook: ../utility/update_kernel.yml
+- import_playbook: ../../playbook_library/utility/update_kernel.yml
   vars:
-    kernel_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/kernel_rpms"
+    kernel_rpm_dir: "{{ rpm_stack_path }}/kernel_rpms"
     # default_kernel_version: "5.14.0-570.17.1.el9_6"
 
 
@@ -93,7 +103,7 @@
     pcs_manage_services: true
     allow_package_removal: false
     pcs_reinstall_packages: false
-    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/drbd_pcs_rpms"
+    drbd_rpm_dir: "{{ rpm_stack_path }}/drbd_pcs_rpms"
 
 # ---------------------------------------------------------------------------
 # DRBD Storage Replication Setup
@@ -117,7 +127,7 @@
 # ---------------------------------------------------------------------------
 - import_playbook: ../../playbook_library/utility/utility_pcs_basic.yml
   vars:
-    vip_interface: "{{ xcat_vip_interface }}"
+    vip_interface: "{{ private_interface }}"
     vip_ip: "{{ xcat_vip_ip }}"
     vip_prefix: "{{ xcat_vip_subnet_prefix }}"
     vip_resource_name: "{{ xcat_vip_resource_name }}"
@@ -136,16 +146,16 @@
 
 
 
-- import_playbook: ../utility/utility_lmod.yml
+- import_playbook: ../../playbook_library/utility/utility_lmod.yml
   vars:
-    local_rpm_base: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/utilities_rpm"
+    local_rpm_base: "{{ rpm_stack_path }}/utilities_rpm"
     modulepath_dir: "{{ modulepath_dir }}"
 
 
 # ============================================================
 # ===  PHASE 3: NETWORK CONFIGURATION  =======================
 # ============================================================
-- import_playbook: ../network/setup_mellanox.yml
+- import_playbook: ../../playbook_library/network/setup_mellanox.yml
   vars:
     install_mellanox: true
     # mellanox_repo_url: rhel9_4_repo
@@ -154,13 +164,13 @@
 # ============================================================
 # ===  PHASE 4: CORE SERVICES  ===============================
 # ============================================================
-- import_playbook: ../services/firewalld.yml
+- import_playbook: ../../playbook_library/services/firewalld.yml
   vars:
     fw_service_name: firewalld
     fw_service_state: stopped
     fw_service_enabled: false
 
-- import_playbook: ../services/sshd.yml
+- import_playbook: ../../playbook_library/services/sshd.yml
   vars:
     sshd_service_name: sshd
     sshd_service_state: started
@@ -170,19 +180,19 @@
 # ===  PHASE 5: SECURITY & HARDENING  ========================
 # ============================================================
 
-- import_playbook: ../security/configure_firewall.yml
+- import_playbook: ../../playbook_library/security/configure_firewall.yml
   vars:
     fw_service_name: firewalld
     fw_service_state: stopped       # 🧠 Example of overriding variable
     fw_service_enabled: false       # 🧠 Custom value
     fw_install_if_missing: true
 
-- import_playbook: ../security/configure_selinux.yml
+- import_playbook: ../../playbook_library/security/configure_selinux.yml
   vars:
     selinux_mode: disabled
     selinux_install_if_missing: true
 
-- import_playbook: ../security/security_sshd.yml
+- import_playbook: ../../playbook_library/security/security_sshd.yml
   vars:
     sshd_packages:
       - openssh-server
@@ -215,7 +225,7 @@
 # =================================================================================================
 # ===  PHASE 6: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
 # =================================================================================================
-- import_playbook: ../container/docker-engine/install_docker_latest.yml
+- import_playbook: ../../playbook_library/container/docker-engine/install_docker_latest.yml
   vars:
     docker_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
     docker_remove_exiting: true # or false
@@ -223,9 +233,9 @@
     at_install_allow_erasing: false # or true
     docker_service_enable: yes # or no
 
-- import_playbook: ../container/docker-compose/install_docker_compose.yml
+- import_playbook: ../../playbook_library/container/docker-compose/install_docker_compose.yml
 
-- import_playbook: ../container/docker-swarm/swarm_ha_setup.yml
+- import_playbook: ../../playbook_library/container/docker-swarm/swarm_ha_setup.yml
   vars:
     primary_manager: "{{ primary_swarm_manager }}"
     swarm_managers:
@@ -238,7 +248,7 @@
 # ===  PHASE 6: Provisioning: xCAT Installation   ============
 # ============================================================
 
-- import_playbook: ../provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
+- import_playbook: ../../playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
   vars:
     swarm_label_key: xcat_master
     swarm_label_value: true
@@ -248,7 +258,7 @@
     xcat_container_img: "{{ xcat_container_img_tar }}"
     xcat_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
 
-- import_playbook: ../configure/xcat_docker_hostmachine_setup.yml
+- import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
   vars:
     xcat_version: "{{ xcat_version_tag }}"
     xcat_baseos: "{{ rhel_linux_label }}"
@@ -257,7 +267,7 @@
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
     os_architecture: "{{ os_arch }}"
 
-- import_playbook: ../configure/xcat_docker_hostmachine_setup.yml
+- import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
   vars:
     xcat_version: "{{ xcat_version_tag }}"
     xcat_baseos: "{{ rhel_linux_label }}"
@@ -269,7 +279,7 @@
 # ===  PHASE 7: Authentication: OpenLDAP Container Installation   ============
 # ============================================================================
 
-- import_playbook: ../install/ldap/install_multi_rep_openldap_server.yml
+- import_playbook: ../../playbook_library/install/ldap/install_multi_rep_openldap_server.yml
   vars:
     ldap_pv_dir: "/hpc_container_pv/ldapdata"
     openldap_image: "{{ openldap_container_image }}"
@@ -279,7 +289,7 @@
     PRIMARY_LDAP_SERVER_IP: "{{ primary_ldap_server_ip }}"
     SECONDARY_LDAP_SERVER_IP: "{{ secondary_ldap_server_ip }}"
 
-- import_playbook: ../configure/ldap_docker_hostmachine_setup.yml
+- import_playbook: ../../playbook_library/configure/ldap_docker_hostmachine_setup.yml
   vars:
     ldap_version: "{{ ldap_version_tag }}"
 
@@ -287,7 +297,7 @@
 # ===  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
 # ===================================================================================
 
-- import_playbook: ../install/slurm/install_slurm_master.yml
+- import_playbook: ../../playbook_library/install/slurm/install_slurm_master.yml
   vars:
     slurm_reinstall: false
     slurm_replace_configs: true
