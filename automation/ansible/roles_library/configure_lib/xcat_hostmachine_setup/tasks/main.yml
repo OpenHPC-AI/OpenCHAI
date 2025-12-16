@@ -1,12 +1,4 @@
 ---
-# tasks/main.yml - xCAT Local Host Machine Setup
-
-# Expected variables (define in defaults/main.yml or inventory):
-# xcat_version: "latest"
-# xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
-# xcat_baseos: "rh8"
-# xcat_vip_ip: "10.x.x.x"
-
 ###############################################################
 # 1. Install prerequisite packages
 ###############################################################
