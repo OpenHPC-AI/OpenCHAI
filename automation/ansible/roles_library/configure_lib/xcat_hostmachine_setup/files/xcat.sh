@@ -1,4 +1,4 @@
-XCATROOT=/opt/xcat
+XCATROOT=/drbd/xcatdata/opt/xcat/
 PATH=$XCATROOT/bin:$XCATROOT/sbin:$XCATROOT/share/xcat/tools:$PATH
 MANPATH=$XCATROOT/share/man:$MANPATH
 export XCATROOT PATH MANPATH
