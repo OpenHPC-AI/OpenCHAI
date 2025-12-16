@@ -45,9 +45,10 @@
     ldap_container_img: "{{ ldap_container_img_tar }}"
     ldap_version: "{{ ldap_version_tag }}"
     ldap_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
-    validate_certs: no
+    ssl_certificate_check: no
     primary_ldap_server_ip: "{{ primary_ldap_node_ip }}"
     secondary_ldap_node_ip: "{{ secondary_ldap_node_ip }}"
 
   roles:
     - "{{ roles_parent_path }}/install_lib/multi_rep_ldap_server_container"
+
