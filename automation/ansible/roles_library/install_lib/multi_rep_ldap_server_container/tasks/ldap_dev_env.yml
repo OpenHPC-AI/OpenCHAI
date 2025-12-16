@@ -21,7 +21,7 @@
       SECONDARY_LDAP_SERVER_IP: "{{ secondary_ldap_server_ip }}"
       UIDNUMBER: "15000"
       GIDNUMBER: "15000"
-      SERVER_ROLE: "{{ '1' if ansible_host == PRIMARY_LDAP_SERVER_IP else ('2' if ansible_host == SECONDARY_LDAP_SERVER_IP else '0') }}"
+      SERVER_ROLE: "{{ '1' if ansible_host == primary_ldap_server_ip else ('2' if ansible_host == secondary_ldap_server_ip else '0') }}"
 
 # -------------------------------------------------------------------
 # Create .env file for docker-compose
