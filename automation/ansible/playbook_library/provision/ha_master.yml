@@ -286,8 +286,9 @@
     ldap_container_img: "{{ ldap_container_img_tar }}"
     ldap_version: "{{ ldap_version_tag }}"
     ldap_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
-    PRIMARY_LDAP_SERVER_IP: "{{ primary_ldap_server_ip }}"
-    SECONDARY_LDAP_SERVER_IP: "{{ secondary_ldap_server_ip }}"
+    ssl_certificate_check: no
+    primary_ldap_server_ip: "{{ primary_ldap_node_ip }}"
+    secondary_ldap_node_ip: "{{ secondary_ldap_node_ip }}"
 
 - import_playbook: ../../playbook_library/configure/ldap_docker_hostmachine_setup.yml
   vars:
