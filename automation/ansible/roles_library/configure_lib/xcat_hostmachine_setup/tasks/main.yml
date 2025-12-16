@@ -11,12 +11,39 @@
 # 1. Install prerequisite packages
 ###############################################################
 
-- name: "Install required packages (wget, which)"
+# --------------------------------------
+# Enable EPEL and CRB repositories
+# --------------------------------------
+- name: Enable EPEL repository
+  yum:
+    name: epel-release
+    state: present
+
+- name: Enable EPEL repo explicitly
+  command: dnf config-manager --set-enabled epel
+  args:
+    creates: /etc/yum.repos.d/epel.repo
+
+- name: Enable CRB repository
+  command: dnf config-manager --set-enabled crb
+  args:
+    creates: /etc/yum.repos.d/rocky-crb.repo
+
+# --------------------------------------
+# Install required packages
+# --------------------------------------
+- name: Install base utilities and perl dependencies
   yum:
     name:
       - wget
       - which
+      - perl-IO-Tty
+      - perl-Crypt-CBC
+    enablerepo:
+      - epel
+      - crb
     state: present
+
 
 ###############################################################
 # 2. Determine xCAT core repo type
