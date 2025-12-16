@@ -1,6 +1,4 @@
-
 ---
-
 - name: Detect OS major version
   ansible.builtin.set_fact:
     os_major_version: "{{ ansible_distribution_major_version }}"
@@ -46,7 +44,7 @@
 # Determine DRBD RPM path based on RHEL version
 - name: Set Development RPM directory path
   ansible.builtin.set_fact:
-    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/developement_rpms"
+    drbd_rpm_dir: "{{ rpm_stack_path }}/developement_rpms"
 
 # Check if DRBD RPM directory exists
 - name: Check if Development RPM directory exists
