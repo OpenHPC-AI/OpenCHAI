@@ -38,6 +38,6 @@
     path: "{{ item.dest }}"
     fstype: nfs
     opts: "{{ item.opts | default('defaults') }}"
-    state: mounted
+    state: "{{ mounted_state }}"
   loop: "{{ nfs_mounts }}"
   when: inventory_hostname != headnode_inventory_hostname
