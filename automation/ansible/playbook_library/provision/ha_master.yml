@@ -42,7 +42,8 @@
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
-
+    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
+    
 - import_playbook: ../../playbook_library/configure/config_mount_nfs_client.yml
   vars:
     nfs_client_packages:
@@ -53,7 +54,8 @@
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
-
+    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
+    
 # ---------------------------------------------------------------------------
 # Standard Directory setup
 # ---------------------------------------------------------------------------
@@ -138,7 +140,7 @@
     drbd_device: "{{ drbd_device }}"
     drbd_mount_dir: "{{ drbd_mount_dir }}"
     drbd_fstype: "{{ drbd_fstype }}"
-
+    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
     primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
     secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
     pcs_cluster_password: "{{ pcs_cluster_password }}"
