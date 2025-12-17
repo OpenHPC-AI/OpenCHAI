@@ -308,7 +308,7 @@
     path: /drbd
     src: "{{ drbd_device }}"
     fstype: ext4
-    state: mounted
+    state: "{{ mounted_state }}"
   when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
 
 
