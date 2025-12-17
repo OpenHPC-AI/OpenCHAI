@@ -58,9 +58,10 @@ Alternatively, during the OpenCHAI Manager Tool setup, you will be given an opti
 You may also download it directly from the online source using:
 
 ```bash
-# Multiple OS versions (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
+# Multiple OS versions supports (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
 # Browse available options here:
 # https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
+# Multiple openchai version (openchai_v1.24.0.tgz, openchai_v1.25.0.tgz) are available for download
 
 # Example: Downloading the AlmaLinux 8.9 rpm-stack
 mkdir ./hpcsuite_registry/hostmachine_reg/alma8.9
@@ -70,7 +71,7 @@ https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostm
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
 #(OR), first load the tar file then extract it.
-wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.24.0.tgz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
+wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
 
 Make sure the **rpm-stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/<os-version>/** !
