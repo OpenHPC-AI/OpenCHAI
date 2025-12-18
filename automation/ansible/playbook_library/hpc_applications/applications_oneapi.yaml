@@ -3,8 +3,14 @@
   become: true
   vars_files:
     - ../../group_vars/all.yml
+
   vars:
-    #default_kernel_version: "4.18.0-513.5.1.el8_9"
+    modulepath_dir: "{{ application_base_dir }}/modulefiles/apps"
+    intel_installer: "{{ rpm_stack_path }}/oneapi_rpms/{{ intel_installer }}"
+    intel_source_dir: "{{ rpm_stack_path }}/oneapi_rpms"
+    intel_install_dir: "{{ application_base_dir }}/intel"
+    intel_module_script: "{{ intel_install_dir }}/modulefiles-setup.sh"
+    intel_module_output_dir: "{{ application_base_dir }}/modulefiles/hpc/intel"
 
   roles:
     - "{{ roles_parent_path }}/hpc_applications_lib/applications_oneapi"
