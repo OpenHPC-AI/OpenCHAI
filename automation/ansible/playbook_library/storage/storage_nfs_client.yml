@@ -2,17 +2,52 @@
 - name: Configure NFS Client
   hosts: all
   become: true
+  gather_facts: no
+  serial: 1
+  ignore_unreachable: yes
+  any_errors_fatal: false
+
   vars_files:
     - ../../group_vars/all.yml
+
   vars:
+    # RPM-based package installation
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms"
+    required_packages:
+      - nfs-utils
+      - libnfsidmap
+      - rpcbind
+
+    # NFS client configuration
     nfs_client_packages:
       - nfs-utils
     nfs_client_service: nfs-client.target
-    nfs_client_state: started        # started, stopped, restarted
-    nfs_client_enabled: true         # true or false
+    nfs_client_state: started
+    nfs_client_enabled: true
     nfs_client_install_if_missing: true
-    nfs_mounts:                       # server:path mount_point
-      - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
-    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
+
+    # Multiple NFS mounts
+    nfs_mounts:
+      - src: "{{ headnode_ip }}:{{ rpm_stack_path }}"
+        dest: "{{ rpm_stack_path }}"
+        fstype: nfs
+        opts: ro,_netdev
+      - src: "{{ headnode_ip }}:{{ configuration_dir_path }}"
+        dest: "{{ configuration_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+      - src: "{{ headnode_ip }}:{{ bin_dir_path }}"
+        dest: "{{ bin_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+
+    # mounted  → persistent (/etc/fstab)
+    # ephemeral → runtime only (HPC preferred)
+    mounted_state: ephemeral
+
+  pre_tasks:
+    - name: Reset failed host state (if any)
+      ansible.builtin.meta: clear_host_errors
+
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_nfs_client"
