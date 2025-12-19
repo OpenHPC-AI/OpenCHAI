@@ -21,7 +21,7 @@
         options: rw,sync,no_root_squash
       - path: "{{ bin_dir_path }}"
         clients: "*"
-        options: rw,sync,no_subtree_check
+        options: rw,sync,no_root_squash
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_nfs_server"
