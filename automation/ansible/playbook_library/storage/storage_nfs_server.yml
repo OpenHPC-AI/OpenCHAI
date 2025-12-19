@@ -4,14 +4,24 @@
   become: true
   vars_files:
     - ../../group_vars/all.yml
+
   vars:
     nfs_server_service: nfs-server
-    nfs_server_state: started       # started, stopped, restarted
-    nfs_server_enabled: true        # true or false
+    nfs_server_state: started
+    nfs_server_enabled: true
     nfs_server_install_if_missing: true
-    nfs_export_paths:
-      - "{{ rpm_stack_path }}/"
-    nfs_export_options: ro,sync,no_root_squash
+
+    # Multiple NFS export points
+    nfs_exports:
+      - path: "{{ rpm_stack_path }}"
+        clients: "*"
+        options: ro,sync,no_root_squash
+      - path: "{{ configuration_dir_path }}"
+        clients: "*"
+        options: rw,sync,no_root_squash
+      - path: "{{ bin_dir_path }}"
+        clients: "*"
+        options: rw,sync,no_subtree_check
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_nfs_server"
