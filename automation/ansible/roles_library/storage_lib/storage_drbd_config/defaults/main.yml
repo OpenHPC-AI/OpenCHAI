@@ -1,6 +1,37 @@
 ---
 # Default variables for DRBD configuration
 
+# Role defaults - override in playbook or group_vars/host_vars
+
+# DRBD resource name and template-related
+drbd_resource_name: rudra_drbd
+drbd_clone_name: rudra_drbd_clone
+drbd_fs_resource_name: rudra_drbd_fs
+
+# DRBD device / mount point variables
+drbd_mount_dir: /drbd
+drbd_fstype: ext4
+
+# Create metadata (default false, set true to run create-md)
+drbd_force_md_create: false
+
+# Pattern for detecting drbd LVs (case-insensitive substring)
+drbd_lv_name_pattern: "drbd"
+
+# If you want to force a particular device, set this (optional)
+# drbd_force_device: "/dev/nvme0n1p5"
+
+# Primary master hostname (used to run mkfs and promote)
+primary_master_node_hostname: ""
+
+# How long to wait for DRBD sync on primary (seconds)
+drbd_sync_retries: 30
+drbd_sync_delay: 20
+
+# Whether to wipe existing filesystem signatures when prepping device
+drbd_wipefs: true
+
+
 drbd_resource_name: rudra_drbd
 drbd_device: /dev/drbd0
 #drbd_disk: /dev/mapper/almalinux-drbd
@@ -21,17 +52,13 @@ drbd_disk_params:
   resync_rate: "40M"
 
 
-drbd_disk_params:
-  c_min_rate: 80M
-  c_max_rate: 720M
-  resync_rate: 40M
 
 drbd_nodes:
-  - name: "{{ primary_master_node_hostname }}"
-    ip: "{{ primary_master_node_ip }}"
+  - name: cn27
+    ip: 172.10.3.27
     device: /dev/drbd0
     disk: /dev/nvme0n1p4
-  - name: "{{ secondary_master_node_hostname }}"
-    ip: "{{ secondary_master_node_ip }}"
+  - name: cn28
+    ip: 172.10.3.28
     device: /dev/drbd0
     disk: /dev/nvme0n1p5
