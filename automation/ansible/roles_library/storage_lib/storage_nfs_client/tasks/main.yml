@@ -1,43 +1,78 @@
 ---
-- name: Check installed packages
-  package_facts:
-    manager: auto
+- name: Ensure Development RPM directory exists
+  ansible.builtin.file:
+    path: "{{ nfs_rpm_dir }}"
+    state: directory
+    mode: '0755'
 
-- name: Install NFS Client packages if missing and allowed
-  package:
+- name: Gather installed packages using rpm
+  ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
+  register: installed_rpms
+  changed_when: false
+
+- name: Determine missing required packages
+  ansible.builtin.set_fact:
+    missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+
+- name: Show missing packages
+  ansible.builtin.debug:
+    msg: "Missing packages: {{ missing_packages }}"
+  when: missing_packages | length > 0
+
+- name: Find local RPMs for missing packages
+  ansible.builtin.find:
+    paths: "{{ nfs_rpm_dir }}"
+    patterns: "{{ item }}-*.rpm"
+  loop: "{{ missing_packages }}"
+  register: found_rpms
+  when: missing_packages | length > 0
+
+- name: Fail if any required RPM is missing locally
+  ansible.builtin.fail:
+    msg: "RPM for package {{ item.item }} not found in {{ nfs_rpm_dir }}"
+  when:
+    - missing_packages | length > 0
+    - item.matched == 0
+  loop: "{{ found_rpms.results }}"
+
+- name: Install missing packages using rpm
+  ansible.builtin.command: >
+    rpm -Uvh --nosignature --nodeps
+    {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+  when: missing_packages | length > 0
+
+- name: Ensure NFS Client packages are installed
+  ansible.builtin.package:
     name: "{{ nfs_client_packages }}"
     state: present
-  when:
-    - nfs_client_install_if_missing | bool
-    - nfs_client_packages | difference(ansible_facts.packages.keys()) | length > 0
-
-- name: Debug if NFS Client packages missing and install skipped
-  debug:
-    msg: "NFS Client packages missing, installation skipped (nfs_client_install_if_missing=false)."
-  when:
-    - not nfs_client_install_if_missing | bool
-    - nfs_client_packages | difference(ansible_facts.packages.keys()) | length > 0
+  when: nfs_client_install_if_missing | bool
 
 - name: Manage NFS Client service
-  service:
+  ansible.builtin.service:
     name: "{{ nfs_client_service }}"
     state: "{{ nfs_client_state }}"
     enabled: "{{ nfs_client_enabled }}"
-  when: nfs_client_packages | difference(ansible_facts.packages.keys()) | length == 0
+  when: nfs_client_packages is defined
 
-- name: Ensure NFS mount points exist
-  file:
+- name: Ensure NFS mount point directories exist
+  ansible.builtin.file:
     path: "{{ item.dest }}"
     state: directory
+    owner: root
+    group: root
     mode: '0755'
   loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.dest }}"
 
-- name: Mount NFS shares
-  mount:
+- name: Mount multiple NFS shares
+  ansible.builtin.mount:
     src: "{{ item.src }}"
     path: "{{ item.dest }}"
-    fstype: nfs
-    opts: "{{ item.opts | default('defaults') }}"
+    fstype: "{{ item.fstype | default('nfs') }}"
+    opts: "{{ item.opts | default('defaults,_netdev') }}"
     state: "{{ mounted_state }}"
   loop: "{{ nfs_mounts }}"
+  loop_control:
+    label: "{{ item.src }} -> {{ item.dest }}"
   when: inventory_hostname != headnode_inventory_hostname
