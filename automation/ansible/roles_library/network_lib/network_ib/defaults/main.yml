@@ -56,7 +56,7 @@ required_packages:
   - systemd-devel
   - tk
   - perl
-  - perl-core
   - perl-Test-Simple
   - kernel-rpm-macros
   - createrepo_c
+  - createrepo_c-libs
