@@ -1,4 +1,12 @@
 ---
+# tasks/main.yml - xCAT Local Host Machine Setup
+
+# Expected variables (define in defaults/main.yml or inventory):
+# xcat_version: "latest"
+# xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+# xcat_baseos: "rh8"
+# xcat_vip_ip: "10.x.x.x"
+
 ###############################################################
 # 1. Install prerequisite packages
 ###############################################################
@@ -97,34 +105,7 @@
     mode: "0755"
 
 ###############################################################
-# 6. Create global xCAT VIP environment variable
-###############################################################
-
-- name: "Create global XCATHOST variable"
-  copy:
-    dest: /etc/profile.d/xcat_vip.sh
-    mode: "0755"
-    content: |
-      export XCATHOST={{ xcat_vip_ip }}:3001
-
-###############################################################
-# 7. Source environment scripts for current execution (optional)
-###############################################################
-
-- name: "Source xcat.sh for the current session"
-  shell: source /etc/profile.d/xcat.sh
-  args:
-    executable: /bin/bash
-  changed_when: false
-
-- name: "Source xcat_vip.sh for the current session"
-  shell: source /etc/profile.d/xcat_vip.sh
-  args:
-    executable: /bin/bash
-  changed_when: false
-
-###############################################################
-# 8. Create .xcat key symlink for command execution
+# 6. Create .xcat key symlink for command execution
 ###############################################################
 
 - name: Create xCAT config symlink for root
@@ -133,3 +114,14 @@
     dest: /root/.xcat
     state: link
     force: yes
+
+
+###############################################################
+# 7. Source environment scripts for current execution
+###############################################################
+
+- name: "Source xcat.sh for the current session"
+  shell: source /etc/profile.d/xcat.sh
+  args:
+    executable: /bin/bash
+  changed_when: false
