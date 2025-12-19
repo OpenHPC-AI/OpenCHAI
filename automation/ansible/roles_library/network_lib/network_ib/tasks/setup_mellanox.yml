@@ -1,6 +1,54 @@
 ---
 # tasks/main.yml
 
+
+- name: Ensure required packages are installed using rpm only
+  block:
+
+    - name: Ensure Development RPM directory exists
+      ansible.builtin.file:
+        path: "{{ dev_rpm_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Gather installed package list using rpm
+      ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
+      register: installed_rpms
+      changed_when: false
+
+    - name: Determine missing required packages
+      ansible.builtin.set_fact:
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+
+    - name: Show missing packages
+      ansible.builtin.debug:
+        msg: "Missing packages: {{ missing_packages }}"
+      when: missing_packages | length > 0
+
+    - name: Find local RPMs for missing packages
+      ansible.builtin.find:
+        paths: "{{ dev_rpm_path }}"
+        patterns: "{{ item }}-*.rpm"
+      loop: "{{ missing_packages }}"
+      register: found_rpms
+      when: missing_packages | length > 0
+
+    - name: Fail if any required RPM is missing locally
+      ansible.builtin.fail:
+        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+      when:
+        - missing_packages | length > 0
+        - item.matched == 0
+      loop: "{{ found_rpms.results }}"
+
+    - name: Install missing packages using rpm
+      ansible.builtin.command: >
+        rpm -Uvh --nosignature --nodeps
+        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+      when: missing_packages | length > 0
+
+##########################################################################################################################
+
 - name: Check if Mellanox OFED is installed
   command: ofed_info -s
   register: ofed_check
@@ -27,10 +75,11 @@
     - install_mellanox is not defined
     - user_choice.user_input | lower != 'yes'
 
+
 # Ensure required build packages are installed
 - name: Ensure Mellanox RPM directory exists
   file:
-    path: "{{ base_dir }}/rpm-stack/mellanox_rpms"
+    path: "{{ bin_stack_path }}/"
     state: directory
     mode: "0755"
   when: install_mellanox
@@ -96,25 +145,40 @@
   ansible.builtin.set_fact:
     mellanox_ofed_dir: "{{ mellanox_ofed_url | basename | regex_replace('\\.tgz$', '') }}"
 
+#- name: Download Mellanox OFED tgz if not present
+#  ansible.builtin.get_url:
+#    url: "{{ mellanox_ofed_url }}"
+#    dest: "{{ rpm_stack_path }}/{{ mellanox_tgz }}"
+#    mode: '0644'
+#    force: no
+#  when: mellanox_ofed_url | length > 0
+
+- name: Check if Mellanox OFED tgz already exists
+  ansible.builtin.stat:
+    path: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
+  register: mellanox_tgz_stat
+
 - name: Download Mellanox OFED tgz if not present
   ansible.builtin.get_url:
     url: "{{ mellanox_ofed_url }}"
-    dest: "{{ base_dir }}/rpm-stack/mellanox_rpms/{{ mellanox_tgz }}"
+    dest: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
     mode: '0644'
-    force: no
-  when: mellanox_ofed_url | length > 0
+  when:
+    - mellanox_ofed_url | length > 0
+    - not mellanox_tgz_stat.stat.exists
 
 
 # Extract the Mellanox OFED tarball
 - name: Extract Mellanox OFED tgz
   ansible.builtin.unarchive:
-    src: "{{ mellanox_dir }}/{{ mellanox_tgz }}"
-    dest: "{{ mellanox_dir }}/"
+    src: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
+    dest: "{{ bin_stack_path }}"
     remote_src: yes
 
 # Install Mellanox OFED with kernel support
 - name: Install Mellanox OFED if enabled
   when:
   - not mellanox_installed or install_mellanox | default(false) | bool
-  command: "{{ base_dir }}/rpm-stack/mellanox_rpms/{{ mellanox_ofed_dir }}/mlnxofedinstall --add-kernel-support"
+  command: "{{ bin_stack_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --add-kernel-support"
   when: install_mellanox
+  ignore_errors: true
