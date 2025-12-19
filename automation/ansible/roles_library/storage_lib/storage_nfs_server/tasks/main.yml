@@ -1,10 +1,10 @@
 ---
 - name: Check installed packages
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Install NFS Server packages if missing and allowed
-  package:
+  ansible.builtin.package:
     name: "{{ nfs_server_packages }}"
     state: present
   when:
@@ -12,29 +12,56 @@
     - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
 
 - name: Debug if NFS Server packages missing and install skipped
-  debug:
-    msg: "NFS Server packages missing, installation skipped (nfs_server_install_if_missing=false)."
+  ansible.builtin.debug:
+    msg: >
+      NFS Server packages missing, installation skipped
+      (nfs_server_install_if_missing=false).
   when:
     - not nfs_server_install_if_missing | bool
     - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
 
-- name: Configure /etc/exports
-  template:
-    src: exports.j2
-    dest: /etc/exports
+- name: Ensure /etc/exports exists
+  ansible.builtin.file:
+    path: /etc/exports
+    state: touch
     owner: root
     group: root
     mode: '0644'
+  when: inventory_hostname == headnode_inventory_hostname
+
+- name: Ensure NFS export directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ nfs_exports }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: inventory_hostname == headnode_inventory_hostname
+
+- name: Configure multiple NFS exports
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "{{ item.path }} {{ item.clients }}({{ item.options }})"
+    state: present
+    insertafter: EOF
+    create: yes
+  loop: "{{ nfs_exports }}"
+  loop_control:
+    label: "{{ item.path }}"
   notify: Reload NFS exports
   when: inventory_hostname == headnode_inventory_hostname
 
 - name: Manage NFS Server service
-  service:
+  ansible.builtin.service:
     name: "{{ nfs_server_service }}"
     state: "{{ nfs_server_state }}"
     enabled: "{{ nfs_server_enabled }}"
-  when: nfs_server_packages | difference(ansible_facts.packages.keys()) | length == 0
+  when:
+    - nfs_server_packages | difference(ansible_facts.packages.keys()) | length == 0
 
 # Handlers
 - name: Reload NFS exports
-  command: exportfs -r
+  ansible.builtin.command: exportfs -r
