@@ -9,7 +9,7 @@
 # Determine DRBD RPM path based on RHEL version
 - name: Set DRBD RPM directory path
   ansible.builtin.set_fact:
-    drbd_rpm_dir: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_version }}/{{ chai_version }}/drbd_pcs_rpms"
+    drbd_rpm_dir: "{{  rpm_stack_path }}/drbd_pcs_rpms"
 
 # Check if DRBD RPM directory exists
 - name: Check if DRBD RPM directory exists
@@ -40,6 +40,9 @@
     - drbd_use_local_rpms | default(false)
     - local_rpms is defined
     - local_rpms.files | length > 0
+  ignore_errors: true
+  ignore_unreachable: true
+
 
 # Debug output (optional)
 - name: Debug RPM install output (optional)
