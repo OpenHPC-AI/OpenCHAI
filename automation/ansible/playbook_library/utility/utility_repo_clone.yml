@@ -7,12 +7,8 @@
 
 
   vars:
-    #repo_server: "http://172.10.3.25:8080"
     repo_server: "http://{{headnode_ip}}:8080"
-    #clone_dest: "/home/hpc-project-oct-2025/CHAI/rpm-stack/"
-    clone_dest: "{{rpm_stack_path}}/"
-    # hosted_dirs: ["cuda_rpms", "kernel_rpms"]   # Optional
-    #hosted_dirs: ["kernel_rpms", "drbd_pcs_rpms"]   # Optional
+    clone_dest: "{{openchai_vault_path}}/"
     download_tool: "wget"
 
   roles:
