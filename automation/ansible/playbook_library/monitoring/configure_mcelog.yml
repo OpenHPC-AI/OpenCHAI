@@ -5,6 +5,12 @@
   vars_files:
     - ../../group_vars/all.yml
 
+  vars:
+    util_rpm_base: "{{ rpm_stack_path }}/utilities_rpms"
+
+  pre_tasks:
+    - name: Reset failed host state (if any)
+      meta: clear_host_errors
 
   roles:
     - "{{ roles_parent_path }}/monitoring_lib/mcelog_configure"
