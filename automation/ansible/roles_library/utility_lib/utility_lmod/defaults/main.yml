@@ -1,8 +1,8 @@
 # Default path for local RPMs
-local_rpm_base: "/home/CHAI_Sk/rpm-stack/utilities_rpm"
+#local_rpm_base: "/home/CHAI_Sk/rpm-stack/utilities_rpm"
 
 # Default modulepath to export (can override in playbook)
-modulepath_dir: "/home/apps/modulefiles/"
+#modulepath_dir: "/home/apps/modulefiles/"
 
 # Lmod and dependencies
 custom_rpms:
@@ -11,7 +11,7 @@ custom_rpms:
   - libcerf-devel-1.17-2.el8.x86_64.rpm
 
 # Packages to install
-extra_packages:
+required_packages:
   - gcc-gfortran
   - curl
   - screen
@@ -19,7 +19,7 @@ extra_packages:
   - cmake
 
 # Old package to remove
-old_modules_package: "environment-modules-4.5.2-4.el8.x86_64"
+#old_modules_package: "environment-modules-4.5.2-4.el8.x86_64"
 
 # HISTTIMEFORMAT line
 histtimeformat_line: 'export HISTTIMEFORMAT="%F %T "'
