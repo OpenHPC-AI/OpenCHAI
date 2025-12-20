@@ -1,4 +1,6 @@
+
 ---
+
 - name: Detect OS major version
   ansible.builtin.set_fact:
     os_major_version: "{{ ansible_distribution_major_version }}"
@@ -28,7 +30,7 @@
 # 3. Install extra packages
 - name: Install extra development packages
   ansible.builtin.yum:
-    name: "{{ extra_packages }}"
+    name: "{{ required_packages }}"
     state: present
   ignore_errors: yes
 
@@ -41,39 +43,59 @@
   ignore_errors: yes
 
 
-# Determine DRBD RPM path based on RHEL version
-- name: Set Development RPM directory path
-  ansible.builtin.set_fact:
-    drbd_rpm_dir: "{{ rpm_stack_path }}/developement_rpms"
 
-# Check if DRBD RPM directory exists
-- name: Check if Development RPM directory exists
-  ansible.builtin.stat:
-    path: "{{ drbd_rpm_dir }}"
-  register: drbd_rpm_dir_stat
+- name: Ensure required packages are installed using rpm only
+  block:
 
-# Find local RPMs only if directory exists
-- name: Find local RPM files
-  ansible.builtin.find:
-    paths: "{{ drbd_rpm_dir }}"
-    patterns: "*.rpm"
-  register: local_rpms
-  when: drbd_rpm_dir_stat.stat.exists
+    - name: Ensure Development RPM directory exists
+      ansible.builtin.file:
+        path: "{{ dev_rpm_base }}"
+        state: directory
+        mode: "0755"
 
-# Install PCS + DRBD packages from local RPMs using rpm
-- name: Install Development packages from local RPMs
-  ansible.builtin.command: >
-    rpm -Uvh --force --nodeps --nosignature {{ item.path }}
-  loop: "{{ local_rpms.files }}"
-  register: drbd_rpm_install_results
+    - name: Gather installed package list using rpm
+      ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
+      register: installed_rpms
+      changed_when: false
+
+    - name: Determine missing required packages
+      ansible.builtin.set_fact:
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+
+    - name: Show missing packages
+      ansible.builtin.debug:
+        msg: "Missing packages: {{ missing_packages }}"
+      when: missing_packages | length > 0
+
+    - name: Find local RPMs for missing packages
+      ansible.builtin.find:
+        paths: "{{ dev_rpm_base }}"
+        patterns: "{{ item }}-*.rpm"
+      loop: "{{ missing_packages }}"
+      register: found_rpms
+      when: missing_packages | length > 0
+
+    - name: Fail if any required RPM is missing locally
+      ansible.builtin.fail:
+        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+      when:
+        - missing_packages | length > 0
+        - item.matched == 0
+      loop: "{{ found_rpms.results }}"
+
+    - name: Install missing packages using rpm
+      ansible.builtin.command: >
+        rpm -Uvh --nosignature --nodeps
+        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+      when: missing_packages | length > 0
+
 
 
 # 5. Try to install lmod-hpc from local RPMs
-#     paths: "{{ local_rpm_base }}/el{{ os_major_version }}"
 
 - name: Find local Lmod RPMs
   ansible.builtin.find:
-    paths: "{{ local_rpm_base }}/"
+    paths: "{{ util_rpm_base }}/"
     patterns:
       - "lmod-hpc*.rpm"
       - "Lmod*.rpm"
@@ -103,12 +125,14 @@
     name: epel-release
     state: present
   when: lmod_check.stdout == "" and (local_lmod_rpms is not defined or local_lmod_rpms.matched == 0)
+  ignore_errors: yes
 
 - name: Install Lmod from repos (EPEL)
   ansible.builtin.yum:
     name: Lmod
     state: present
   when: lmod_check.stdout == "" and (local_lmod_rpms is not defined or local_lmod_rpms.matched == 0)
+  ignore_errors: yes
 
 # 7. Deploy lmod.sh profile script
 - name: Deploy lmod.sh profile script
