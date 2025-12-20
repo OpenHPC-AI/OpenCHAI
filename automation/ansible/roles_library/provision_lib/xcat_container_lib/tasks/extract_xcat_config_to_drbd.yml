@@ -1,0 +1,38 @@
+---
+# Check if /drbd is mounted
+- name: Check if /drbd is mounted
+  command: mountpoint -q /drbd
+  register: drbd_mount_check
+  failed_when: false
+  changed_when: false
+
+# Fail if /drbd is not mounted
+- name: Fail if /drbd is not mounted
+  ansible.builtin.fail:
+    msg: "/drbd is not mounted. Cannot proceed with xCAT configuration extraction."
+  when: drbd_mount_check.rc != 0
+
+# Check if xcatdata base config tar exists locally
+- name: Check if xcatdata base config tar exists locally
+  ansible.builtin.stat:
+    path: "{{ configuration_dir_path }}/xcat_config/{{ xcatdata_base_config }}"
+  register: xcatdata_tar_stat
+
+# Download xcatdata base config tar if not present locally
+- name: Download xcatdata base config tar from network URL
+  ansible.builtin.get_url:
+    url: "{{ xcat_provisioning_osimage_network_url }}/{{ xcatdata_base_config }}"
+    dest: "{{ configuration_dir_path }}/xcat_config/{{ xcatdata_base_config }}"
+    mode: "0644"
+    validate_certs: "{{ ssl_certificate_check }}"
+  when:
+    - drbd_mount_check.rc == 0
+    - not xcatdata_tar_stat.stat.exists
+
+# Extract xCAT configuration tar to /drbd
+- name: Extract xCAT provisioning configuration data to /drbd
+  ansible.builtin.unarchive:
+    src: "{{ configuration_dir_path }}/xcat_config/{{ xcatdata_base_config }}"
+    dest: /drbd
+    remote_src: true
+  when: drbd_mount_check.rc == 0
