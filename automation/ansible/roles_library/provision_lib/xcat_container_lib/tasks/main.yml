@@ -11,6 +11,9 @@
   include_tasks: create_xcat_drbd_dirs.yml
   when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
 
+- name: Extracting xCAT data configuration to prepare the provisioning environment
+  include_tasks: extract_xcat_config_to_drbd.yml
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
 # Step 3: Pull xCAT docker image and load it on HPC master nodes
 - name: Pull and load xCAT Docker image on HPC master nodes
   include_tasks: load_xcat_image.yml
