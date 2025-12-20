@@ -3,6 +3,8 @@
   ansible.builtin.yum:
     name: rsyslog
     state: present
+  ignore_errors: yes
+
 
 - name: Enable and start rsyslog service
   ansible.builtin.service:
