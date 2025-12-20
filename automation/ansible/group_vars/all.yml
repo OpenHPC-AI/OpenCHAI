@@ -16,6 +16,7 @@ bin_dir_path: "{{ openchai_vault_path }}/bin"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
+hpcsangrah_vault_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault"
 
 # Ansible inventroy hostname
 primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
