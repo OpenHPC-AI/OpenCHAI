@@ -1,43 +1,176 @@
+
 ---
+# storage_drbd: main tasks
+# 1) detect drbd backing device (LVM LV containing 'drbd' OR partition)
+# 2) prepare device (optional wipe, unmount)
+# 3) deploy DRBD configs (from templates)
+# 4) create-md (optional)
+# 5) bring up drbd, promote primary (only on designated primary)
+# 6) wait for peer UpToDate
+# 7) mkfs on primary only (if needed) — idempotent
 
-
-# Detect disk backing the /drbd mount point
-- name: Detect DRBD backing disk
-  ansible.builtin.shell: |
-    lsblk -o NAME,MOUNTPOINT -nr | awk '$2=="/drbd"{print "/dev/"$1}'
-  register: drbd_backing_disk
+- name: Gather minimal facts (ensure ansible_hostname available)
+  setup:
+    gather_subset: min
   changed_when: false
 
-- name: Debug detected DRBD disk
-  ansible.builtin.debug:
-    msg: "Detected DRBD disk for {{ inventory_hostname }}: {{ drbd_backing_disk.stdout }}"
 
-# Fail if no disk was detected
-- name: Fail if DRBD disk not found
-  ansible.builtin.fail:
-    msg: "No disk found for /drbd mount. Ensure the partition exists."
-  when: drbd_backing_disk.stdout == ""
+- debug:
+    msg:
+      inventory: "{{ inventory_hostname }}"
+      hostname: "{{ ansible_hostname }}"
+      nodename: "{{ ansible_nodename }}"
+      fqdn: "{{ ansible_fqdn }}"
+
+# -----------------------------
+# Optional override - use forced device if provided
+# -----------------------------
+- name: Use forced device if provided
+  set_fact:
+    drbd_final_device: "{{ drbd_force_device }}"
+  when: drbd_force_device is defined and drbd_force_device != ""
+
+# -----------------------------
+# Detect LVM LV containing 'drbd' (preferred)
+# -----------------------------
+# 1. Find all active LVs containing DRBD pattern
+- name: Find LVM LV matching DRBD name
+  shell: |
+    lvs --noheadings -o lv_path,lv_name | awk '/drbd/ {print $1}'
+  register: drbd_lvm_scan
+  changed_when: false
+
+# 2. Normalize path
+- name: Set LVM device candidate
+  set_fact:
+    drbd_lvm_device: "{{ drbd_lvm_scan.stdout_lines[0] | default('') }}"
+
+
+- name: Stat detected LVM device (if any)
+  stat:
+    path: "{{ drbd_lvm_device }}"
+  register: drbd_lvm_stat
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_device is defined
+    - drbd_lvm_device | length > 0
+
+
+# -----------------------------
+# Fallback: detect partition used for /drbd (unmounted or mounted)
+# -----------------------------
+
+- name: Detect partition that is mounted on /drbd (fast path)
+  shell: |
+    lsblk -nrpo NAME,MOUNTPOINT,TYPE | awk '$3=="part" && $2=="/drbd" {print $1; exit}'
+  register: drbd_partition_mounted
+  changed_when: false
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+
+- name: Detect largest unmounted partition (fallback)
+  shell: |
+    lsblk -nrpo NAME,SIZE,TYPE,MOUNTPOINT | awk '$3=="part" && $4=="" {print $1, $2}' | \
+    sort -k2 -h | tail -n1 | awk '{print $1}'
+  register: drbd_partition_unmounted
+  changed_when: false
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+    - (drbd_partition_mounted.stdout | default('') ) == ""
+
+- name: Decide partition candidate
+  set_fact:
+    drbd_partition_candidate: >-
+      {{ (drbd_partition_mounted.stdout | trim) if (drbd_partition_mounted.stdout | trim != '') else (drbd_partition_unmounted.stdout | trim) }}
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+
+
+
+# -----------------------------
+# Finalize chosen device
+# -----------------------------
+- name: Choose final DRBD device
+  set_fact:
+    drbd_final_device: >-
+      {{
+        drbd_lvm_device | default('') | trim
+        if (drbd_lvm_device is defined and drbd_lvm_device | trim != '')
+        else
+        drbd_partition_candidate | default('') | trim
+      }}
+
+- name: Debug selected DRBD device
+  debug:
+    msg: "DRBD backing device selected for {{ inventory_hostname }}: {{ drbd_final_device | default('') }}"
+
+
+- name: Build DRBD device map keyed by ansible_hostname
+  set_fact:
+    drbd_device_map: >-
+      {{
+        dict(
+          ansible_play_hosts |
+          map('extract', hostvars) |
+          map(attribute='ansible_hostname') |
+          zip(
+            ansible_play_hosts |
+            map('extract', hostvars, 'drbd_final_device')
+          )
+        )
+      }}
+  run_once: true
+  delegate_to: localhost
+
+
+
+#- name: Build DRBD device map from all hosts
+#  set_fact:
+#    drbd_device_map: >-
+#      {{
+#        dict(
+#          ansible_play_hosts |
+#          zip(ansible_play_hosts | map('extract', hostvars, 'drbd_final_device'))
+#        )
+#      }}
+#  run_once: true
+#  delegate_to: localhost
+
+- debug:
+    var: drbd_device_map
+  run_once: true
+  delegate_to: localhost
+
+
+
+- name: Fail if no DRBD disk detected
+  fail:
+    msg: "No DRBD LVM or partition device detected!"
+  when: drbd_final_device | default('') | trim == ''
+
+
+
+# -----------------------------
+# Prepare device: ensure /drbd not mounted and optionally wipe fs signatures
+# -----------------------------
+- name: Ensure /drbd is unmounted if mounted (ignore errors)
+  command: umount {{ drbd_mount_dir }}
+  ignore_errors: true
+  changed_when: false
+
+- name: Wipe filesystem signatures from DRBD device (optional)
+  command: wipefs -a {{ drbd_final_device }}
+  when: drbd_wipefs | default(true) | bool
   ignore_errors: true
 
-
-# Set DRBD disk variable dynamically for template
-- name: Set DRBD disk variable
-  ansible.builtin.set_fact:
-    drbd_node_disk: "{{ drbd_backing_disk.stdout }}"
-
-
-- name: Ensure /drbd is unmounted if mounted
-  ansible.builtin.command: umount /drbd
-  ignore_errors: true
-
-- name: Wipe filesystem signatures from DRBD disk
-  ansible.builtin.command: "wipefs -a {{ drbd_node_disk }}"
-  ignore_errors: true
-
-
-
-- name: Ensure DRBD configuration directory exists
-  ansible.builtin.file:
+# -----------------------------
+# Deploy DRBD configuration templates
+# -----------------------------
+- name: Ensure /etc/drbd.d exists
+  file:
     path: /etc/drbd.d
     state: directory
     owner: root
@@ -45,94 +178,225 @@
     mode: "0755"
 
 - name: Deploy global DRBD configuration
-  ansible.builtin.template:
+  template:
     src: global_common.conf.j2
     dest: /etc/drbd.d/global_common.conf
     owner: root
     group: root
     mode: "0644"
 
-- name: Deploy DRBD resource configuration
-  ansible.builtin.template:
+- name: Set final DRBD device for subsequent tasks
+  set_fact:
+    drbd_node_disk: "{{ drbd_final_device }}"
+
+
+
+################################################
+
+
+
+#################################################
+
+
+- name: Deploy DRBD resource configuration (render device)
+  template:
     src: drbd_resource.res.j2
     dest: "/etc/drbd.d/{{ drbd_resource_name }}.res"
     owner: root
     group: root
     mode: "0644"
+  # pass drbd_final_device to template via extra_vars available to Jinja
 
 
 
-- name: Create DRBD metadata non-interactively
-  ansible.builtin.command: >
-    drbdadm create-md --force {{ drbd_resource_name }}
+###########################################################
+#
+
+- name: Show ansible_hostname for each node
+  debug:
+    msg: "Host={{ inventory_hostname }} | ansible_hostname={{ ansible_hostname }}"
+
+
+- name: Decide DRBD primary and secondary
+  set_fact:
+    drbd_primary: "{{ (ansible_play_hosts | sort)[0] }}"
+    drbd_secondary: "{{ (ansible_play_hosts | sort)[1] }}"
+  run_once: true
+  delegate_to: localhost
+
+
+- name: Fetch DRBD file from secondary node
+  fetch:
+    src: /etc/drbd.d/rudra_drbd.res
+    dest: /tmp/drbd_res_files/
+    flat: yes
+  when: inventory_hostname == drbd_secondary
+
+
+- name: Copy DRBD file to primary node
+  copy:
+    src: /tmp/drbd_res_files/rudra_drbd.res
+    dest: /etc/drbd.d/rudra_drbd.res
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname == drbd_primary
+
+
+#- name: Build DRBD device map based on ansible_hostname
+#  set_fact:
+#    drbd_device_map: "{{ drbd_device_map | default({}) | combine({ hostvars[item].ansible_hostname: hostvars[item].drbd_final_device }) }}"
+#  loop: "{{ ansible_play_hosts }}"
+#  run_once: true
+#  delegate_to: localhost
+
+
+- name: Build DRBD nodes structure
+  set_fact:
+    drbd_nodes: >-
+      {{
+        drbd_nodes | default([]) + [{
+          'name': hostvars[item].ansible_hostname,
+          'ip': hostvars[item].ansible_default_ipv4.address,
+          'disk': hostvars[item].drbd_final_device
+        }]
+      }}
+  loop: "{{ ansible_play_hosts }}"
+  run_once: true
+  delegate_to: localhost
+
+
+
+- debug: var=drbd_device_map
+  run_once: true
+  delegate_to: localhost
+
+- name: Read DRBD resource file
+  slurp:
+    src: /etc/drbd.d/rudra_drbd.res
+  register: drbd_res_file
+
+- name: Convert content
+  set_fact:
+    drbd_resource_content: "{{ drbd_res_file.content | b64decode }}"
+
+
+- name: Back up DRBD resource file (local copy)
+  copy:
+    src: /etc/drbd.d/rudra_drbd.res
+    dest: "/tmp/rudra_drbd.res.{{ inventory_hostname }}.bak"
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: yes
+  become: true
+
+- name: Replace disk entry for this host
+  replace:
+    path: /etc/drbd.d/rudra_drbd.res
+    regexp: '(^\s*on {{ ansible_hostname }} \{[\s\S]*?disk\s+)(\/dev\/[a-zA-Z0-9]+)'
+    replace: '\1{{ drbd_device_map[ansible_hostname] }}'
+  when: "'disk ' ~ drbd_device_map[ansible_hostname] not in (drbd_res_file.content | b64decode)"
+
+
+
+
+- debug:
+    msg: "Disk corrected to {{ drbd_device_map[ansible_hostname] }}"
+
+
+- name: Read DRBD resource file
+  command: cat /etc/drbd.d/rudra_drbd.res
+  register: drbd_res_file
+
+- name: Decide DRBD primary and secondary
+  set_fact:
+    drbd_primary: "{{ (ansible_play_hosts | sort)[0] }}"
+    drbd_secondary: "{{ (ansible_play_hosts | sort)[1] }}"
+  run_once: true
+  delegate_to: localhost
+
+
+
+
+- name: Print DRBD resource file contents
+  debug:
+    msg: "{{ drbd_res_file.stdout }}"
+
+#
+###########################################################
+
+
+
+
+# -----------------------------
+# Create metadata (optional)
+# -----------------------------
+- name: Create DRBD metadata non-interactively (if requested)
+  command: drbdadm create-md --force {{ drbd_resource_name }}
   when: drbd_force_md_create | default(false) | bool
   register: drbd_create_md
-  changed_when: "'Writing meta data' in drbd_create_md.stdout or 'successfully' in drbd_create_md.stdout"
-  failed_when: >
-    drbd_create_md.rc != 0 and
-    ('already contains meta data' not in drbd_create_md.stdout)
+  changed_when: "'Writing meta data' in (drbd_create_md.stdout | default('')) or ('successfully' in (drbd_create_md.stdout | default('')))"
+  failed_when: drbd_create_md.rc != 0 and ('already contains meta data' not in (drbd_create_md.stdout | default('')))
 
-
-
-# 1. Bring DRBD resource up ---
+# -----------------------------
+# Bring DRBD up and optionally promote primary on designated node
+# -----------------------------
 - name: Bring DRBD resource up
-  ansible.builtin.command:
-    cmd: drbdadm up {{ drbd_resource_name }}
+  command: drbdadm up {{ drbd_resource_name }}
   register: drbd_up_result
-  changed_when: "'successfully' in drbd_up_result.stdout or drbd_up_result.rc == 0"
+  changed_when: "'successfully' in (drbd_up_result.stdout | default('')) or drbd_up_result.rc == 0"
   failed_when: drbd_up_result.rc != 0
 
+- name: Debug drbd up result
+  debug:
+    var: drbd_up_result.stdout_lines
 
-- name: Debug DRBD node and primary hostname
-  ansible.builtin.debug:
-    msg:
-      - "inventory_hostname = {{ inventory_hostname }}"
-      - "ansible_hostname = {{ ansible_hostname }}"
-      - "primary_master_node_hostname = {{ primary_master_node_hostname | default('undefined') }}"
-
-
-
-# 2. Set Primary node (force only on designated host) ---
-- name: Set this node as Primary (only on the designated master)
-  ansible.builtin.command:
-    cmd: "drbdadm primary --force {{ drbd_resource_name }}"
-  when: inventory_hostname == primary_master_node_hostname or
-        ansible_hostname == primary_master_node_hostname or
-        primary_master_node_hostname in inventory_hostname
+- name: Promote to Primary on designated master (force)
+  command: drbdadm primary --force {{ drbd_resource_name }}
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
   register: drbd_primary_result
-  changed_when: "'became Primary' in drbd_primary_result.stdout or 'already' in drbd_primary_result.stdout"
-  failed_when: false
+  ignore_errors: true
+  changed_when: "'became Primary' in (drbd_primary_result.stdout | default('')) or ('already Primary' in (drbd_primary_result.stdout | default('')))"
 
-# 3. Wait until Secondary disk sync is complete ---
-- name: Wait for DRBD secondary to become UpToDate
-  ansible.builtin.command:
-    cmd: drbdadm status {{ drbd_resource_name }}
+- name: Wait for peer to be UpToDate (only run on primary)
+  command: drbdadm status {{ drbd_resource_name }}
   register: drbd_status
-  until: "'peer-disk:UpToDate' in drbd_status.stdout"
-  retries: 30
-  delay: 20
+  until: "'peer-disk:UpToDate' in (drbd_status.stdout | default(''))"
+  retries: "{{ drbd_sync_retries }}"
+  delay: "{{ drbd_sync_delay }}"
   changed_when: false
-  when: inventory_hostname == primary_master_node_hostname or
-        ansible_hostname == primary_master_node_hostname or
-        primary_master_node_hostname in inventory_hostname
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
 
-# 4. Create filesystem on /dev/drbd0 ---
-- name: Create ext4 filesystem on DRBD device
-  ansible.builtin.command:
-    cmd: mkfs -t ext4 {{ drbd_device }}
-  args:
-    creates: "{{ drbd_device }}"
+# -----------------------------
+# Create filesystem on /dev/drbd0 (only on primary, idempotent)
+# -----------------------------
+- name: Check existing filesystem on DRBD device (only primary)
+  command: blkid -o value -s TYPE /dev/drbd0
+  register: drbd_fs_check
+  failed_when: false
+  changed_when: false
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+- name: Create ext4 filesystem on DRBD device (only primary if missing)
+  command: mkfs -t {{ drbd_fstype }} /dev/drbd0
   register: drbd_mkfs
-  changed_when: "'Creating filesystem' in drbd_mkfs.stdout"
-  when: inventory_hostname == primary_master_node_hostname or
-        ansible_hostname == primary_master_node_hostname or
-        primary_master_node_hostname in inventory_hostname
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+    - drbd_fs_check.stdout == ""
+  changed_when: drbd_mkfs.rc == 0
 
-# 5. Comment out DRBD mount entry in /etc/fstab ---
-- name: Comment DRBD mount entry in /etc/fstab
-  ansible.builtin.replace:
-    path: /etc/fstab
-    regexp: '^(UUID=.*[[:space:]]+/drbd[[:space:]]+)'
-    replace: '# \1'
-    backup: yes
-  when: "'/drbd' in lookup('file', '/etc/fstab')"
+- name: Debug filesystem creation
+  debug:
+    msg: "Created filesystem on /dev/drbd0"
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+    - drbd_fs_check.stdout == ""
