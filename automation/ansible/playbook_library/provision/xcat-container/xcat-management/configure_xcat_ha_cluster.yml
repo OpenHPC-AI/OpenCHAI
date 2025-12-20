@@ -53,7 +53,9 @@
     xcat_version: "{{ xcat_version_tag }}"
     xcat_image: "{{ xcat_docker_img }}"
     xcat_container_img: "{{ xcat_container_img_tar }}"
-    xcat_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
+    xcat_reg_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
     ssl_certificate_check: no
+    xcatdata_base_config: "xcatdata_{{ os_version }}.tgz"
+
   roles:
     - role: "{{ roles_parent_path }}/provision_lib/xcat_container_lib"
