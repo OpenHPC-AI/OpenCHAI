@@ -126,17 +126,7 @@ nvidia_cuda_version: "13.0"
 
 ####################### Intel Module Variable #######################
 # Intel OneAPI installer path
-intel_installer: "{{ rpm_stack_path }}/oneapi_rpms/intel-oneapi-hpc-toolkit-2025.2.0.575_offline.sh"
-
-intel_source_dir: "{{ rpm_stack_path }}/oneapi_rpms"
-# Installation arguments
-intel_install_dir: "{{ application_base_dir }}/intel"
-
-# Module setup script
-intel_module_script: "{{ intel_install_dir }}/modulefiles-setup.sh"
-
-# Arguments for module script
-intel_module_output_dir: "{{ application_base_dir }}/modulefiles/hpc/intel"
+intel_installer: "intel-oneapi-hpc-toolkit-2025.3.0.381_offline.sh"
 
 ####################### Monitoring Tools Variable #######################
 monitoring_log_server_ip: "172.10.3.25"
