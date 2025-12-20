@@ -24,5 +24,12 @@
     pcs_cluster_password: "{{ pcs_cluster_password }}"
     pcs_cluster_name: "{{ pcs_cluster_name }}"
 
+    mounted_state: ephemeral
+
+  pre_tasks:
+    - name: Reset failed host state (if any)
+      meta: clear_host_errors
+
+
   roles:
     - "{{ roles_parent_path }}/utility_lib/utility_pcs_basic"
