@@ -52,15 +52,15 @@ $ cd ./OpenCHAI
 
 **1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
 
-**Pull the openchai stack for Alma or Rocky Linux from your ***USB drive (local SSD or pen drive)*** into the directory ***../OpenCHAI/hpcsuite_registry/hostmachine_reg*** on the head node.**
+**a.) Pull the openchai stack for Alma or Rocky Linux from your ***USB drive (local SSD or pen drive)*** into the directory ***../OpenCHAI/hpcsuite_registry/hostmachine_reg*** on the head node.**
 
 **(OR)**
 
-***Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the openchai packages from the network.***
+***b.) Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the openchai packages from the network.***
 
 **(OR)**
 
-**You may also download it directly from the online source using:**
+**c.) You may also download it directly from the online source using:**
 
 ```bash
 # Multiple OS versions supports (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
