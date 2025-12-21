@@ -29,22 +29,22 @@ This chapter provides a straightforward, step-by-step guide for installing the O
 
 The quick installation steps are outlined below:
 
-### **1.1  Installing The Head Node**
+### **1  Installing The Head Node**
 
-Install the git package 
+1.0 Install the git package 
 
 ```bash
 yum install git
 ```
 
-Clone the Repository:
+1.2 Clone the Repository:
 Make sure to clone the repository into a directory with at least 60 GB of free disk space. This space is essential for offline installation, as the complete software stack RPMs will be downloaded into the same directory. Adequate space ensures a smooth and error-free installation and configuration process.
 
 ```bash
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool. Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.
+1.3 Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool. Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.
 
 ```bash
 $ cd ./OpenCHAI
