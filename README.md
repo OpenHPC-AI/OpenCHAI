@@ -119,7 +119,7 @@ After completing all the above configurations, you can now begin the setup of th
 $ bash ./configure_openchai_manager.sh
 ```
 
-**1.3.3 Post-Setup Verification of Manager Tool Configuration**
+**1.3.3 Post-setup verification of communication between all OpenCHAI Manager service nodes in the cluster from the HeadNode**
 - **Inventory Setup**
 ```bash
 ansible-inventory --list
