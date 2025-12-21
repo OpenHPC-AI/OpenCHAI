@@ -124,7 +124,7 @@ $ bash ./configure_openchai_manager.sh
 ```bash
 ansible-inventory --list
 ```
-- **1.3.4 Ping ALL Cluster hosts in inventory**
+- **Ping ALL Cluster hosts in inventory**
 ```bash
 ansible all -m ping
 # Verify Cluster connection with ssh port, adjust ssh port according to your environment
