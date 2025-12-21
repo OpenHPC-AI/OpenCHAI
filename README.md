@@ -79,7 +79,7 @@ https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostm
 wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
 
-Make sure the **rpm-stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/<os-version>/** !
+Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/<os-version>/** !
 
 ```bash
 ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
