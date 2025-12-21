@@ -54,6 +54,8 @@ $ cd ./OpenCHAI
 Pull the rpm-stack for Alma or Rocky Linux from your **USB drive (local SSD or pen drive)** into the directory
 **../OpenCHAI/hpcsuite_registry/hostmachine_reg** on the head node.
 
+**(OR)**
+
 ***Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the rpm-stack from the network.***
 
 **(OR)**
