@@ -44,7 +44,7 @@ Make sure to clone the repository into a directory with at least 60 GB of free d
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-Run the configuration script to set up the Manager tool after pulling the **rpm-stack** into the OpenCHAI directory.
+Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool. Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.
 
 ```bash
 $ cd ./OpenCHAI
@@ -56,7 +56,7 @@ Pull the rpm-stack for Alma or Rocky Linux from your **USB drive (local SSD or p
 
 **(OR)**
 
-***Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the rpm-stack from the network.***
+***Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the openchai packages from the network.***
 
 **(OR)**
 
