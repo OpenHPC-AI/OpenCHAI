@@ -51,7 +51,7 @@ $ cd ./OpenCHAI
 ```
 
 
-Pull the rpm-stack for Alma or Rocky Linux from your **USB drive (local SSD or pen drive)** into the directory
+Pull the openchai stack for Alma or Rocky Linux from your **USB drive (local SSD or pen drive)** into the directory
 **../OpenCHAI/hpcsuite_registry/hostmachine_reg** on the head node.
 
 **(OR)**
