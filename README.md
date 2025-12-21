@@ -31,7 +31,7 @@ The quick installation steps are outlined below:
 
 ### **1  Installing The Head Node**
 
-**1.0 Install the git package**
+**1.1 Install the git package**
 
 ```bash
 yum install git
