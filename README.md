@@ -98,6 +98,8 @@ Configure the Ansible inventory on the head node to enable communication with al
 
 -Login nodes
 
+-BMC nodes
+
 This setup allows the head node to orchestrate tasks, deploy configurations, and manage the cluster using Ansible.
 ```python
 
