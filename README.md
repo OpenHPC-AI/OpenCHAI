@@ -31,28 +31,28 @@ The quick installation steps are outlined below:
 
 ### **1  Installing The Head Node**
 
-1.0 Install the git package 
+**1.0 Install the git package**
 
 ```bash
 yum install git
 ```
 
-1.2 Clone the Repository:
+**1.2 Clone the Repository:**
 Make sure to clone the repository into a directory with at least 60 GB of free disk space. This space is essential for offline installation, as the complete software stack RPMs will be downloaded into the same directory. Adequate space ensures a smooth and error-free installation and configuration process.
 
 ```bash
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-1.3 Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool. Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.
+**1.3 Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool.** 
 
 ```bash
 $ cd ./OpenCHAI
 ```
 
+**1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
 
-Pull the openchai stack for Alma or Rocky Linux from your **USB drive (local SSD or pen drive)** into the directory
-**../OpenCHAI/hpcsuite_registry/hostmachine_reg** on the head node.
+**Pull the openchai stack for Alma or Rocky Linux from your ***USB drive (local SSD or pen drive)*** into the directory ***../OpenCHAI/hpcsuite_registry/hostmachine_reg*** on the head node.**
 
 **(OR)**
 
@@ -86,7 +86,7 @@ ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
 
 
-**Ansible Inventory Setup**
+**1.3.1 Ansible Inventory Setup**
 
 Configure the Ansible inventory on the head node to enable communication with all service nodes in the HPC-AI cluster, including:
 
@@ -109,7 +109,7 @@ $ vim chai_setup/inventory_def.txt
 
 ```
 
-**Proceed to CHAI-Manager Head Node Setup**
+**1.3.2 Proceed to CHAI-Manager Head Node Setup**
 
 After completing all the above configurations, you can now begin the setup of the CHAI-Manager Head Node. This step initializes the primary control node responsible for managing the HPC-AI cluster services, deployments, and orchestration workflows.
 
@@ -119,12 +119,12 @@ After completing all the above configurations, you can now begin the setup of th
 $ bash ./configure_openchai_manager.sh
 ```
 
-**Post-Setup Verification of Manager Tool Configuration**
+**1.3.3 Post-Setup Verification of Manager Tool Configuration**
 - **Inventory Setup**
 ```bash
 ansible-inventory --list
 ```
-- **Ping ALL Cluster hosts in inventory**
+- **1.3.4 Ping ALL Cluster hosts in inventory**
 ```bash
 ansible all -m ping
 # Verify Cluster connection with ssh port, adjust ssh port according to your environment
