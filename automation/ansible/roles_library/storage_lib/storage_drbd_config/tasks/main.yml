@@ -1,4 +1,3 @@
-
 ---
 # storage_drbd: main tasks
 # 1) detect drbd backing device (LVM LV containing 'drbd' OR partition)
