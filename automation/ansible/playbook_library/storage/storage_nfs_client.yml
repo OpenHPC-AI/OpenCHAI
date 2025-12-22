@@ -12,7 +12,7 @@
 
   vars:
     # RPM-based package installation
-    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms"
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms/"
     required_packages:
       - nfs-utils
       - libnfsidmap
