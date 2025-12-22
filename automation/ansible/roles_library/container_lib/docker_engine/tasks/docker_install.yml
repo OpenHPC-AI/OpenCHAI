@@ -1,0 +1,47 @@
+---
+# Try local RPM stack first, fallback to network repo
+
+- block:
+
+    - name: Check local Docker RPM stack directory exists
+      stat:
+        path: "{{ docker_engine_rpm_stack_path }}"
+      register: docker_rpm_dir
+
+    - name: Fail if local RPM stack path does not exist
+      fail:
+        msg: "Docker RPM stack path {{ docker_engine_rpm_stack_path }} not found"
+      when: not docker_rpm_dir.stat.exists
+
+    - name: Install Docker Engine from local RPM stack
+      dnf:
+        name:
+          - "{{ docker_engine_rpm_stack_path }}/*.rpm"
+        state: present
+        disable_gpg_check: true
+      register: docker_local_install
+
+  rescue:
+
+    - name: Local RPM install failed, falling back to network repo
+      debug:
+        msg: "Local Docker RPM installation failed. Installing from network repo."
+
+    - import_tasks: docker_repo.yml
+
+    - name: Install Docker Engine from network repository
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: latest
+        allowerasing: "{{ at_install_allow_erasing }}"
+
+- name: Enable and start Docker service
+  systemd:
+    name: docker
+    enabled: "{{ docker_service_enable }}"
+    state: started
