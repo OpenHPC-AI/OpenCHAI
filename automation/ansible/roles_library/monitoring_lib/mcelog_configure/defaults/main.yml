@@ -1,1 +1,5 @@
 mcelog_log_file: "/var/log/mcelog.log"
+
+
+required_packages:
+  - mcelog
