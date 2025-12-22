@@ -1,5 +1,5 @@
 ---
-- name: Configure tnd Setwp Mellanox tasks
+- name: Configure and Setwp Mellanox tasks
   ansible.builtin.include_tasks: setup_mellanox.yml
 
 
