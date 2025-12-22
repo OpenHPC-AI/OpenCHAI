@@ -1,20 +1,47 @@
 ---
-- name: Find local RPM files
-  find:
-    paths: "{{ rpm_stack_path }}/developement_rpms/"
-    patterns: "*.rpm"
-  register: local_rpms
 
-- name: Install packages from local directory if available
-  yum:
-    name: "{{ item.path }}"
-    state: present
-  loop: "{{ local_rpms.files }}"
-  when: local_rpms.files | length > 0
-  register: rpm_local_install
-  ignore_errors: yes
 
-- name: Install missing packages from yum online repo
-  yum:
-    name: "{{ required_packages }}"
-    state: present
+- name: Ensure required packages are installed using rpm only
+  block:
+
+    - name: Ensure Development RPM directory exists
+      ansible.builtin.file:
+        path: "{{ dev_rpm_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Gather installed package list using rpm
+      ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
+      register: installed_rpms
+      changed_when: false
+
+    - name: Determine missing required packages
+      ansible.builtin.set_fact:
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+
+    - name: Show missing packages
+      ansible.builtin.debug:
+        msg: "Missing packages: {{ missing_packages }}"
+      when: missing_packages | length > 0
+
+    - name: Find local RPMs for missing packages
+      ansible.builtin.find:
+        paths: "{{ dev_rpm_path }}"
+        patterns: "{{ item }}-*.rpm"
+      loop: "{{ missing_packages }}"
+      register: found_rpms
+      when: missing_packages | length > 0
+
+    - name: Fail if any required RPM is missing locally
+      ansible.builtin.fail:
+        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+      when:
+        - missing_packages | length > 0
+        - item.matched == 0
+      loop: "{{ found_rpms.results }}"
+
+    - name: Install missing packages using rpm
+      ansible.builtin.command: >
+        rpm -Uvh --nosignature --nodeps
+        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+      when: missing_packages | length > 0
