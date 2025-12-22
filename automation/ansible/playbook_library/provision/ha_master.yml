@@ -85,7 +85,11 @@
     hpctool_stack_dir: /hpctool_stack
     hpc_cluster_suite_dir: /root/hpc_cluster_suite
 
+# ---------------------------------------------------------------------------
+# Hosts file setup for master nodes
+# ---------------------------------------------------------------------------
 
+- import_playbook: ../../playbook_library/bootstrap/update_hosts.yml
 
 
 # ---------------------------------------------------------------------------
