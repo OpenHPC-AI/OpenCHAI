@@ -1,0 +1,12 @@
+---
+# ------------------------------------------------------------
+# Update /etc/hosts on all nodes using inventory data
+# ------------------------------------------------------------
+
+- name: Ensure /etc/hosts is generated from inventory
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
