@@ -10,5 +10,6 @@
     docker_install: true # or false
     at_install_allow_erasing: false # or true
     docker_service_enable: yes # or no
+    docker_engine_rpm_stack_path: "{{ rpm_stack_path }}/docker_rpm"
   roles:
     - "{{ roles_parent_path }}/container_lib/docker_engine"
