@@ -37,4 +37,3 @@
     - docker-ce-test
     - docker-ce-edge
   ignore_errors: yes  # in case those sections don't exist
-
