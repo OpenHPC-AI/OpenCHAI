@@ -2,7 +2,10 @@
 ---
 - name: Master HPC Provisioning Playbook
   hosts: all
-  gather_facts: true
+#  gather_facts: true
+  gather_facts: no
+  serial: 1
+  ignore_unreachable: yes
   become: true
   vars_files:
     - ../../group_vars/all.yml
@@ -25,8 +28,10 @@
 - import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
   vars:
     repo_server: "http://{{ headnode_ip }}:8080"
-    clone_dest: "{{ rpm_stack_path }}/"
+    clone_dest: "{{openchai_vault_path}}/"
     download_tool: wget
+
+
 
 # ---------------------------------------------------------------------------
 # Create NFS-Clients Nodes for rpm-stack distribution
@@ -42,8 +47,12 @@
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
-    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
-    
+
+
+
+
+
+
 - import_playbook: ../../playbook_library/configure/config_mount_nfs_client.yml
   vars:
     nfs_client_packages:
@@ -54,8 +63,9 @@
     nfs_client_install_if_missing: true
     nfs_mounts:                       # server:path mount_point
       - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
-    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
-    
+
+
+
 # ---------------------------------------------------------------------------
 # Standard Directory setup
 # ---------------------------------------------------------------------------
@@ -65,16 +75,24 @@
     hpctool_stack_dir: /hpctool_stack
     hpc_cluster_suite_dir: /root/hpc_cluster_suite
 
+
+
+
 # ---------------------------------------------------------------------------
 # Monitoring Baseline
 # ---------------------------------------------------------------------------
 - import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
 
 
+
+
+
 - import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
   vars:
     rsyslog_mode: server
     rsyslog_server_ip: "{{ primary_master_node_ip }}"
+
+
 
 
 # ============================================================
@@ -140,7 +158,7 @@
     drbd_device: "{{ drbd_device }}"
     drbd_mount_dir: "{{ drbd_mount_dir }}"
     drbd_fstype: "{{ drbd_fstype }}"
-    mounted_state: ephemeral   # mounted (don't use "mounted" it will make nfs mount entry in /etc/fstab)
+
     primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
     secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
     pcs_cluster_password: "{{ pcs_cluster_password }}"
@@ -150,8 +168,10 @@
 
 - import_playbook: ../../playbook_library/utility/utility_lmod.yml
   vars:
-    local_rpm_base: "{{ rpm_stack_path }}/utilities_rpm"
+    util_rpm_base: "{{ rpm_stack_path }}/utilities_rpms"
+    dev_rpm_base : "{{ rpm_stack_path }}/developement_rpms"
     modulepath_dir: "{{ modulepath_dir }}"
+
 
 
 # ============================================================
@@ -159,8 +179,10 @@
 # ============================================================
 - import_playbook: ../../playbook_library/network/setup_mellanox.yml
   vars:
-    install_mellanox: true
-    # mellanox_repo_url: rhel9_4_repo
+    install_mellanox: true   # set to false to skip re-installation
+    mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
+    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
+
 
 
 # ============================================================
@@ -234,6 +256,7 @@
     docker_install: true # or false
     at_install_allow_erasing: false # or true
     docker_service_enable: yes # or no
+    docker_engine_rpm_stack_path: "{{ rpm_stack_path }}/docker_rpm"
 
 - import_playbook: ../../playbook_library/container/docker-compose/install_docker_compose.yml
 
@@ -258,16 +281,10 @@
     xcat_version: "{{ xcat_version_tag }}"
     xcat_image: "{{ xcat_docker_img }}"
     xcat_container_img: "{{ xcat_container_img_tar }}"
-    xcat_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
-
-- import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
-  vars:
-    xcat_version: "{{ xcat_version_tag }}"
-    xcat_baseos: "{{ rhel_linux_label }}"
-    xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
-    # Correct Jinja2 conditional instead of Bash
-    xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
-    os_architecture: "{{ os_arch }}"
+    xcat_reg_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
+    xcat_provisioning_osimage_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/provisioning_osimage/{{ os_version }}"
+    ssl_certificate_check: no
+    xcatdata_base_config: "xcatdata_{{ os_version }}.tgz"
 
 - import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
   vars:
@@ -287,7 +304,7 @@
     openldap_image: "{{ openldap_container_image }}"
     ldap_container_img: "{{ ldap_container_img_tar }}"
     ldap_version: "{{ ldap_version_tag }}"
-    ldap_reg_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
+    ldap_reg_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/ldap_reg/{{ ldap_version }}/{{ ldap_container_img }}"
     ssl_certificate_check: no
     primary_ldap_server_ip: "{{ primary_ldap_node_ip }}"
     secondary_ldap_server_ip: "{{ secondary_ldap_node_ip }}"
