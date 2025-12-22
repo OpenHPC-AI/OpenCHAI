@@ -1,4 +1,5 @@
-- name: Remove Docker, Podman, and related packages
+---
+- name: Remove Docker, Podman, and related packages (offline-safe)
   become: "{{ docker_remove_exiting }}"
   dnf:
     name:
@@ -13,3 +14,5 @@
       - podman
       - runc
     state: absent
+    disablerepo: "*"
+    disable_gpg_check: true
