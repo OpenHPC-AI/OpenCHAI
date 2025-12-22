@@ -25,11 +25,11 @@
 # ---------------------------------------------------------------------------
 # Clone Hosted Repositories to Client Nodes
 # ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
-  vars:
-    repo_server: "http://{{ headnode_ip }}:8080"
-    clone_dest: "{{openchai_vault_path}}/"
-    download_tool: wget
+#- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+#  vars:
+#    repo_server: "http://{{ headnode_ip }}:8080"
+#    clone_dest: "{{openchai_vault_path}}/"
+#    download_tool: wget
 
 
 
@@ -39,30 +39,40 @@
 
 - import_playbook: ../../playbook_library/storage/storage_nfs_client.yml
   vars:
+    # RPM-based package installation
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms"
+    required_packages:
+      - nfs-utils
+      - libnfsidmap
+      - rpcbind
+
+    # NFS client configuration
     nfs_client_packages:
       - nfs-utils
     nfs_client_service: nfs-client.target
-    nfs_client_state: started        # started, stopped, restarted
-    nfs_client_enabled: true         # true or false
+    nfs_client_state: started
+    nfs_client_enabled: true
     nfs_client_install_if_missing: true
-    nfs_mounts:                       # server:path mount_point
-      - { src: "{{ headnode_ip }}:{{ rpm_stack_path }}", dest: "{{ rpm_stack_path }}", opts: "defaults" }
 
+    # Multiple NFS mounts
+    nfs_mounts:
+      - src: "{{ headnode_ip }}:{{ rpm_stack_path }}"
+        dest: "{{ rpm_stack_path }}"
+        fstype: nfs
+        opts: ro,_netdev
+      - src: "{{ headnode_ip }}:{{ configuration_dir_path }}"
+        dest: "{{ configuration_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+      - src: "{{ headnode_ip }}:{{ bin_dir_path }}"
+        dest: "{{ bin_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
 
+    # mounted  → persistent (/etc/fstab)
+    # ephemeral → runtime only (HPC preferred)
+    mounted_state: ephemeral
 
-
-
-
-- import_playbook: ../../playbook_library/configure/config_mount_nfs_client.yml
-  vars:
-    nfs_client_packages:
-      - nfs-utils
-    nfs_client_service: nfs-client.target
-    nfs_client_state: started        # started, stopped, restarted
-    nfs_client_enabled: true         # true or false
-    nfs_client_install_if_missing: true
-    nfs_mounts:                       # server:path mount_point
-      - { src: "{{ headnode_ip }}:{{ configuration_dir_path }}", dest: "{{ configuration_dir_path }}", opts: "defaults" }
 
 
 
