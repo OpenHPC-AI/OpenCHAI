@@ -230,8 +230,7 @@ read -p "Enterprise EL Label              [default: $DEF_EL_LABEL]: " USER_EL_LA
 EL_LABEL="${USER_EL_LABEL:-$DEF_EL_LABEL}"
 
 read -p "Kernel Version                   [default: $DEF_KERNEL]: " USER_KERNEL
-KERNEL_VERSION="${USER_KERNEL:-$DEF_KERNEL}"
-
+tmp="${USER_KERNEL:-$DEF_KERNEL}"; KERNEL_VERSION="${tmp%.*}"
 echo
 echo
 # -------------------------
@@ -337,8 +336,8 @@ if (( ${#tar_files[@]} == 0 )); then
                 fi
 
                 info "Extracting ${FILE} ..."
-                tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH" || \
-                tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH"
+                tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION" || \
+                tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION"
 
                 notice "✅ Registry extracted successfully"
                 info "Untar directory name: ${OPENCHAI_VERSION}"
@@ -375,8 +374,8 @@ else
         OPENCHAI_VERSION=$(strip_tar_ext "$local_tar")
 
         info "Extracting selected file: ${local_tar} ..."
-        tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH" || \
-        tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH"
+        tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION" || \
+        tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION"
 
         notice "✅ Registry extracted successfully"
         info "Untar directory name: ${OPENCHAI_VERSION}"
@@ -389,10 +388,10 @@ fi
 # ------------------------------------------------------------------
 echo
 echo "Checking local registry for OpenCHAI version..."
-echo "Path: ${HOSTMACHINE_REGISTRY_PATH}"
+echo "Path: ${HOSTMACHINE_REGISTRY_PATH}/$OS_VERSION"
 echo "Version: ${OPENCHAI_VERSION}"
 
-if [[ -d "${HOSTMACHINE_REGISTRY_PATH}/${OPENCHAI_VERSION}" ]]; then
+if [[ -d "${HOSTMACHINE_REGISTRY_PATH}/${OS_VERSION}/${OPENCHAI_VERSION}" ]]; then
     echo -e "${GREEN}✔ Version '${OPENCHAI_VERSION}' exists.${RESET}"
 else
     echo -e "${YELLOW}⚠ Version directory not found."
