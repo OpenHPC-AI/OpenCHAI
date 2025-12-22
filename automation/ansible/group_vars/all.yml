@@ -77,7 +77,7 @@ drbd_fs_resource_name: "xcatfs"
 drbd_device: "/dev/drbd0"
 drbd_mount_dir: "/drbd"
 drbd_fstype: "ext4"
-
+drbd_primitive_name: "drbdfs"
 drbd_sync_delay: "40"
 
 pcs_primary_master_node_hostname: "hpc-master01"
