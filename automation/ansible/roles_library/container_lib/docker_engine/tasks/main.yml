@@ -1,9 +1,18 @@
 ---
 # tasks file for docker_engine
-- import_tasks: docker_repo.yml
+
+- name: Check if Docker is already installed
+  command: docker --version
+  register: docker_check
+  failed_when: false
+  changed_when: false
 
 - import_tasks: docker_remove_exiting.yml
-  when: docker_remove_exiting | default(false)
+  when:
+    - docker_remove_exiting | default(false)
+    - docker_check.rc != 0
 
-- import_tasks: docker_latest.yml
-  when: docker_install | default(false)
+- import_tasks: docker_install.yml
+  when:
+    - docker_install | default(false)
+    - docker_check.rc != 0
