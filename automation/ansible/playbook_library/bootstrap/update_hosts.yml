@@ -1,0 +1,11 @@
+---
+- name: Update /etc/hosts on all nodes using inventory
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  roles:
+    - "{{ roles_parent_path }}/bootstrap_lib/update_hosts"
