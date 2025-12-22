@@ -1,78 +1,116 @@
 ---
-- name: Ensure Development RPM directory exists
+# ============================================================
+# NFS Client Installation – EL8 / EL9 (Rocky / RHEL / Alma)
+# Strategy:
+#   1. Check if NFS client packages are already installed
+#   2. If missing, try installing from local RPMs
+#   3. If local RPMs are not present, fallback to network repo
+# ============================================================
+
+- name: Ensure local NFS RPM directory exists
   ansible.builtin.file:
     path: "{{ nfs_rpm_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
-- name: Gather installed packages using rpm
+# ------------------------------------------------------------
+# Detect installed packages
+# ------------------------------------------------------------
+- name: Gather installed packages
   ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
   register: installed_rpms
   changed_when: false
 
-- name: Determine missing required packages
+- name: Determine missing NFS client packages
   ansible.builtin.set_fact:
-    missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+    missing_packages: "{{ nfs_client_packages | difference(installed_rpms.stdout_lines) }}"
 
-- name: Show missing packages
+- name: Debug missing packages
   ansible.builtin.debug:
-    msg: "Missing packages: {{ missing_packages }}"
+    msg: "Missing NFS client packages: {{ missing_packages }}"
   when: missing_packages | length > 0
 
+# ------------------------------------------------------------
+# Check availability of local RPMs
+# ------------------------------------------------------------
 - name: Find local RPMs for missing packages
   ansible.builtin.find:
     paths: "{{ nfs_rpm_dir }}"
     patterns: "{{ item }}-*.rpm"
   loop: "{{ missing_packages }}"
-  register: found_rpms
+  register: local_rpm_search
   when: missing_packages | length > 0
 
-- name: Fail if any required RPM is missing locally
-  ansible.builtin.fail:
-    msg: "RPM for package {{ item.item }} not found in {{ nfs_rpm_dir }}"
-  when:
-    - missing_packages | length > 0
-    - item.matched == 0
-  loop: "{{ found_rpms.results }}"
+- name: Determine if all missing RPMs are available locally
+  ansible.builtin.set_fact:
+    local_rpms_available: >-
+      {{
+        local_rpm_search.results
+        | map(attribute='matched')
+        | min
+        | default(0)
+        | int > 0
+      }}
+  when: missing_packages | length > 0
 
-- name: Install missing packages using rpm
+# ------------------------------------------------------------
+# Install from local RPMs (preferred)
+# ------------------------------------------------------------
+- name: Install NFS client packages from local RPMs
   ansible.builtin.command: >
     rpm -Uvh --nosignature --nodeps
-    {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
-  when: missing_packages | length > 0
+    {{ local_rpm_search.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+  when:
+    - missing_packages | length > 0
+    - local_rpms_available | bool
 
-- name: Ensure NFS Client packages are installed
+# ------------------------------------------------------------
+# Fallback: install from network repo (safe on fresh OS)
+# ------------------------------------------------------------
+- name: Install NFS client packages from network repository
   ansible.builtin.package:
-    name: "{{ nfs_client_packages }}"
+    name: "{{ missing_packages }}"
     state: present
-  when: nfs_client_install_if_missing | bool
+  when:
+    - missing_packages | length > 0
+    - not local_rpms_available | bool
 
-- name: Manage NFS Client service
+# ------------------------------------------------------------
+# Ensure NFS client service
+# ------------------------------------------------------------
+- name: Ensure NFS client services are enabled and running
   ansible.builtin.service:
-    name: "{{ nfs_client_service }}"
-    state: "{{ nfs_client_state }}"
-    enabled: "{{ nfs_client_enabled }}"
-  when: nfs_client_packages is defined
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - rpcbind
+    - nfs-client.target
 
+# ------------------------------------------------------------
+# Ensure NFS mount points exist
+# ------------------------------------------------------------
 - name: Ensure NFS mount point directories exist
   ansible.builtin.file:
     path: "{{ item.dest }}"
     state: directory
     owner: root
     group: root
-    mode: '0755'
-  loop: "{{ nfs_mounts }}"
+    mode: "0755"
+  loop: "{{ nfs_mounts | default([]) }}"
   loop_control:
     label: "{{ item.dest }}"
 
-- name: Mount multiple NFS shares
+# ------------------------------------------------------------
+# Mount NFS filesystems
+# ------------------------------------------------------------
+- name: Mount NFS filesystems
   ansible.builtin.mount:
     src: "{{ item.src }}"
     path: "{{ item.dest }}"
     fstype: "{{ item.fstype | default('nfs') }}"
     opts: "{{ item.opts | default('defaults,_netdev') }}"
-    state: "{{ mounted_state }}"
-  loop: "{{ nfs_mounts }}"
+    state: mounted
+  loop: "{{ nfs_mounts | default([]) }}"
   loop_control:
     label: "{{ item.src }} -> {{ item.dest }}"
-  when: inventory_hostname != headnode_inventory_hostname
