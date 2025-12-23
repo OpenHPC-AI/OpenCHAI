@@ -1,0 +1,31 @@
+---
+- name: Update interface IP configuration
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars_prompt:
+    - name: iface_name
+      prompt: "Enter interface name (e.g. ens1f2, ib0)"
+      private: no
+      default: "ens1f2"
+
+    - name: iface_ipaddr
+      prompt: "Enter IP address"
+      private: no
+
+    - name: iface_prefix
+      prompt: "Enter network prefix (e.g. 16, 24)"
+      private: no
+      default: "16"
+
+    - name: iface_persistent
+      prompt: "Make IP persistent? (true/false)"
+      private: no
+      default: "true"
+
+  roles:
+    - "{{ roles_parent_path }}/bootstrap_lib/update_interface_ipaddr"
