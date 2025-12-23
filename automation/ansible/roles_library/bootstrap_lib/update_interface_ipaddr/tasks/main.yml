@@ -1,0 +1,98 @@
+---
+- name: Ensure network-scripts directory exists
+  ansible.builtin.file:
+    path: /etc/sysconfig/network-scripts
+    state: directory
+    mode: "0755"
+
+- name: Set interface config file path
+  ansible.builtin.set_fact:
+    iface_cfg: "/etc/sysconfig/network-scripts/ifcfg-{{ iface_name }}"
+
+- name: Check if interface config exists
+  ansible.builtin.stat:
+    path: "{{ iface_cfg }}"
+  register: iface_cfg_stat
+
+- name: Backup existing interface configuration
+  ansible.builtin.copy:
+    src: "{{ iface_cfg }}"
+    dest: "{{ iface_cfg }}.bak"
+    remote_src: yes
+  when:
+    - iface_persistent | bool
+    - iface_cfg_stat.stat.exists
+  ignore_errors: true
+
+# =====================================================
+# Enable persistent IP configuration
+# =====================================================
+- name: Configure persistent IP for interface
+  block:
+    - name: Set DEVICE
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^DEVICE='
+        line: "DEVICE={{ iface_name }}"
+        create: yes
+
+    - name: Set BOOTPROTO none
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^BOOTPROTO='
+        line: "BOOTPROTO=none"
+        create: yes
+
+    - name: Set IPADDR
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^IPADDR='
+        line: "IPADDR={{ iface_ipaddr }}"
+        create: yes
+
+    - name: Set PREFIX
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^PREFIX='
+        line: "PREFIX={{ iface_prefix }}"
+        create: yes
+
+    - name: Enable ONBOOT
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^ONBOOT='
+        line: "ONBOOT=yes"
+        create: yes
+  when: iface_persistent | bool
+
+# =====================================================
+# Disable persistent IP configuration
+# =====================================================
+- name: Remove persistent IP configuration
+  block:
+    - name: Remove IPADDR
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^IPADDR='
+        state: absent
+
+    - name: Remove PREFIX
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^PREFIX='
+        state: absent
+
+    - name: Set BOOTPROTO auto
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^BOOTPROTO='
+        line: "BOOTPROTO=dhcp"
+        create: yes
+
+    - name: Disable ONBOOT
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^ONBOOT='
+        line: "ONBOOT=no"
+        create: yes
+  when: not iface_persistent | bool
