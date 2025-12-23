@@ -40,12 +40,16 @@
         - missing_packages | length > 0
         - item.matched == 0
       loop: "{{ found_rpms.results }}"
+      ignore_errors: true
+
 
     - name: Install missing packages using rpm
       ansible.builtin.command: >
         rpm -Uvh --nosignature --nodeps
         {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
       when: missing_packages | length > 0
+      ignore_errors: true
+
 
 ##########################################################################################################################
 
@@ -79,7 +83,7 @@
 # Ensure required build packages are installed
 - name: Ensure Mellanox RPM directory exists
   file:
-    path: "{{ bin_stack_path }}/"
+    path: "{{ mlnx_dir_path }}/"
     state: directory
     mode: "0755"
   when: install_mellanox
@@ -88,6 +92,8 @@
   ansible.builtin.package:
     name: "{{ required_packages }}"
     state: present
+  ignore_errors: true
+
 
 # Get OS version safely with slurp + regex
 - name: Read /etc/os-release content
@@ -155,13 +161,13 @@
 
 - name: Check if Mellanox OFED tgz already exists
   ansible.builtin.stat:
-    path: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
+    path: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
   register: mellanox_tgz_stat
 
 - name: Download Mellanox OFED tgz if not present
   ansible.builtin.get_url:
     url: "{{ mellanox_ofed_url }}"
-    dest: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
+    dest: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
     mode: '0644'
   when:
     - mellanox_ofed_url | length > 0
@@ -171,14 +177,14 @@
 # Extract the Mellanox OFED tarball
 - name: Extract Mellanox OFED tgz
   ansible.builtin.unarchive:
-    src: "{{ bin_stack_path }}/{{ mellanox_tgz }}"
-    dest: "{{ bin_stack_path }}"
+    src: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
+    dest: "{{ mlnx_dir_path }}"
     remote_src: yes
 
 # Install Mellanox OFED with kernel support
 - name: Install Mellanox OFED if enabled
   when:
   - not mellanox_installed or install_mellanox | default(false) | bool
-  command: "{{ bin_stack_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --add-kernel-support"
+  command: "{{ mlnx_dir_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --add-kernel-support"
   when: install_mellanox
   ignore_errors: true
