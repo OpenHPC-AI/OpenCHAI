@@ -47,7 +47,7 @@ git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 **1.3 Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool.** 
 
 ```bash
-$ cd ./OpenCHAI
+cd ./OpenCHAI
 ```
 
 **1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
@@ -105,7 +105,7 @@ This setup allows the head node to orchestrate tasks, deploy configurations, and
 
 #Update the inventory file with all service node details for your cluster, based on your environment configuration.
 
-$ vim chai_setup/inventory_def.txt
+vim chai_setup/inventory_def.txt
 
 ```
 
@@ -116,7 +116,7 @@ After completing all the above configurations, you can now begin the setup of th
 ```bash
 #Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
 
-$ bash ./configure_openchai_manager.sh
+bash ./configure_openchai_manager.sh
 ```
 
 **1.3.3 Post-setup verification of communication between all OpenCHAI Manager service nodes in the cluster from the HeadNode**
