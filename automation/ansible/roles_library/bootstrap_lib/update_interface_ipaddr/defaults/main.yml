@@ -1,0 +1,6 @@
+---
+# REQUIRED VARIABLES
+# iface_name        → Interface name (e.g. ens1f2, ib0, bond0)
+# iface_ipaddr      → IP address (e.g. 172.10.3.201)
+# iface_prefix      → Prefix (e.g. 16)
+# iface_persistent  → true | false (enable/disable permanent IP)
