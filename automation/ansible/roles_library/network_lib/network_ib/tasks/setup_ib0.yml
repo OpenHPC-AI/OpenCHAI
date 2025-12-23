@@ -1,13 +1,35 @@
 ---
-# Generate UUID for ib0
-- name: Generate UUID for ib0
+# Detect InfiniBand interface name
+- name: Detect InfiniBand interface
+  ansible.builtin.shell: |
+    ip -o link show | awk -F': ' '{print $2}' | grep -E '^(ib|ibp|mlx)'
+  register: ib_iface
+  changed_when: false
+  failed_when: ib_iface.stdout_lines | length == 0
+
+# Set InfiniBand device fact
+- name: Set InfiniBand device name
+  ansible.builtin.set_fact:
+    ib_device: "{{ ib_iface.stdout_lines[0] }}"
+
+# Generate UUID for InfiniBand interface
+- name: Generate UUID for InfiniBand interface
   ansible.builtin.command: uuidgen
-  register: ib0
+  register: ib_uuid
+  changed_when: false
+
+# Ensure network-scripts directory exists (EL8/EL9 compatibility)
+- name: Ensure network-scripts directory exists
+  ansible.builtin.file:
+    path: /etc/sysconfig/network-scripts
+    state: directory
+    mode: "0755"
 
 # Create InfiniBand config file
-- name: Create InfiniBand configuration file for ib0
+- name: Create InfiniBand configuration file
   ansible.builtin.copy:
-    dest: /etc/sysconfig/network-scripts/ifcfg-ib0
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ ib_device }}"
+    mode: "0644"
     content: |
       CONNECTED_MODE=no
       TYPE=InfiniBand
@@ -21,7 +43,7 @@
       IPV6_DEFROUTE=yes
       IPV6_FAILURE_FATAL=no
       IPV6_ADDR_GEN_MODE=eui64
-      NAME=ib0
-      UUID={{ ib0.stdout }}
-      DEVICE=ib0
+      NAME={{ ib_device }}
+      UUID={{ ib_uuid.stdout }}
+      DEVICE={{ ib_device }}
       ONBOOT=yes
