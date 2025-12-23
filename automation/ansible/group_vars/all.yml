@@ -72,7 +72,7 @@ xcat_vip_subnet_prefix: "22"
 xcat_vip_resource_name: "vip_xCAT"
 
 drbd_resource_name: "rudra_drbd"
-drbd_clone_name: "drbd_fs_clone"
+drbd_clone_name: "drbdfs-clone"
 drbd_fs_resource_name: "xcatfs"
 drbd_device: "/dev/drbd0"
 drbd_mount_dir: "/drbd"
