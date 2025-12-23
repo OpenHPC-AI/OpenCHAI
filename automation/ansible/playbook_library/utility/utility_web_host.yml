@@ -12,7 +12,7 @@
 
     # Directory to host
     #web_content_dir: "/home/hpc-project-oct-2025/CHAI/rpm-stack/"
-    web_content_dir: "{{rpm_stack_path}}/"
+    web_content_dir: "{{ openchai_vault_path }}/"
 
     # Web server port
     web_port: 8080
