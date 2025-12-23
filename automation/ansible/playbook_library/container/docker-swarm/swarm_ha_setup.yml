@@ -10,7 +10,9 @@
       - "{{ secondary_swarm_manager }}"
       - "{{ tertiary_swarm_manager }}"
     swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
+    docker_service_enable: yes #no
 
   roles:
     - "{{ roles_parent_path }}/container_lib/docker_swarm_ha"
+
 
