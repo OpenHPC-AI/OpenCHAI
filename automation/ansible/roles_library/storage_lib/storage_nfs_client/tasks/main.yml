@@ -1,26 +1,36 @@
 ---
+# =============================================================================
+# NFS CLIENT SETUP — ENTERPRISE SAFE (EL8 / EL9)
+# =============================================================================
 
+# ------------------------------------------------------------
+# Reload systemd
+# ------------------------------------------------------------
 - name: Reload systemd manager configuration
   ansible.builtin.systemd:
     daemon_reload: yes
   become: true
 
+# ------------------------------------------------------------
+# Ensure local RPM directory exists
+# ------------------------------------------------------------
 - name: Ensure local NFS RPM directory exists
   ansible.builtin.file:
     path: "{{ nfs_rpm_dir }}"
     state: directory
     mode: "0755"
-  vars:
-    nfs_rpm_dir: "{{ rpm_stack_path | default('/tmp/rpm-stack') }}/nfs_rpms"
 
 # ------------------------------------------------------------
-# Gather installed packages
+# Gather installed RPMs
 # ------------------------------------------------------------
-- name: Gather installed packages
+- name: Gather installed RPM list
   ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
   register: installed_rpms
   changed_when: false
 
+# ------------------------------------------------------------
+# Determine missing NFS client packages
+# ------------------------------------------------------------
 - name: Determine missing NFS client packages
   ansible.builtin.set_fact:
     missing_packages: "{{ nfs_client_packages | difference(installed_rpms.stdout_lines) }}"
@@ -31,28 +41,32 @@
   when: missing_packages | length > 0
 
 # ------------------------------------------------------------
-# Copy missing RPMs from headnode
+# Check RPM availability on headnode
 # ------------------------------------------------------------
-- name: Check if RPMs exist on headnode
+- name: Check if NFS RPMs exist on headnode
   ansible.builtin.stat:
     path: "{{ nfs_rpm_dir }}"
   delegate_to: "{{ groups['headnode'][0] }}"
-  register: headnode_rpm_dir
   run_once: true
+  register: headnode_rpm_dir
+  when: missing_packages | length > 0
 
-- name: Copy missing RPMs from headnode if available
+# ------------------------------------------------------------
+# Sync RPMs from headnode if available
+# ------------------------------------------------------------
+- name: Sync RPMs from headnode
   ansible.builtin.synchronize:
     src: "{{ nfs_rpm_dir }}/"
     dest: "{{ nfs_rpm_dir }}/"
     mode: pull
   when:
     - missing_packages | length > 0
-    - headnode_rpm_dir.stat.exists
+    - headnode_rpm_dir.stat.exists | default(false)
 
 # ------------------------------------------------------------
-# Find RPMs locally on each client node
+# Find local RPMs for missing packages
 # ------------------------------------------------------------
-- name: Find local RPMs for missing packages
+- name: Find local RPMs
   ansible.builtin.find:
     paths: "{{ nfs_rpm_dir }}"
     patterns: "{{ item }}-*.rpm"
@@ -61,18 +75,28 @@
   when: missing_packages | length > 0
 
 # ------------------------------------------------------------
-# Install from local RPMs if found
+# Attempt local RPM installation (NON-FATAL)
 # ------------------------------------------------------------
-- name: Install NFS client packages from local RPMs
+- name: Attempt install from local RPMs
   ansible.builtin.command: >
     rpm -Uvh --nosignature
     {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+  register: local_rpm_install
+  failed_when: false
+  changed_when: local_rpm_install.rc == 0
   when:
     - missing_packages | length > 0
     - found_rpms.results | map(attribute='matched') | sum > 0
 
+- name: Debug local RPM install failure
+  ansible.builtin.debug:
+    msg: "{{ local_rpm_install.stderr }}"
+  when:
+    - local_rpm_install is defined
+    - local_rpm_install.rc != 0
+
 # ------------------------------------------------------------
-# Fallback: install missing packages from network repo
+# Fallback: Install from network repository
 # ------------------------------------------------------------
 - name: Install NFS client packages from network repo
   ansible.builtin.package:
@@ -80,19 +104,30 @@
     state: present
   when:
     - missing_packages | length > 0
-    - found_rpms.results | map(attribute='matched') | sum == 0
+    - local_rpm_install is not defined
+      or local_rpm_install.rc != 0
 
 # ------------------------------------------------------------
-# Ensure NFS client services
+# Final verification
 # ------------------------------------------------------------
-- name: Ensure rpcbind service is running and enabled
+- name: Verify NFS client packages installed
+  ansible.builtin.command: rpm -q {{ item }}
+  loop: "{{ nfs_client_packages }}"
+  register: verify_pkgs
+  changed_when: false
+  failed_when: false
+
+# ------------------------------------------------------------
+# Ensure services
+# ------------------------------------------------------------
+- name: Ensure rpcbind service running
   ansible.builtin.service:
     name: rpcbind
     state: started
     enabled: true
   ignore_errors: true
 
-- name: Ensure NFS client target is running and enabled
+- name: Ensure NFS client target running
   ansible.builtin.service:
     name: nfs-client.target
     state: started
@@ -100,9 +135,9 @@
   ignore_errors: true
 
 # ------------------------------------------------------------
-# Ensure NFS mount points exist
+# Ensure NFS mount directories exist
 # ------------------------------------------------------------
-- name: Ensure NFS mount point directories exist
+- name: Ensure NFS mount directories exist
   ansible.builtin.file:
     path: "{{ item.dest }}"
     state: directory
