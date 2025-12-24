@@ -196,6 +196,7 @@ notice "Default Selected OS version from Headnode: ${DETECTED_OS}"
 echo
 notice "You can adjust the OS version for the HPC-AI Master Nodes in the upcoming steps if it differs from the Headnode!"
 
+
 # -------------------------------------------------------
 # Auto-detect server values
 # -------------------------------------------------------
@@ -238,7 +239,7 @@ echo
 # -------------------------
 HOSTMACHINE_REG_NETWORK_URL="${OPENCHAI_VAULT_NETWORK_URL}/hostmachine_reg/${OS_VERSION}/"
 CONTAINER_IMAGE_REG_NETWORK_URL="${OPENCHAI_VAULT_NETWORK_URL}/container_img_reg/${OS_VERSION}/"
-
+mkdir -p "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION" || true
 # -------------------------
 # Host key / SSL check option
 # -------------------------
