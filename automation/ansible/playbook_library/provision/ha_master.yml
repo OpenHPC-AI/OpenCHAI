@@ -1,46 +1,53 @@
-# playbook_library/master_provision.yml
 ---
 - name: Master HPC Provisioning Playbook
   hosts: all
-#  gather_facts: true
   gather_facts: no
-  serial: 1
+  #serial: 1
   ignore_unreachable: yes
   become: true
   vars_files:
     - ../../group_vars/all.yml
 
-      #  vars:
-      #    roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
-
-    #  vars_files:
-    #   - /OpenCHAI/automation/ansible/group_vars/all.yml
-
-
   tasks:
     - name: Display starting banner
       ansible.builtin.debug:
-        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+        msg: "Starting full HPC provisioning for {{ inventory_hostname }}"
+
+# =============================================================================
+# ======================== BOOTSTRAP CONFIGURATION  ===========================
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Hosts file setup for master nodes
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../playbook_library/bootstrap/update_hosts.yml
+
+# ---------------------------------------------------------------------------
+# Standard Directory setup
+# ---------------------------------------------------------------------------
+- import_playbook: ../../playbook_library/configure/standard_dir_setup.yml
+  vars:
+    hpc_container_pv_dir: /hpc_container_pv
+    hpctool_stack_dir: /hpctool_stack
+    hpc_cluster_suite_dir: /root/hpc_cluster_suite
 
 # ---------------------------------------------------------------------------
 # Clone Hosted Repositories to Client Nodes
 # ---------------------------------------------------------------------------
-#- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
-#  vars:
-#    repo_server: "http://{{ headnode_ip }}:8080"
-#    clone_dest: "{{openchai_vault_path}}/"
-#    download_tool: wget
-
-
+- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+  vars:
+    repo_server: "http://{{ headnode_ip }}:8080"
+    clone_dest: "{{openchai_vault_path}}/"
+    download_tool: wget
 
 # ---------------------------------------------------------------------------
-# Create NFS-Clients Nodes for rpm-stack distribution
+# Prepare NFS-Clients Nodes for rpm-stack distribution
 # ---------------------------------------------------------------------------
-
 - import_playbook: ../../playbook_library/storage/storage_nfs_client.yml
   vars:
     # RPM-based package installation
-    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms"
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms/"
     required_packages:
       - nfs-utils
       - libnfsidmap
@@ -74,59 +81,32 @@
     mounted_state: ephemeral
 
 
-
-
-# ---------------------------------------------------------------------------
-# Standard Directory setup
-# ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/configure/standard_dir_setup.yml
-  vars:
-    hpc_container_pv_dir: /hpc_container_pv
-    hpctool_stack_dir: /hpctool_stack
-    hpc_cluster_suite_dir: /root/hpc_cluster_suite
-
-# ---------------------------------------------------------------------------
-# Hosts file setup for master nodes
-# ---------------------------------------------------------------------------
-
-- import_playbook: ../../playbook_library/bootstrap/update_hosts.yml
-
-
 # ---------------------------------------------------------------------------
 # Monitoring Baseline
 # ---------------------------------------------------------------------------
 - import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
-
-
-
-
 
 - import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
   vars:
     rsyslog_mode: server
     rsyslog_server_ip: "{{ primary_master_node_ip }}"
 
+# ---------------------------------------------------------------------------
+# Configure Chrony Server
+# ---------------------------------------------------------------------------
 
 
+# =============================================================================
+# ====================  PHASE 1: HIGH-AVAILABILITY   ==========================
+# =============================================================================
 
-# ============================================================
-# ===  PHASE 1: BOOTSTRAP CONFIGURATION  =====================
-# ============================================================
-#- import_playbook: ../bootstrap/configure_chrony_client.yml
-#  vars:
-#    chrony_conf_src: "{{ configuration_dir_path }}/chrony.conf"
-#    chrony_conf_dest: "/etc/chrony.conf"
-#    chrony_conf_backup: "/etc/chrony.conf.bk"
+# ---------------------------------------------------------------------------
+# Kernel & Utilities Setup
+# ---------------------------------------------------------------------------
 
-
-# ============================================================
-# ===  PHASE 2: KERNEL & UTILITIES  ==========================
-# ============================================================
 - import_playbook: ../../playbook_library/utility/update_kernel.yml
   vars:
     kernel_rpm_dir: "{{ rpm_stack_path }}/kernel_rpms"
-    # default_kernel_version: "5.14.0-570.17.1.el9_6"
-
 
 # ---------------------------------------------------------------------------
 # PCS + DRBD – Install & Provision
@@ -137,7 +117,7 @@
     pcs_manage_services: true
     allow_package_removal: false
     pcs_reinstall_packages: false
-    drbd_rpm_dir: "{{ rpm_stack_path }}/drbd_pcs_rpms"
+    drbd_rpm_dir: "{{ rpm_stack_path }}/drbd_pcs_rpms/"
 
 # ---------------------------------------------------------------------------
 # DRBD Storage Replication Setup
@@ -150,11 +130,9 @@
       - name: "{{ primary_master_node_hostname }}"
         ip: "{{ primary_master_node_ip }}"
         device: /dev/drbd0
-        #disk: /dev/mapper/rl_cn06-drbd
       - name: "{{ secondary_master_node_hostname }}"
         ip: "{{ secondary_master_node_ip }}"
         device: /dev/drbd0
-        #disk: /dev/mapper/rl_cn08-drbd
 
 # ---------------------------------------------------------------------------
 # Basic PCS Cluster Setup
@@ -178,7 +156,11 @@
     pcs_cluster_password: "{{ pcs_cluster_password }}"
     pcs_cluster_name: "{{ pcs_cluster_name }}"
 
+    mounted_state: ephemeral
 
+# =============================================================================
+# ===========================       UTILITIES            ======================
+# =============================================================================
 
 - import_playbook: ../../playbook_library/utility/utility_lmod.yml
   vars:
@@ -186,22 +168,18 @@
     dev_rpm_base : "{{ rpm_stack_path }}/developement_rpms"
     modulepath_dir: "{{ modulepath_dir }}"
 
+# =============================================================================
+# ====================  PHASE 2: NETWORK CONFIGURATION  =======================
+# =============================================================================
+#- import_playbook: ../../playbook_library/network/setup_mellanox.yml
+#  vars:
+#    install_mellanox: true   # set to false to skip re-installation
+#    mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
+#    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
 
-
-# ============================================================
-# ===  PHASE 3: NETWORK CONFIGURATION  =======================
-# ============================================================
-- import_playbook: ../../playbook_library/network/setup_mellanox.yml
-  vars:
-    install_mellanox: true   # set to false to skip re-installation
-    mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
-    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
-
-
-
-# ============================================================
-# ===  PHASE 4: CORE SERVICES  ===============================
-# ============================================================
+# =============================================================================
+# ====================  PHASE 3: CORE SERVICES  ===============================
+# =============================================================================
 - import_playbook: ../../playbook_library/services/firewalld.yml
   vars:
     fw_service_name: firewalld
@@ -214,15 +192,14 @@
     sshd_service_state: started
     sshd_service_enabled: true
 
-# ============================================================
-# ===  PHASE 5: SECURITY & HARDENING  ========================
-# ============================================================
-
+# =============================================================================
+# ====================  PHASE 4: SECURITY & HARDENING  ========================
+# =============================================================================
 - import_playbook: ../../playbook_library/security/configure_firewall.yml
   vars:
     fw_service_name: firewalld
-    fw_service_state: stopped       # 🧠 Example of overriding variable
-    fw_service_enabled: false       # 🧠 Custom value
+    fw_service_state: stopped       # Example of overriding variable
+    fw_service_enabled: false       # Custom value
     fw_install_if_missing: true
 
 - import_playbook: ../../playbook_library/security/configure_selinux.yml
@@ -259,9 +236,8 @@
       MACs hmac-sha2-512,hmac-sha2-256
       KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
 
-
 # =================================================================================================
-# ===  PHASE 6: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
+# ===  PHASE 5: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
 # =================================================================================================
 - import_playbook: ../../playbook_library/container/docker-engine/install_docker_latest.yml
   vars:
@@ -283,9 +259,9 @@
       - "{{ tertiary_swarm_manager }}"
     swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
 
-# ============================================================
-# ===  PHASE 6: Provisioning: xCAT Installation   ============
-# ============================================================
+# ============================================================================
+# =================  PHASE 6: Provisioning: xCAT Installation   ==============
+# ============================================================================
 
 - import_playbook: ../../playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
   vars:
@@ -308,9 +284,9 @@
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
     os_architecture: "{{ os_arch }}"
 
-# ============================================================================
-# ===  PHASE 7: Authentication: OpenLDAP Container Installation   ============
-# ============================================================================
+# ====================================================================================
+# ===========  PHASE 7: Authentication: OpenLDAP Container Installation   ============
+# ====================================================================================
 
 - import_playbook: ../../playbook_library/install/ldap/install_multi_rep_openldap_server.yml
   vars:
@@ -327,9 +303,9 @@
   vars:
     ldap_version: "{{ ldap_version_tag }}"
 
-# ===================================================================================
-# ===  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
-# ===================================================================================
+# ===========================================================================================
+# ===========  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
+# ===========================================================================================
 
 - import_playbook: ../../playbook_library/install/slurm/install_slurm_master.yml
   vars:
