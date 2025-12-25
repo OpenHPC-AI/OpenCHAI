@@ -17,7 +17,6 @@
 # NOTE:
 # - Each column should be separated by spaces or tabs.
 # - You can add as many nodes as you want — one per line.
-# - If using SSH keys (no password login), you can leave the password column blank.
 # -------------------------------------------------------------------------
 
 # Example entries:
