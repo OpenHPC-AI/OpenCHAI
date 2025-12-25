@@ -73,7 +73,7 @@ wget --no-check-certificate -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
-#Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/** !
+#Make sure the openchai stack is pulled at  ../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/ !
 
 ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 
@@ -127,4 +127,8 @@ ansible-inventory --list
 ansible all -m ping
 # Verify Cluster connection with ssh port, adjust ssh port according to your environment
 ansible all -m ping -e "ansible_port=22"
+
+# If you encounter any communication issues between the head node and the service nodes, update the chai_setup/inventory_def.txt file to match your environment.
+# After making the changes, run the script below to establish and enable proper communication between the nodes.
+bash update_inventory_def.sh
 ```
