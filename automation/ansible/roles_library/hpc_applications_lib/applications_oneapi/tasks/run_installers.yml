@@ -17,6 +17,7 @@
     chdir: "{{ intel_source_dir }}"
   register: intel_install_status
   changed_when: "'completed successfully' in intel_install_status.stdout"
+  ignore_errors: true
 
 - name: Run modulefiles-setup.sh
   command: >
