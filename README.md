@@ -52,34 +52,31 @@ cd ./OpenCHAI
 
 **1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
 
-**a.) Pull the openchai stack for Alma or Rocky Linux from your ***USB drive (local SSD or pen drive)*** into the directory ***../OpenCHAI/hpcsuite_registry/hostmachine_reg*** on the head node.**
+**a.) Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive (local SSD or pen drive) into the directory (./OpenCHAI/hpcsuite_registry/hostmachine_reg/) on the head node (offline mode).If the stack is not available locally, you may alternatively download it directly from the online source using the following command:**
 
-**(OR)**
-
-***b.) Alternatively, during the OpenCHAI Manager Tool setup, you will be given an option to download the openchai packages from the network.***
-
-**(OR)**
-
-**c.) You may also download it directly from the online source using:**
+***(You may skip Option a and proceed directly with Option b.)***
 
 ```bash
 # Multiple OS versions supports (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
 # Browse available options here:
 # https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
+
 # Multiple openchai version (openchai_v1.24.0.tgz, openchai_v1.25.0.tgz) are available for download
 
-# Example: Downloading the AlmaLinux 8.9 rpm-stack
+#Select the operating system version (AlmaLinux or Rocky Linux) according to your environment.
+
+#Example: The following steps demonstrate downloading OpenCHAI packages for AlmaLinux 8.9. The same procedure can be followed for Rocky Linux 9.4 or Rocky Linux 9.6.
+
 mkdir ./hpcsuite_registry/hostmachine_reg/alma8.9
 
 wget --no-check-certificate -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
-#(OR), first load the tar file then extract it.
-wget https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz -P ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 ```
+(OR)
 
-Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/** !
+**b.) Alternatively, during the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/** !**
 
 ```bash
 ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
