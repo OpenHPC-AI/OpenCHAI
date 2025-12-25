@@ -1,27 +1,3 @@
-# Local RPM directory
-#
-#
-
-####################### Application Module Variable #######################
-application_base_dir: "/home/apps"
-# lmod
-modulepath_dir: "{{ application_base_dir }}/modulefiles/apps"
-
-####################### Intel Module Variable #######################
-# Intel OneAPI installer path
-intel_installer: "{{ rpm_stack_path }}/oneapi_rpms/{{ intel_installer }}"
-
-# Installation arguments
-intel_source_dir: "{{ rpm_stack_path }}/oneapi_rpms"
-intel_install_dir: "{{ application_base_dir }}/intel"
-
-# Module setup script
-intel_module_script: "{{ intel_install_dir }}/modulefiles-setup.sh"
-# Arguments for module script
-intel_module_output_dir: "{{ application_base_dir }}/modulefiles/hpc/intel"
-
-
-
 # Packages to install
 required_packages:
   - patch
