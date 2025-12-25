@@ -14,7 +14,7 @@
     --eula accept
     --intel-sw-improvement-program-consent decline
   args:
-    chdir: "{{ local_rpm_dir }}"
+    chdir: "{{ intel_source_dir }}"
   register: intel_install_status
   changed_when: "'completed successfully' in intel_install_status.stdout"
 
