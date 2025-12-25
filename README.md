@@ -73,14 +73,14 @@ wget --no-check-certificate -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
+#Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/** !
+
+ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
+
 ```
 (OR)
 
-**b.)** Alternatively, during the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. Make sure the **openchai stack** is pulled at  **../OpenCHAI/hpcsuite_registry/hostmachine_reg/os-version/** !
-
-```bash
-ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
-```
+**b.)** Alternatively, during the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. 
 
 
 **1.3.1 Ansible Inventory Setup**
