@@ -13,7 +13,7 @@
 # ansible_password   →  The password for the user mentioned above.
 # group              →  Logical group name (like headnode, hpc_master, compute).
 # hostname           →  The actual hostname configured on the node (output of `hostname` command).
-#
+# port               →  Mention ssh port as your system configure for ssh  
 # NOTE:
 # - Each column should be separated by spaces or tabs.
 # - You can add as many nodes as you want — one per line.
