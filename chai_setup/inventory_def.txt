@@ -21,14 +21,20 @@
 # -------------------------------------------------------------------------
 
 # Example entries:
+#You may modify the entries in the table below to match your environment.
+#Remove any rows that are not required—the table shown is only an example.
+#Important: Every column must have a value for each host.
+# - ansible_hostname is managed by the Ansible inventory.
+# - ip, ansible_user, ansible_password, hostname, and ssh_port must match the values configured on the actual system.
+# - Ensure that SSH access is working using the provided user, password, and port before running Ansible.
 
 #ansible_hostname         ip             ansible_user  ansible_password      group          hostname   ssh_port
-headnode                 192.168.1.10    root          Admin#@#$             headnode       headnode   4411
-hpc-master01             192.168.1.1     root          Admin#@#$             hpc_master     master01   22
-hpc-master02             192.168.1.2     root          Admin#@#$             hpc_master     master02   22
-hpc-mgmt01               192.168.1.4     root          Admin#@#$             hpc_mgmt       mgmt01     22
-hpc-mgmt02               192.168.1.5     root          Admin#@#$             hpc_mgmt       mgmt02     22
-login01                  192.168.1.11    root          Admin#@#$             login          login01    4422
-login02                  192.168.1.12    root          Admin#@#$             login          login02    4422
-login03                  192.168.1.13    root          Admin#@#$             login          login03    4422
-login04                  192.168.1.14    root          Admin#@#$             login          login04    4422
+headnode                 192.168.1.10    root          AdminUser             headnode       headnode   2211
+hpc-master01             192.168.1.1     root          AdminUser             hpc_master     master01   22
+hpc-master02             192.168.1.2     root          AdminUser             hpc_master     master02   22
+hpc-mgmt01               192.168.1.4     root          AdminUser             hpc_mgmt       mgmt01     22
+hpc-mgmt02               192.168.1.5     root          AdminUser             hpc_mgmt       mgmt02     22
+login01                  192.168.1.11    root          AdminUser             login          login01    2222
+login02                  192.168.1.12    root          AdminUser             login          login02    2222
+login03                  192.168.1.13    root          AdminUser             login          login03    2222
+login04                  192.168.1.14    root          AdminUser             login          login04    2222
