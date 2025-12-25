@@ -54,7 +54,7 @@ cd ./OpenCHAI
 
 **a.)** Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive (local SSD or pen drive) into the directory (./OpenCHAI/hpcsuite_registry/hostmachine_reg/) on the head node (offline mode).If the stack is not available locally, you may alternatively download it directly from the online source using the following command:
 
-***(You may skip Option a and proceed directly with Option b.)***
+***(You may skip 'Option a' and proceed directly with 'Option b')***
 
 ```bash
 # Multiple OS versions supports (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
