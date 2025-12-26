@@ -21,3 +21,4 @@
     path: "{{ configuration_dir_path }}/docker_swarm"
     state: absent
   when: swarm_state.stdout != "inactive"
+  when: inventory_hostname == primary_swarm_manager
