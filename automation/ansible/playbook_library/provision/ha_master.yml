@@ -171,11 +171,11 @@
 # =============================================================================
 # ====================  PHASE 2: NETWORK CONFIGURATION  =======================
 # =============================================================================
-#- import_playbook: ../../playbook_library/network/setup_mellanox.yml
-#  vars:
-#    install_mellanox: true   # set to false to skip re-installation
-#    mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
-#    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
+- import_playbook: ../../playbook_library/network/setup_mellanox.yml
+  vars:
+    install_mellanox: true   # set to false to skip re-installation
+    mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
+    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
 
 # =============================================================================
 # ====================  PHASE 3: CORE SERVICES  ===============================
