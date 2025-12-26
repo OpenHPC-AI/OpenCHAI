@@ -1,0 +1,12 @@
+# Get local swarm state and leader availability
+- name: Get local swarm state
+  command: docker info -f '{{ "{{.Swarm.LocalNodeState}}" }}'
+  register: swarm_state
+  changed_when: false
+  failed_when: false
+
+- name: Get swarm control availability (leader check)
+  command: docker info -f '{{ "{{.Swarm.ControlAvailable}}" }}'
+  register: swarm_control
+  changed_when: false
+  failed_when: false
