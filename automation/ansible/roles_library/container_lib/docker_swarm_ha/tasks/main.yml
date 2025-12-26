@@ -3,6 +3,13 @@
 - name: Start the docker service and enable it
   include_tasks: docker_service.yml
 
+- name: Initialize Docker Swarm on the primary manager
+  include_tasks: swarm_reset.yml
+
+# Gather swarm state for all nodes
+- name: Gather swarm state
+  include_tasks: swarm_state.yml
+
 - name: Create a directory for swarm token save
   include_tasks: swarm_token_dir.yml
   when: inventory_hostname == primary_swarm_manager
