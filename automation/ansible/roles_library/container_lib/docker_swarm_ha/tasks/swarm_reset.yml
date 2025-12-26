@@ -1,0 +1,23 @@
+# tasks/swarm_reset.yml
+# Safely leave any existing Docker Swarm and remove old token
+
+- name: Check if node is part of a swarm
+  command: docker info -f '{% raw %}{{.Swarm.LocalNodeState}}{% endraw %}'
+  register: swarm_state
+  changed_when: false
+  failed_when: false
+
+- name: Leave Docker Swarm if node is active
+  command: docker swarm leave --force
+  when: swarm_state.stdout == "active"
+
+- name: Remove old swarm token file if exists
+  file:
+    path: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
+    state: absent
+
+- name: Remove old swarm directory if empty
+  file:
+    path: "{{ configuration_dir_path }}/docker_swarm"
+    state: absent
+  when: swarm_state.stdout != "inactive"
