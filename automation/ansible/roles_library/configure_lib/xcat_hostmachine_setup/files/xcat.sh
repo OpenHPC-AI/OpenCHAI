@@ -1,14 +1,18 @@
-XCATROOT=/drbd/xcatdata/opt/xcat/
-PATH=$XCATROOT/bin:$XCATROOT/sbin:$XCATROOT/share/xcat/tools:$PATH
-MANPATH=$XCATROOT/share/man:$MANPATH
-export XCATROOT PATH MANPATH
-export PERL_BADLANG=0
+XCATROOT="/drbd/xcatdata/opt/xcat"
 
-# If /usr/local/share/perl5 is not already in @INC, add it to PERL5LIB
-set +e
-perl -e "print \"@INC\"" | egrep "(^|\W)/usr/local/share/perl5($| )" > /dev/null
-PERL_FOUND=$?
-set -e
-if [ $? = 1 ]; then
-    export PERL5LIB=/usr/local/share/perl5:$PERL5LIB
+# Only configure xCAT environment if DRBD is mounted and xCAT exists
+if [ -d "$XCATROOT" ] && mountpoint -q /drbd; then
+    export XCATROOT
+    export PATH="$XCATROOT/bin:$XCATROOT/sbin:$XCATROOT/share/xcat/tools:$PATH"
+    export MANPATH="$XCATROOT/share/man:${MANPATH:-}"
 fi
+
+# Perl environment (safe, non-fatal)
+if command -v perl >/dev/null 2>&1; then
+    perl -e 'exit(grep { $_ eq "/usr/local/share/perl5" } @INC ? 0 : 1)' 2>/dev/null
+    if [ $? -ne 0 ]; then
+        export PERL5LIB="/usr/local/share/perl5:${PERL5LIB:-}"
+    fi
+fi
+
+export PERL_BADLANG=0
