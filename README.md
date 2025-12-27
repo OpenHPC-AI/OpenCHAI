@@ -1,5 +1,5 @@
 # OpenCHAI
-The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It seamlessly integrates provisioning, centralized authentication and authorization, automation, workload scheduling, orchestration, and monitoring by leveraging industry-standard tools such as xCAT, OpenLDAP, Ansible, SLURM, Kubernetes, Nagios, Ganglia, and Chakshu-Front.
+The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automation framework designed to simplify and accelerate the deployment, configuration, and management of HPC and AI clusters. It seamlessly integrates provisioning, centralized authentication and authorization, automation, workload scheduling, orchestration, and monitoring by leveraging industry-standard tools such as xCAT, OpenLDAP, Ansible, SLURM, Kubernetes, Nagios, Ganglia, and C-Chakshu etc.
 
 # OpenCHAI Flow Diagram for HPC-AI Cluster Provisioning, Deployment & Configuration
 
@@ -52,9 +52,9 @@ cd ./OpenCHAI
 
 **1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
 
-**a.)** Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive (local SSD or pen drive) into the directory (./OpenCHAI/hpcsuite_registry/hostmachine_reg/) on the head node (offline mode).If the stack is not available locally, you may alternatively download it directly from the online source using the following command:
+**a.) Offline Mode:** Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive/local SSD/pen drive (which you are carrying) into the directory (./hpcsuite_registry/hostmachine_reg/) on the head node .If the stack is not available locally, follow option b. 
 
-***(You may skip 'Option a' and proceed directly with 'Option b')***
+**b.) Online Mode:** During the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. or you may alternatively download it directly from the online source using the following command:
 
 ```bash
 # Multiple OS versions supports (Like: alma8.9, rocky9.4, rocky9.6) are available for download.
@@ -70,7 +70,7 @@ cd ./OpenCHAI
 #For AlmaLinux8.9
 mkdir ./hpcsuite_registry/hostmachine_reg/alma8.9
 
-wget --no-check-certificate -qO- \
+wget -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
@@ -81,7 +81,7 @@ ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 #For RockyLinux9.6
 mkdir ./hpcsuite_registry/hostmachine_reg/rocky9.6
 
-wget --no-check-certificate -qO- \
+wget -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
 
@@ -89,9 +89,6 @@ https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostm
 
 ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/
 ```
-(OR)
-
-**b.)** Alternatively, during the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. 
 
 
 **1.3.1 Ansible Inventory Setup**
