@@ -6,11 +6,12 @@
   failed_when: false
   changed_when: false
 
-# Fail if /drbd is not mounted
-- name: Fail if /drbd is not mounted
-  ansible.builtin.fail:
-    msg: "/drbd is not mounted. Cannot proceed with xCAT configuration extraction."
+
+- name: Skip xCAT configuration if /drbd is not mounted
+  ansible.builtin.debug:
+    msg: "/drbd is not mounted. Skipping xCAT configuration extraction."
   when: drbd_mount_check.rc != 0
+
 
 # Check if xcatdata base config tar exists locally
 - name: Check if xcatdata base config tar exists locally
