@@ -20,12 +20,12 @@ For testing purposes, the minimum hardware requirements are:
 
 **Head Node**: 4 CPU cores and 4 GB RAM (recommended: 8 CPU cores and 8 GB RAM)
 
-**Master Nodes**: Minimum 16 CPU cores and 8 GB RAM each
+**Master Nodes**: Minimum 8 to 12 CPU cores and 8 GB RAM each
 
 
 # OpenCHAI Manager Tool Setup
 
-This chapter provides a straightforward, step-by-step guide for installing the Open CDAC HPC-AI Manager Tool (OpenCHAI) on **bare-metal cluster hardware**. It focuses on a quick installation process with minimal explanation of each step. By following these instructions, a moderately experienced cluster administrator can set up and configure a standard cluster environment efficiently—without needing to go through the entire OpenCHAI Administrator Manual or its detailed sections.
+This chapter provides a straightforward, step-by-step guide for installing the Open CDAC HPC-AI Manager Tool (OpenCHAI) on **bare-metal server**. It focuses on a quick installation process with minimal explanation of each step. By following these instructions, a moderately experienced cluster administrator can set up and configure a standard cluster environment efficiently—without needing to go through the entire OpenCHAI Administrator Manual or its detailed sections.
 
 The quick installation steps are outlined below:
 
