@@ -95,11 +95,11 @@ ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/
 
 Configure the Ansible inventory on the head node to enable communication with all service nodes in the HPC-AI cluster, including:
 
--Master nodes
+-HPC Master nodes
 
 -Management nodes
 
--AI/Kubernetes nodes
+-AI Master nodes
 
 -Login nodes
 
