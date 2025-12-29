@@ -259,23 +259,6 @@
   changed_when: false
   when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
 
-# Format DRBD device only on primary & only if empty
-- name: Format DRBD device with ext4
-  command: "mkfs.ext4 {{ drbd_device }}"
-  register: drbd_format
-  when:
-    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
-   #- drbd_fs_check.stdout == ""
-  changed_when: drbd_format.rc == 0
-
-- name: Show filesystem creation result
-  debug:
-    msg: "DRBD device {{ drbd_device }} formatted on primary node."
-  when:
-    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
-   #- drbd_fs_check.stdout == ""
-
-
 - name: Wait until PCS cluster is clean and nodes are online
   command: pcs status
   register: pcs_status
@@ -312,149 +295,162 @@
   when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
 
 
+########################################
+# PCS + DRBD + VIP + Docker (Primary only)
+########################################
+
+- block:
+
+    ########################################
+    # 1. Cluster defaults
+    ########################################
+    - name: Set PCS defaults
+      command: >
+        pcs resource defaults update
+        migration-threshold=10
+        resource-stickiness=100
+        startdelay=45s
 
 
-#######################################################################
-# Execute following PCS configuration tasks only on the PRIMARY NODE #
-#######################################################################
-# ==== VARIABLES ====
-# drbd_primitive_name: drbdfs
-# drbd_conf_resource: rudra_drbd
-# drbd_clone_name: drbdfs-clone
-# drbd_fs_resource_name: xcatfs
-# vip_resource_name: vip_xCAT
+    ########################################
+    # 2. Virtual IP
+    ########################################
+    - name: Create VIP resource
+      command: >
+        pcs resource create vip_xCAT ocf:heartbeat:IPaddr2
+        ip={{ vip_ip }} cidr_netmask={{ vip_prefix }}
+        op monitor interval=10s timeout=20s
+        op start interval=0s timeout=20s
+        op stop interval=0s timeout=20s
 
 
-# =============================
-# 7. Disable STONITH
-# =============================
-- name: Disable STONITH
-  command: pcs property set stonith-enabled=false
+    ########################################
+    # 3. DRBD promotable resource
+    ########################################
+    - name: Create DRBD resource (promotable)
+      command: >
+        pcs resource create drbdfs ocf:linbit:drbd
+        drbd_resource={{ drbd_resource_name }}
+        op monitor role=Master interval=20s timeout=90
+        op monitor role=Slave interval=30s timeout=90
+        op start timeout=240
+        op stop timeout=100
+        op reload timeout=30
+        promotable
+
+
+    ########################################
+    # 4. DRBD filesystem
+    ########################################
+    - name: Create DRBD filesystem resource
+      command: >
+        pcs resource create xcatfs ocf:heartbeat:Filesystem
+        device={{ drbd_device }}
+        directory={{ drbd_mount_dir }}
+        fstype={{ drbd_fstype }}
+        op monitor interval=20s timeout=40s
+        op start interval=0s timeout=60s
+        op stop interval=0s timeout=60s
+
+
+    ########################################
+    # 5. Docker service (must stop first)
+    ########################################
+    - name: Create Docker PCS resource
+      command: >
+        pcs resource create docker systemd:docker
+        op start timeout=120
+        op stop timeout=120
+        op monitor interval=30s timeout=60s
+
+
+    ########################################
+    # 6. Colocation constraints
+    ########################################
+    - name: Colocate filesystem with DRBD master
+      command: >
+        pcs constraint colocation add
+        xcatfs with master drbdfs-clone
+
+    - name: Colocate VIP with DRBD master
+      command: >
+        pcs constraint colocation add
+        vip_xCAT with master drbdfs-clone
+
+    - name: Colocate Docker with filesystem
+      command: >
+        pcs constraint colocation add
+        docker with xcatfs
+
+
+    ########################################
+    # 7. Ordering constraints (CRITICAL)
+    ########################################
+    - name: Stop docker before filesystem
+      command: >
+        pcs constraint order
+        stop docker then stop xcatfs
+
+    - name: Unmount filesystem before DRBD demote
+      command: >
+        pcs constraint order
+        stop xcatfs then demote drbdfs-clone
+
+    - name: Promote DRBD before filesystem mount
+      command: >
+        pcs constraint order
+        promote drbdfs-clone then start xcatfs
+
+    - name: Start filesystem before docker
+      command: >
+        pcs constraint order
+        start xcatfs then start docker
+
+    - name: VIP follows DRBD master
+      command: >
+        pcs constraint order
+        promote drbdfs-clone then start vip_xCAT
+
+    - name: Stop VIP before DRBD demote
+      command: >
+        pcs constraint order
+        stop vip_xCAT then demote drbdfs-clone
+
+
+    ########################################
+    # 8. Location preferences (PRIMARY > SECONDARY)
+    ########################################
+    - name: Prefer DRBD master on primary node
+      command: >
+        pcs constraint location
+        drbdfs-clone prefers {{ primary_master_node_hostname }}=200
+
+    - name: Prefer DRBD master on secondary node
+      command: >
+        pcs constraint location
+        drbdfs-clone prefers {{ secondary_master_node_hostname }}=100
+
+    - name: Prefer VIP on primary node
+      command: >
+        pcs constraint location
+        vip_xCAT prefers {{ primary_master_node_hostname }}=200
+
+    - name: Prefer VIP on secondary node
+      command: >
+        pcs constraint location
+        vip_xCAT prefers {{ secondary_master_node_hostname }}=100
+
+
+    ########################################
+    # 9. DRBD clone tuning
+    ########################################
+    - name: Tune DRBD clone properties
+      command: >
+        pcs resource update drbdfs-clone
+        notify=true
+        master-node-max=1
+        master-max=1
+        clone-node-max=1
+        clone-max=2
+
   when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 8. Set resource defaults
-# =============================
-- name: Set PCS defaults
-  command: >
-    pcs resource defaults update
-    migration-threshold=10
-    resource-stickiness=100
-    startdelay=45s
-  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 9. Create VIP
-# =============================
-- name: Create VIP resource
-  command: >
-    pcs resource create {{ vip_resource_name }} ocf:heartbeat:IPaddr2
-    cidr_netmask={{ vip_prefix }}
-    ip={{ vip_ip }}
-    op monitor interval=10s timeout=20s
-    start interval=0s timeout=20s
-    stop interval=0s timeout=20s
-  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 10. Create DRBD primitive
-# =============================
-- name: Create DRBD primitive (promotable)
-  command: >
-    pcs resource create {{ drbd_primitive_name }} ocf:linbit:drbd
-    drbd_resource={{ drbd_resource_name }}
-    op monitor role=Promoted interval=20s timeout=90
-    op monitor role=Unpromoted interval=30s timeout=90
-    op start timeout=240
-    op stop timeout=100
-    op reload timeout=30
-    promotable
-  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 11. Create Filesystem resource
-# =============================
-- name: Create DRBD Filesystem resource
-  command: >
-    pcs resource create {{ drbd_fs_resource_name }} ocf:heartbeat:Filesystem
-    device={{ drbd_device }}
-    directory={{ drbd_mount_dir }}
-    fstype={{ drbd_fstype }}
-    op monitor interval=20s timeout=40s
-    op start interval=0s timeout=60s
-    op stop interval=0s timeout=60s
-  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 12. Convert DRBD primitive into clone
-# Equivalent to:
-# pcs resource promotable drbdfs drbdfs-clone ...
-#   command: pcs resource promotable {{ drbd_primitive_name }} {{ drbd_clone_name }} master-node-max=1 clone-max=2 notify=true master-max=1 clone-node-max=1
-#   command: pcs resource update drbdfs-clone promotable=true clone-max=2 clone-node-max=1 master-node-max=1 master-max=1 notify=true
-#            pcs resource update drbdfs-clone notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
-
-
-# =============================
-#- name: Make clone promotable
-#  command: pcs resource update {{ drbd_clone_name }}  promotable=true notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
-#  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 13. Constraints
-# =============================
-
-- name: Colocate filesystem with DRBD master
-  command: >
-    pcs constraint colocation add
-    {{ drbd_fs_resource_name }} with master {{ drbd_clone_name }}
-  when: ansible_hostname == primary_master_node_hostname
-
-- name: Promote DRBD before filesystem mount
-  command: >
-    pcs constraint order
-    promote {{ drbd_clone_name }} then start {{ drbd_fs_resource_name }}
-  when: ansible_hostname == primary_master_node_hostname
-
-
-- name: Colocate VIP with filesystem
-  command: >
-    pcs constraint colocation add
-    {{ vip_resource_name }} with {{ drbd_fs_resource_name }}
-  when: ansible_hostname == primary_master_node_hostname
-
-- name: Start filesystem before VIP
-  command: >
-    pcs constraint order
-    start {{ drbd_fs_resource_name }} then start {{ vip_resource_name }}
-  when: ansible_hostname == primary_master_node_hostname
-
-- name: Prefer DRBD master on primary node
-  command: >
-    pcs constraint location
-    {{ drbd_clone_name }} prefers {{ primary_master_node_hostname }}=100
-  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 14. Update promotable clone options
-# =============================
-#- name: Update DRBD clone properties
-#  command: >
-#    pcs resource update {{ drbd_clone_name }}
-#    notify=true master-node-max=1 clone-max=2 master-max=1 clone-node-max=1
-#  when: ansible_hostname == primary_master_node_hostname
-
-
-# =============================
-# 15. Global ordering set
-# VIP → DRBD clone → FS
-# =============================
-#- name: Global ordering VIP → DRBD → FS
-#  command: pcs constraint order set {{ vip_resource_name }} {{ drbd_clone_name }} {{ drbd_fs_resource_name }}
-#  when: ansible_hostname == primary_master_node_hostname
