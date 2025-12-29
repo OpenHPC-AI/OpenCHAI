@@ -2,12 +2,50 @@
 - name: Configure Chrony Client Service
   hosts: all
   become: true
+
   vars_files:
     - ../../group_vars/all.yml
+
   vars:
     chrony_conf_src: "{{ configuration_dir_path }}/chrony.conf"
     chrony_conf_dest: "/etc/chrony.conf"
     chrony_conf_backup: "/etc/chrony.conf.bk"
 
+  pre_tasks:
+    - name: Please confirm that Chrony configuration file is updated for chrony-server networks at "{{ configuration_dir_path }}"
+      ansible.builtin.pause:
+        prompt: >
+          Have you updated the chrony.conf file with correct network values at "{{ configuration_dir_path }}"?
+          Type 'yes' to continue or 'no' to abort:
+      register: chrony_user_confirm
+
+    - name: Abort if user did not confirm
+      ansible.builtin.fail:
+        msg: "User aborted: chrony.conf network values are not confirmed."
+      when: chrony_user_confirm.user_input | lower != "yes"
+
+    - name: Check existing chrony.conf checksum
+      ansible.builtin.stat:
+        path: "{{ chrony_conf_dest }}"
+        checksum_algorithm: sha1
+      register: chrony_conf_before
+
   roles:
     - "{{ roles_parent_path }}/bootstrap_lib/chrony_client"
+
+  post_tasks:
+    - name: Check updated chrony.conf checksum
+      ansible.builtin.stat:
+        path: "{{ chrony_conf_dest }}"
+        checksum_algorithm: sha1
+      register: chrony_conf_after
+
+    - name: Confirm chrony.conf update result
+      ansible.builtin.debug:
+        msg: >-
+          Chrony configuration file was
+          {% if chrony_conf_before.stat.checksum != chrony_conf_after.stat.checksum %}
+          UPDATED successfully.
+          {% else %}
+          NOT changed (already up to date).
+          {% endif %}
