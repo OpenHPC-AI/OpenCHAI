@@ -1,0 +1,14 @@
+- name: Setup selected Nvidia NHPC
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    nvhpc_source_dir: "{{ bin_dir_path }}/nvhpc_rpms"
+    dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
+    nvhpc_module_output_dir: "{{ application_base_dir }}/modulefiles/mldl"
+
+
+  roles:
+    - "{{ roles_parent_path }}/hpc_applications_lib/applications_nvhpc"
