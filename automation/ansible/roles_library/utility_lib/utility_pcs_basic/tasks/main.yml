@@ -116,9 +116,6 @@
     mode: '0644'
 
 
-
-
-
 - name: Restart pcsd to bring up pcs service for further processes
   ansible.builtin.systemd:
     name: pcsd
@@ -239,7 +236,6 @@
 
 
 
-
 - name: Restart NetworkManager to bring up virtual IP interface
   ansible.builtin.systemd:
     name: NetworkManager
@@ -293,6 +289,28 @@
     fstype: ext4
     state: "{{ mounted_state }}"
   when: primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+
+
+
+
+#######################################################################
+# Execute following PCS configuration tasks only on the PRIMARY NODE #
+#######################################################################
+# ==== VARIABLES ====
+# drbd_primitive_name: drbdfs
+# drbd_conf_resource: rudra_drbd
+# drbd_clone_name: drbdfs-clone
+# drbd_fs_resource_name: xcatfs
+# vip_resource_name: vip_xCAT
+
+
+# =============================
+# 7. Disable STONITH
+# =============================
+- name: Disable STONITH
+  command: pcs property set stonith-enabled=false
+  when: ansible_hostname == primary_master_node_hostname
 
 
 ########################################
@@ -454,3 +472,10 @@
         clone-max=2
 
   when: ansible_hostname == primary_master_node_hostname
+
+
+
+
+
+
+
