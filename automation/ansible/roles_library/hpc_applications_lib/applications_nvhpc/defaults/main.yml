@@ -1,0 +1,14 @@
+application_base_dir: "/home/apps"
+# Packages to install
+required_packages:
+  - patch
+  - git
+
+
+# =====================
+# defaults/main.yml
+# =====================
+bin_dir_path: "{{ openchai_vault_path }}/bin"
+nvhpc_rpms:
+- nvhpc-25-9-25.9-1.x86_64.rpm
+- nvhpc-25-9-cuda-multi-25.9-1.x86_64.rpm
