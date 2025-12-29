@@ -13,9 +13,31 @@
       ansible.builtin.debug:
         msg: "Starting full HPC provisioning for {{ inventory_hostname }}"
 
-# =============================================================================
-# ======================== BOOTSTRAP CONFIGURATION  ===========================
-# =============================================================================
+# =========================================================================================================
+# ============================= PHASE 0: PRE-REQUISITE CONFIGURATION  =====================================
+# =========================================================================================================
+
+
+- import_playbook: ../../playbook_library/security/configure_firewall.yml
+  vars:
+    fw_service_name: firewalld
+    fw_service_state: stopped       # Example of overriding variable
+    fw_service_enabled: false       # Custom value
+    fw_install_if_missing: true
+
+- import_playbook: ../../playbook_library/security/configure_selinux.yml
+  vars:
+    selinux_mode: disabled
+    selinux_install_if_missing: true
+
+# ---------------------------------------------------------------------------
+# Clone Hosted Repositories to Client Nodes
+# ---------------------------------------------------------------------------
+- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+  vars:
+    repo_server: "http://{{ headnode_ip }}:8080"
+    clone_dest: "{{openchai_vault_path}}/"
+    download_tool: wget
 
 # ---------------------------------------------------------------------------
 # Hosts file setup for master nodes
@@ -31,15 +53,6 @@
     hpc_container_pv_dir: /hpc_container_pv
     hpctool_stack_dir: /hpctool_stack
     hpc_cluster_suite_dir: /root/hpc_cluster_suite
-
-# ---------------------------------------------------------------------------
-# Clone Hosted Repositories to Client Nodes
-# ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
-  vars:
-    repo_server: "http://{{ headnode_ip }}:8080"
-    clone_dest: "{{openchai_vault_path}}/"
-    download_tool: wget
 
 # ---------------------------------------------------------------------------
 # Prepare NFS-Clients Nodes for rpm-stack distribution
@@ -80,25 +93,53 @@
     # ephemeral → runtime only (HPC preferred)
     mounted_state: ephemeral
 
-
 # ---------------------------------------------------------------------------
-# Monitoring Baseline
+# Configure SSH Hardening
 # ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
 
-- import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
+- import_playbook: ../../playbook_library/security/security_sshd.yml
   vars:
-    rsyslog_mode: server
-    rsyslog_server_ip: "{{ primary_master_node_ip }}"
+    sshd_packages:
+      - openssh-server
+      - openssh-clients
+    sshd_service_name: sshd
+    sshd_service_state: started
+    sshd_service_enabled: true
+    ssh_key_generate: true
+    ssh_key_path: /root/.ssh/id_rsa
+    ssh_key_type: rsa
+    ssh_key_bits: 4096
+    ssh_key_force: no
+    ssh_hardening_enable: true
+    sshd_hardening_block: |
+      PermitRootLogin yes
+      PasswordAuthentication yes
+      PermitEmptyPasswords no
+      ChallengeResponseAuthentication no
+      UseDNS no
+      X11Forwarding yes
+      AllowTcpForwarding no
+      PrintMotd no
+      Banner none
+      VersionAddendum none
+      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+      MACs hmac-sha2-512,hmac-sha2-256
+      KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+
+- import_playbook: ../../playbook_library/services/sshd.yml
+  vars:
+    sshd_service_name: sshd
+    sshd_service_state: started
+    sshd_service_enabled: true
 
 # ---------------------------------------------------------------------------
 # Configure Chrony Server
 # ---------------------------------------------------------------------------
+- import_playbook: ../../playbook_library/bootstrap/configure_chrony_server.yml
 
-
-# =============================================================================
-# ====================  PHASE 1: HIGH-AVAILABILITY   ==========================
-# =============================================================================
+# ======================================================================================================
+# ================================  PHASE 1: HIGH-AVAILABILITY   =======================================
+# ======================================================================================================
 
 # ---------------------------------------------------------------------------
 # Kernel & Utilities Setup
@@ -158,87 +199,40 @@
 
     mounted_state: ephemeral
 
-# =============================================================================
-# ===========================       UTILITIES            ======================
-# =============================================================================
+# =======================================================================================================
+# ==================================  PHASE 2: NETWORK CONFIGURATION  ===================================
+# =======================================================================================================
 
-- import_playbook: ../../playbook_library/utility/utility_lmod.yml
-  vars:
-    util_rpm_base: "{{ rpm_stack_path }}/utilities_rpms"
-    dev_rpm_base : "{{ rpm_stack_path }}/developement_rpms"
-    modulepath_dir: "{{ modulepath_dir }}"
+# ---------------------------------------------------------------------------
+# RDMA, Mellanox Ofed Installation and Configuration
+# ---------------------------------------------------------------------------
 
-# =============================================================================
-# ====================  PHASE 2: NETWORK CONFIGURATION  =======================
-# =============================================================================
 - import_playbook: ../../playbook_library/network/setup_mellanox.yml
   vars:
     install_mellanox: true   # set to false to skip re-installation
     mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
     dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
 
-# =============================================================================
-# ====================  PHASE 3: CORE SERVICES  ===============================
-# =============================================================================
-- import_playbook: ../../playbook_library/services/firewalld.yml
-  vars:
-    fw_service_name: firewalld
-    fw_service_state: stopped
-    fw_service_enabled: false
+# ---------------------------------------------------------------------------
+# Assign Interface IP Address
+# ---------------------------------------------------------------------------
 
-- import_playbook: ../../playbook_library/services/sshd.yml
-  vars:
-    sshd_service_name: sshd
-    sshd_service_state: started
-    sshd_service_enabled: true
+- import_playbook: ../../playbook_library/bootstrap/update_interface_ipaddr.yml
 
-# =============================================================================
-# ====================  PHASE 4: SECURITY & HARDENING  ========================
-# =============================================================================
-- import_playbook: ../../playbook_library/security/configure_firewall.yml
+- import_playbook: ../../playbook_library/network/network_manager.yml
   vars:
-    fw_service_name: firewalld
-    fw_service_state: stopped       # Example of overriding variable
-    fw_service_enabled: false       # Custom value
-    fw_install_if_missing: true
+    nm_service_state: started   # Options: started, stopped, restarted
+    nm_service_enabled: true    # true or false
+    nm_install_if_missing: true  # true or false
 
-- import_playbook: ../../playbook_library/security/configure_selinux.yml
-  vars:
-    selinux_mode: disabled
-    selinux_install_if_missing: true
+# =======================================================================================================
+# ==============================  PHASE 3: Container Environement Setup  ================================
+# =======================================================================================================
 
-- import_playbook: ../../playbook_library/security/security_sshd.yml
-  vars:
-    sshd_packages:
-      - openssh-server
-      - openssh-clients
-    sshd_service_name: sshd
-    sshd_service_state: started
-    sshd_service_enabled: true
-    ssh_key_generate: true
-    ssh_key_path: /root/.ssh/id_rsa
-    ssh_key_type: rsa
-    ssh_key_bits: 4096
-    ssh_key_force: no
-    ssh_hardening_enable: true
-    sshd_hardening_block: |
-      PermitRootLogin yes
-      PasswordAuthentication yes
-      PermitEmptyPasswords no
-      ChallengeResponseAuthentication no
-      UseDNS no
-      X11Forwarding yes
-      AllowTcpForwarding no
-      PrintMotd no
-      Banner none
-      VersionAddendum none
-      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
-      MACs hmac-sha2-512,hmac-sha2-256
-      KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+# ---------------------------------------------------------------------------
+# Docker Engine Installation
+# ---------------------------------------------------------------------------
 
-# =================================================================================================
-# ===  PHASE 5: Container Engine Installation: Docker, Docker Swarm & Docker Compose   ============
-# =================================================================================================
 - import_playbook: ../../playbook_library/container/docker-engine/install_docker_latest.yml
   vars:
     docker_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
@@ -248,7 +242,15 @@
     docker_service_enable: yes # or no
     docker_engine_rpm_stack_path: "{{ rpm_stack_path }}/docker_rpm"
 
+# ---------------------------------------------------------------------------
+# Docker Compose Bin Installation
+# ---------------------------------------------------------------------------
+
 - import_playbook: ../../playbook_library/container/docker-compose/install_docker_compose.yml
+
+# ---------------------------------------------------------------------------
+# Docker Swarm Configuration
+# ---------------------------------------------------------------------------
 
 - import_playbook: ../../playbook_library/container/docker-swarm/swarm_ha_setup.yml
   vars:
@@ -259,9 +261,9 @@
       - "{{ tertiary_swarm_manager }}"
     swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
 
-# ============================================================================
-# =================  PHASE 6: Provisioning: xCAT Installation   ==============
-# ============================================================================
+# =======================================================================================================
+# ==============================  PHASE 4: Provisioning: xCAT Installation   ============================
+# =======================================================================================================
 
 - import_playbook: ../../playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
   vars:
@@ -284,9 +286,9 @@
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
     os_architecture: "{{ os_arch }}"
 
-# ====================================================================================
-# ===========  PHASE 7: Authentication: OpenLDAP Container Installation   ============
-# ====================================================================================
+# =======================================================================================================
+# =====================  PHASE 5: Authentication: OpenLDAP Container Installation   =====================
+# =======================================================================================================
 
 - import_playbook: ../../playbook_library/install/ldap/install_multi_rep_openldap_server.yml
   vars:
@@ -303,9 +305,9 @@
   vars:
     ldap_version: "{{ ldap_version_tag }}"
 
-# ===========================================================================================
-# ===========  PHASE 8: Workload Managment: Slurm Installation & Configuration   ============
-# ===========================================================================================
+# ==========================================================================================================
+# ======================  PHASE 6: Workload Managment: Slurm Installation & Configuration   ================
+# ==========================================================================================================
 
 - import_playbook: ../../playbook_library/install/slurm/install_slurm_master.yml
   vars:
@@ -317,3 +319,28 @@
     slurm_rpm_base: "{{ rpm_stack_path  }}/slurm_rpms/{{ enterprise_linux_label }}/"
     slurm_generate_jwt_key: true
     munge_generate_key: true
+
+# ===========================================================================================================
+# ====================================== PHASE 7: UTILITIES =================================================
+# ===========================================================================================================
+
+# ---------------------------------------------------------------------------
+# Module Configuration: Lua based Module (LMOD) Configuration
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../playbook_library/utility/utility_lmod.yml
+  vars:
+    util_rpm_base: "{{ rpm_stack_path }}/utilities_rpms"
+    dev_rpm_base : "{{ rpm_stack_path }}/developement_rpms"
+    modulepath_dir: "{{ modulepath_dir }}"
+
+# ---------------------------------------------------------------------------
+# Monitoring Baseline: MCE and RSYS Configuraton for Logs Management
+# ---------------------------------------------------------------------------
+- import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
+
+- import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
+  vars:
+    rsyslog_mode: server
+    rsyslog_server_ip: "{{ primary_master_node_ip }}"
+
