@@ -1,0 +1,31 @@
+---
+- name: Install chrony
+  ansible.builtin.package:
+    name: chrony
+    state: present
+
+- name: Backup existing chrony.conf
+  ansible.builtin.copy:
+    src: /etc/chrony.conf
+    dest: /etc/chrony.conf.bak
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['os_family'] in ['RedHat', 'Rocky', 'AlmaLinux']
+  ignore_errors: true
+
+- name: Configure chrony as NTP server
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart chronyd
+
+- name: Enable and start chronyd
+  ansible.builtin.service:
+    name: chronyd
+    enabled: true
+    state: started
