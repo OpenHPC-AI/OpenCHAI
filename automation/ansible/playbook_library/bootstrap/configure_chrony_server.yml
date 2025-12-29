@@ -1,0 +1,28 @@
+---
+- name: Configure Chrony Server Service
+  hosts: all
+  become: true
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  pre_tasks:
+    - name: Detect default IPv4 network if chrony_allow_networks not provided
+      ansible.builtin.set_fact:
+        chrony_allow_networks: >-
+          {{
+            chrony_allow_networks
+            | default(
+                [ ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.prefix ]
+              )
+          }}
+      when:
+        - chrony_allow_networks is not defined
+        - ansible_default_ipv4 is defined
+
+    - name: Show chrony allow networks (debug)
+      ansible.builtin.debug:
+        msg: "Chrony allow networks: {{ chrony_allow_networks }}"
+
+  roles:
+    - "{{ roles_parent_path }}/bootstrap_lib/chrony_server"
