@@ -5,7 +5,7 @@
   vars_files:
     - ../../group_vars/all.yml
   vars:
-    install_mellanox: false   # set to false to skip re-installation
+    install_mellanox: true   # set to false to skip re-installation
     #mellanox_repo_url: rhel9_4_repo        # Use RHEL 9.4 repository to override the default OS kernel  
     mlnx_dir_path: "{{ bin_dir_path }}/mellanox_rpms"
     dev_rpm_path: "{{ rpm_stack_path }}/developement_rpms"
