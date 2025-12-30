@@ -61,7 +61,7 @@ cd ./OpenCHAI
 # Browse available options here:
 # https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
 
-# Multiple openchai version (openchai_v1.24.0.tgz, openchai_v1.25.0.tgz) are available for download
+# Multiple openchai version (openchai_ha_full_v1.24.0.tgz, openchai_ha_full_v1.25.0.tgz, openchai_ha_full_v1.25.0.tgz, openchai_ha_base_v1.25.0.tgz) are available for download
 
 #Select the operating system version (AlmaLinux or Rocky Linux) according to your environment.
 
@@ -71,7 +71,7 @@ cd ./OpenCHAI
 mkdir ./hpcsuite_registry/hostmachine_reg/alma8.9
 
 wget -qO- \
-https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_v1.25.0.tgz \
+https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_ha_full_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
 #Make sure the openchai stack is pulled at  ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/ !
@@ -82,7 +82,7 @@ ls -lh ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/
 mkdir ./hpcsuite_registry/hostmachine_reg/rocky9.6
 
 wget -qO- \
-https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_v1.25.0.tgz \
+https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz \
 | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
 
 #Make sure the openchai stack is pulled at  ../OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/ !
