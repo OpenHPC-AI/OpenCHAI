@@ -3,12 +3,13 @@
 base_dir="/OpenCHAI"
 ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
-echo ">>> Configuring lmod variable for application "
+echo ">>> Configuring variable for application "
 
 
 fields=(
   application_base_dir
   nvidia_cuda_version
+  intel_installer
 )
 
 for key in "${fields[@]}"; do
@@ -18,4 +19,4 @@ for key in "${fields[@]}"; do
     sed -i "s|^$key:.*|$key: $new|" "$ALL_YML"
 done
 
-echo "✔ LMOD Application Variables Updated."
+echo "✔ Application Variables Updated."
