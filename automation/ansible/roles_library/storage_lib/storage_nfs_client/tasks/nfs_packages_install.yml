@@ -1,0 +1,98 @@
+---
+
+# ------------------------------------------------------------
+# Detect installed packages
+# ------------------------------------------------------------
+#
+
+- name: Ensure required packages are installed using rpm only
+  block:
+
+    - name: Ensure Development RPM directory exists
+      ansible.builtin.file:
+        path: "{{ nfs_rpm_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Gather installed package list using rpm
+      ansible.builtin.command: rpm -qa --qf '%{NAME}\n'
+      register: installed_rpms
+      changed_when: false
+
+    - name: Determine missing required packages
+      ansible.builtin.set_fact:
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+
+    - name: Show missing packages
+      ansible.builtin.debug:
+        msg: "Missing packages: {{ missing_packages }}"
+      when: missing_packages | length > 0
+
+    - name: Find local RPMs for missing packages
+      ansible.builtin.find:
+        paths: "{{ nfs_rpm_dir }}"
+        patterns: "{{ item }}-*.rpm"
+      loop: "{{ missing_packages }}"
+      register: found_rpms
+      when: missing_packages | length > 0
+
+    - name: Fail if any required RPM is missing locally
+      ansible.builtin.fail:
+        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+      when:
+        - missing_packages | length > 0
+        - item.matched == 0
+      loop: "{{ found_rpms.results }}"
+      ignore_errors: true
+
+
+    - name: Install missing packages using rpm
+      ansible.builtin.command: >
+        rpm -Uvh --nosignature --nodeps
+        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+      when: missing_packages | length > 0
+      ignore_errors: true
+
+
+# ------------------------------------------------------------
+# HEADNODE fallback (optional)
+# ------------------------------------------------------------
+- name: Check headnode RPM directory
+  ansible.builtin.stat:
+    path: "{{ nfs_rpm_dir }}"
+  delegate_to: "{{ groups['headnode'][0] }}"
+  run_once: true
+  register: headnode_rpm_dir
+  failed_when: false
+
+- name: Pull RPMs from headnode
+  ansible.builtin.synchronize:
+    src: "{{ nfs_rpm_dir }}/"
+    dest: "{{ nfs_rpm_dir }}/"
+    mode: pull
+  when:
+    - missing_packages | length > 0
+    - not local_install_success | default(false)
+    - headnode_rpm_dir.stat.exists | default(false)
+  failed_when: false
+
+- name: Install from headnode RPMs
+  ansible.builtin.command: rpm -Uvh --nosignature --force {{ nfs_rpm_dir }}/*.rpm
+  register: headnode_install
+  when:
+    - missing_packages | length > 0
+    - not local_install_success | default(false)
+    - headnode_rpm_dir.stat.exists | default(false)
+  failed_when: false
+
+# ------------------------------------------------------------
+# FINAL fallback — public network repo
+# ------------------------------------------------------------
+- name: Install from public repository
+  ansible.builtin.package:
+    name: "{{ missing_packages }}"
+    state: present
+  when:
+    - missing_packages | length > 0
+    - local_install_success | default(false) == false
+    - headnode_install.rc | default(1) != 0
