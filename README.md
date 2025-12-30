@@ -61,7 +61,7 @@ cd ./OpenCHAI
 # Browse available options here:
 # https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/
 
-# Multiple openchai version (openchai_ha_full_v1.24.0.tgz, openchai_ha_full_v1.25.0.tgz, openchai_ha_full_v1.25.0.tgz, openchai_ha_base_v1.25.0.tgz) are available for download
+# Multiple openchai version (openchai_ha_full_v1.24.0.tgz, openchai_ha_base_v1.24.0.tgz, openchai_ha_full_v1.25.0.tgz, openchai_ha_base_v1.25.0.tgz) are available for download
 
 #Select the operating system version (AlmaLinux or Rocky Linux) according to your environment.
 
