@@ -60,3 +60,11 @@ required_packages:
   - kernel-rpm-macros
   - createrepo_c
   - createrepo_c-libs
+  - make
+  - patch
+  - rpm-build
+  - autoconf
+  - automake
+  - libtool
+  - kernel-srpm-macros
+
