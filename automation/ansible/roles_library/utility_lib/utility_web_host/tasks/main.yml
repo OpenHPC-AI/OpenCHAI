@@ -1,4 +1,24 @@
 ---
+
+- name: Install Web Server (Nginx or Apache)
+  vars:
+    nginx_packages:
+      - nginx
+    apache_packages:
+      - httpd
+      - httpd-tools
+  block:
+
+    - name: Choose package list based on web_server variable
+      set_fact:
+        web_pkgs: "{{ nginx_packages if web_server == 'nginx' else apache_packages }}"
+
+    - name: Install selected web server and dependencies
+      ansible.builtin.package:
+        name: "{{ web_pkgs }}"
+        state: present
+
+
 - name: Ensure web content directory exists
   ansible.builtin.file:
     path: "{{ web_content_dir }}"
