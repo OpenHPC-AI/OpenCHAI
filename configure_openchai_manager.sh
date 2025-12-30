@@ -218,19 +218,19 @@ echo
 echo "Press ENTER to accept default values."
 echo
 
-read -p "Specify OS Architecture          [default: $DEF_OS_ARCH]: " USER_OS_ARCH
+read -rp "Specify OS Architecture          [default: $DEF_OS_ARCH]: " USER_OS_ARCH
 OS_ARCH="${USER_OS_ARCH:-$DEF_OS_ARCH}"
 
-read -p "Specify OS Version               [default: $DEF_OS_VERSION]: " USER_OS_VERSION
+read -rp "Specify OS Version               [default: $DEF_OS_VERSION]: " USER_OS_VERSION
 OS_VERSION="${USER_OS_VERSION:-$DEF_OS_VERSION}"
 
-read -p "Specify RHEL Label               [default: $DEF_RHEL_LABEL]: " USER_RHEL_LABEL
+read -rp "Specify RHEL Label               [default: $DEF_RHEL_LABEL]: " USER_RHEL_LABEL
 RHEL_LABEL="${USER_RHEL_LABEL:-$DEF_RHEL_LABEL}"
 
-read -p "Enterprise EL Label              [default: $DEF_EL_LABEL]: " USER_EL_LABEL
+read -rp "Enterprise EL Label              [default: $DEF_EL_LABEL]: " USER_EL_LABEL
 EL_LABEL="${USER_EL_LABEL:-$DEF_EL_LABEL}"
 
-read -p "Kernel Version                   [default: $DEF_KERNEL]: " USER_KERNEL
+read -rp "Kernel Version                   [default: $DEF_KERNEL]: " USER_KERNEL
 tmp="${USER_KERNEL:-$DEF_KERNEL}"; KERNEL_VERSION="${tmp%.*}"
 echo
 echo
