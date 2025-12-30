@@ -7,6 +7,7 @@ echo ">>> Configuring xCAT Variables "
 
 fields=(
   xcat_version_tag
+  xcat_repo_version_tag
 )
 
 for key in "${fields[@]}"; do
