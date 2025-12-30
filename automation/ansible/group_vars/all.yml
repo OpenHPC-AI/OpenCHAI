@@ -13,6 +13,9 @@ openchai_vault_path: "{{ hpcsuite_registry_mount_path }}/hostmachine_reg/{{ os_v
 rpm_stack_path: "{{ openchai_vault_path }}/rpm-stack"
 configuration_dir_path: "{{ openchai_vault_path }}/mount"
 bin_dir_path: "{{ openchai_vault_path }}/bin"
+os_iso_dir_path: "{{ hpcsuite_registry_mount_path }}/os_iso/{{ os_version }}"
+provisioning_osimage_dir_path: "{{ hpcsuite_registry_mount_path }}/provisioning_osimage/{{ os_version }}"
+spack_hpc_apps_dir_path: "{{ hpcsuite_registry_mount_path }}/spack_hpc_application/{{ os_version }}"
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
