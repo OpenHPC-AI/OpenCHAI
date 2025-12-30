@@ -1,0 +1,45 @@
+---
+# ------------------------------------------------------------
+# Services (non-fatal)
+# ------------------------------------------------------------
+- name: Ensure rpcbind is running
+  ansible.builtin.service:
+    name: rpcbind
+    state: started
+    enabled: true
+  failed_when: false
+
+- name: Ensure NFS client target is running
+  ansible.builtin.service:
+    name: nfs-client.target
+    state: started
+    enabled: true
+  failed_when: false
+
+# ------------------------------------------------------------
+# Ensure NFS mount directories exist
+# ------------------------------------------------------------
+- name: Ensure NFS mount directories exist
+  ansible.builtin.file:
+    path: "{{ item.dest }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ nfs_mounts | default([]) }}"
+  loop_control:
+    label: "{{ item.dest }}"
+
+# ------------------------------------------------------------
+# Mount NFS filesystems
+# ------------------------------------------------------------
+- name: Mount NFS filesystems
+  ansible.builtin.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.dest }}"
+    fstype: "{{ item.fstype | default('nfs') }}"
+    opts: "{{ item.opts | default('defaults,_netdev') }}"
+    state: "{{ mounted_state }}"
+  loop: "{{ nfs_mounts | default([]) }}"
+  loop_control:
+    label: "{{ item.src }} -> {{ item.dest }}"
