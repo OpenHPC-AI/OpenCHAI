@@ -17,6 +17,8 @@ fields=(
   drbd_device
   drbd_mount_dir
   drbd_fstype
+  drbd_primitive_name
+  drbd_sync_delay
   pcs_primary_master_node_hostname
   pcs_secondary_master_node_hostname
   pcs_cluster_password
