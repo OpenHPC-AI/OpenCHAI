@@ -6,6 +6,7 @@ os_arch: x86_64
 rhel_linux_label: rh8
 enterprise_linux_label: el8
 default_kernel_version: "5.14.0-570.17.1.el9_6"
+pxe_boot_iso: "Rocky-9.6-x86_64-dvd.iso"
 
 # OpenCHAI Manager Environment Setup
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
