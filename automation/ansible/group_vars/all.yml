@@ -48,6 +48,29 @@ secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventor
 
 ####################### PXE Server Configuration Variables #########################
 pxe_boot_iso: "Rocky-9.6-x86_64-dvd.iso"
+# PXE Network Configuration
+pxe_server_ip: "{{ headnode_ip }}"
+pxe_server_dhcp_range_start: "192.168.10.1"
+pxe_server_dhcp_range_end: "192.168.10.100"
+pxe_server_dns: "8.8.8.8"
+# Standard Partition Sizes (MB)
+part_efi_size: 600
+part_boot_size: 1024
+part_swap_size: 2048
+part_var_size: 4096
+# LVM Configuration
+lvm_vg_name: rockylinux
+lvm_pe_size: 4096
+lvm_swap_size: 2048
+lvm_var_size: 4096
+# Localization
+ks_timezone: Asia/Kolkata
+# Network (Kickstart)
+ks_bootproto: dhcp
+# Security
+ks_root_password: root
+# Kickstart Selection
+ks_type: "lvm"   # options: standard | lvm
 
 ####################### Lustre Variable ###########################
 # Lustre Server IPs and Network Configurations
