@@ -32,8 +32,10 @@
 
 # Extract xCAT configuration tar to /drbd
 - name: Extract xCAT provisioning configuration data to /drbd
-  ansible.builtin.unarchive:
-    src: "{{ configuration_dir_path }}/xcat_config/{{ xcatdata_base_config }}"
-    dest: /drbd
-    remote_src: true
+  ansible.builtin.command: >
+    tar --no-same-owner --no-same-permissions
+        -xf {{ configuration_dir_path }}/xcat_config/{{ xcatdata_base_config }}
+        -C /drbd
+  args:
+    creates: /drbd/xcatdata/.extracted
   when: drbd_mount_check.rc == 0
