@@ -71,6 +71,7 @@
     name: "{{ still_missing_auth_pkgs }}"
     state: present
   when: still_missing_auth_pkgs | length > 0
+  ignore_errors: true
 
 
 # =========================================================
