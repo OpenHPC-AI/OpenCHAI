@@ -68,16 +68,25 @@
 
 
 # 🔹 Override: Copy real files if replacement is enabled
-- name: Deploy Munge Key
+- name: Deploy Munge Key (remote file, no overwrite)
   ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
+    src: "{{ configuration_dir_path }}/slurm_config/munge.key"
+    dest: /etc/munge/munge.key
     owner: munge
     group: munge
-    mode: "{{ item.mode | default('0644') }}"
+    mode: "0400"
     remote_src: true
-  loop:
-    - { src: "{{ configuration_dir_path }}/slurm_config/munge.key",    dest: "/etc/munge/munge.key" }
+    force: false
+
+- name: Deploy Munge Key (from remote filesystem)
+  ansible.builtin.copy:
+    src: "{{ configuration_dir_path }}/slurm_config/munge.key"
+    dest: "/etc/munge/munge.key"
+    owner: munge
+    group: munge
+    mode: "0400"
+    remote_src: true
+
 
 
 # 🔹 Override: Copy real files if replacement is enabled
@@ -89,6 +98,7 @@
     group: slurm
     mode: "{{ item.mode | default('0644') }}"
     remote_src: true
+    force: no
   loop:
     - { src: "{{ configuration_dir_path }}/slurm_config/slurm.conf",       dest: "/etc/slurm/slurm.conf" }
     - { src: "{{ configuration_dir_path }}/slurm_config/slurmdbd.conf",    dest: "/etc/slurm/slurmdbd.conf" }
@@ -104,7 +114,8 @@
 
 
 # Ensure required files exist
-- name: Ensure Slurm files exist
+
+- name: Ensure Slurm log files exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: touch
@@ -114,11 +125,6 @@
   loop:
     - /var/log/slurm/slurmctld.log
     - /var/log/slurm/slurmdbd.log
-    - /var/share/slurm/slurm-prolog
-    - /var/share/slurm/slurm-epilog
-    - /var/share/slurm/slurm.taskprolog
-    - /etc/slurm/slurmdbd.conf
-    - /etc/slurm/slurm.conf
 
 # Ensure required files exist
 - name: Ensure Slurmdbd files exist
@@ -130,6 +136,21 @@
     mode: '0600'
   loop:
     - /etc/slurm/slurmdbd.conf
+
+
+- name: Ensure Slurm directories ownership
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: slurm
+    group: slurm
+    mode: '0755'
+  loop:
+    - /etc/slurm
+    - /var/log/slurm
+    - /var/share/slurm
+    - /var/share/slurm/ctld
+    - /var/spool/slurmctld
+
 
 
 # Generate or copy slurm JWT key
@@ -174,4 +195,3 @@
   ansible.builtin.fail:
     msg: "/etc/slurm/slurm.conf is missing! Please ensure it is created before starting services."
   when: not slurm_conf.stat.exists
-
