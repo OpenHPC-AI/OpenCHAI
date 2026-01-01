@@ -129,7 +129,7 @@ xcat_container_img_tar: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
 xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
 xcat_vip: "{{ xcat_vip_ip }}"
 gateway_ip: "{{ xcat_vip_ip }}"
-
+private_ethernet_interface: "{{ private_interface }}"
 mysql_port: 3307
 mysql_admin_pw: Admin123
 mysql_root_pw: Admin123
