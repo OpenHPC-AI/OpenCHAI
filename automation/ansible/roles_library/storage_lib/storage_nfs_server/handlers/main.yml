@@ -1,4 +1,8 @@
-# roles/storage_nfs_server/handlers/main.yml
 ---
 - name: Reload NFS exports
-  command: exportfs -r
+  ansible.builtin.command: exportfs -r
+
+- name: Restart NFS service
+  ansible.builtin.service:
+    name: "{{ nfs_server_service }}"
+    state: restarted
