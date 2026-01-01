@@ -1,24 +1,63 @@
 ---
-# tasks/assign_xcat_swarm_labels.yml
-# Assign common Swarm labels to primary and secondary master nodes
-# Run only on the primary HPC master node (Swarm manager)
+# tasks/assign_docker_swarm_labels.yml
+# Safely assign xCAT Swarm labels using ONLY the Swarm leader
 
-- name: Assign xCAT master label to primary and secondary Swarm nodes
+########################################################################
+# STEP 1: Detect Swarm Leader (run once)
+########################################################################
+- name: Detect Docker Swarm leader
   become: true
   shell: |
+    docker node ls --format '{{ "{{.Hostname}} {{.ManagerStatus}}" }}' \
+    | awk '$2 ~ /Leader/ {print $1}'
+  register: swarm_leader
+  changed_when: false
+  run_once: true
+
+- name: Fail if Swarm leader not detected
+  fail:
+    msg: "Docker Swarm leader could not be detected"
+  when: swarm_leader.stdout | length == 0
+  run_once: true
+
+########################################################################
+# STEP 2: Assign xCAT labels (leader only)
+########################################################################
+- name: Assign xCAT master label to Swarm master nodes (leader only)
+  become: true
+  shell: |
+    set -e
     for host in {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}; do
-      node_id=$(docker node ls --format '{{"{{.Hostname}} {{.ManagerStatus}} {{.ID}}"}}' | grep "$host" | awk '{print $3}')
+      node_id=$(docker node ls --format '{{ "{{.Hostname}} {{.ID}}" }}' | awk '$1=="'$host'" {print $2}')
       if [ -n "$node_id" ]; then
         docker node update --label-add xcat_master=true "$node_id"
+        echo "Label applied to $host"
       else
-        echo "Warning: Node with hostname $host not found in docker swarm"
+        echo "WARNING: Node $host not found in Docker Swarm"
       fi
     done
-  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
   args:
     executable: /bin/bash
+  when: inventory_hostname == swarm_leader.stdout
+  run_once: true
+  retries: 5
+  delay: 3
+  register: label_update
+  until: label_update.rc == 0
 
-- name: Confirm xCAT Swarm labels applied
+########################################################################
+# STEP 3: Verification (safe read-only)
+########################################################################
+- name: Verify xCAT Swarm labels
+  become: true
+  shell: |
+    docker node inspect {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }} \
+    --format '{{ "{{.Description.Hostname}} {{.Spec.Labels.xcat_master}}" }}'
+  register: label_verify
+  changed_when: false
+  run_once: true
+
+- name: Show Swarm label verification
   debug:
-    msg: "Swarm label 'xcat_master=true' successfully applied to primary and secondary nodes: [{{ primary_swarm_manager }}, {{ secondary_swarm_manager }}]"
+    msg: "{{ label_verify.stdout_lines }}"
   run_once: true
