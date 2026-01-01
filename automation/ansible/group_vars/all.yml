@@ -142,13 +142,14 @@ dhcp_interface: ens1f2:0,ens1f2
 slurm_version: "slurm-25.11.0-pmix-all"
 
 ######################## OpenLDAP Tool variable ##########################
-ldap_version_tag: "2.6.8"
+######################## OpenLDAP Tool variable ##########################
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
 secondary_ldap_node_ip: "{{ secondary_master_node_ip }}"
-ldap_base_dn: "dc=nsm,dc=in"
 ldap_container_img_tar: "cdac_openldap_multi-replication_{{ os_version}}_{{ ldap_version_tag }}"
 openldap_container_image: "cdac_openldap_multi-replication/{{ os_version}}:{{ ldap_version_tag }}"
 
+ldap_version_tag: "2.6.8"
+ldap_base_dn: "dc=nsm,dc=in"
 LDAP_ROOT_PASSWD: "Admin123"
 BASE_PRIMARY_DC: "in"
 BASE_SECONDARY_DC: "nsm"
