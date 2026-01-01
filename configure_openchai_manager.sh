@@ -284,7 +284,7 @@ mapfile -t tar_files < <(
 OPENCHAI_VERSION="__SET_LATER__"
 
 # ------------------------------------------------------------------
-# Case 1: No local tar files found
+# Case 1: No local tar files found → Stream extract from network
 # ------------------------------------------------------------------
 if (( ${#tar_files[@]} == 0 )); then
     warn "No registry tar files found in ${HOSTMACHINE_REGISTRY_PATH}."
@@ -322,23 +322,47 @@ if (( ${#tar_files[@]} == 0 )); then
                     [[ -n "$FILE" ]] && break
                 done
 
-                local_tar="${HOSTMACHINE_REGISTRY_PATH}/${FILE}"
                 OPENCHAI_VERSION=$(strip_tar_ext "$FILE")
+                DEST_DIR="${HOSTMACHINE_REGISTRY_PATH}/${OS_VERSION}"
+                TAR_URL="${HOSTMACHINE_REG_NETWORK_URL}${FILE}"
 
-                info "Downloading ${FILE} ..."
-                if command -v wget >/dev/null 2>&1; then
-                    wget -q --show-progress $CERT_FLAG_WGET \
-                        "${HOSTMACHINE_REG_NETWORK_URL}${FILE}" \
-                        -O "$local_tar" || warn "Download failed."
-                else
-                    curl -fsSL ${CERT_FLAG_CURL} \
-                        -o "$local_tar" \
-                        "${HOSTMACHINE_REG_NETWORK_URL}${FILE}" || warn "Download failed."
+                mkdir -p "$DEST_DIR"
+
+                # Skip if already extracted
+                if [[ -d "${DEST_DIR}/${OPENCHAI_VERSION}" ]]; then
+                    notice "✔ Registry already present: ${OPENCHAI_VERSION}"
+                    break
                 fi
 
-                info "Extracting ${FILE} ..."
-                tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION" || \
-                tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION"
+                # Detect compression
+                case "$FILE" in
+                    *.tar.gz|*.tgz) TAR_OPTS="-xzvf -" ;;
+                    *.tar.xz)       TAR_OPTS="-xJvf -" ;;
+                    *.tar)          TAR_OPTS="-xvf -" ;;
+                    *)
+                        warn "Unsupported archive format: $FILE"
+                        OPENCHAI_VERSION="__SET_LATER__"
+                        break
+                        ;;
+                esac
+
+                info "Extracting ${FILE} directly into ${DEST_DIR}"
+
+                if command -v wget >/dev/null 2>&1; then
+                    wget -q -O - $CERT_FLAG_WGET "$TAR_URL" | \
+                    tar $TAR_OPTS -C "$DEST_DIR" || {
+                        warn "Extraction failed"
+                        OPENCHAI_VERSION="__SET_LATER__"
+                        break
+                    }
+                else
+                    curl -fsSL ${CERT_FLAG_CURL} "$TAR_URL" | \
+                    tar $TAR_OPTS -C "$DEST_DIR" || {
+                        warn "Extraction failed"
+                        OPENCHAI_VERSION="__SET_LATER__"
+                        break
+                    }
+                fi
 
                 notice "✅ Registry extracted successfully"
                 info "Untar directory name: ${OPENCHAI_VERSION}"
@@ -354,7 +378,7 @@ if (( ${#tar_files[@]} == 0 )); then
     done
 
 # ------------------------------------------------------------------
-# Case 2: Local tar files exist
+# Case 2: Local tar files exist → Stream extract from file (no copy)
 # ------------------------------------------------------------------
 else
     echo
@@ -372,11 +396,37 @@ else
             break
         fi
 
-        OPENCHAI_VERSION=$(strip_tar_ext "$local_tar")
+        FILE="$(basename "$local_tar")"
+        OPENCHAI_VERSION=$(strip_tar_ext "$FILE")
+        DEST_DIR="${HOSTMACHINE_REGISTRY_PATH}/${OS_VERSION}"
 
-        info "Extracting selected file: ${local_tar} ..."
-        tar -xavf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION" || \
-        tar -xvf "$local_tar" -C "$HOSTMACHINE_REGISTRY_PATH/$OS_VERSION"
+        mkdir -p "$DEST_DIR"
+
+        # Skip if already extracted
+        if [[ -d "${DEST_DIR}/${OPENCHAI_VERSION}" ]]; then
+            notice "✔ Registry already present: ${OPENCHAI_VERSION}"
+            break
+        fi
+
+        # Detect compression
+        case "$FILE" in
+            *.tar.gz|*.tgz) TAR_OPTS="-xzvf" ;;
+            *.tar.xz)       TAR_OPTS="-xJvf" ;;
+            *.tar)          TAR_OPTS="-xvf" ;;
+            *)
+                warn "Unsupported archive format: $FILE"
+                OPENCHAI_VERSION="__SET_LATER__"
+                break
+                ;;
+        esac
+
+        info "Extracting ${FILE} directly into ${DEST_DIR}"
+
+        tar $TAR_OPTS "$local_tar" -C "$DEST_DIR" || {
+            warn "Extraction failed"
+            OPENCHAI_VERSION="__SET_LATER__"
+            break
+        }
 
         notice "✅ Registry extracted successfully"
         info "Untar directory name: ${OPENCHAI_VERSION}"
