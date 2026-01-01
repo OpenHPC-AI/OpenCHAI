@@ -4,31 +4,71 @@
 # -------------------------------------------------------------------
 - name: Deploy LDAP container using docker compose
   command: docker-compose -f /hpctool_stack/ldap_repo/docker-compose.yml up -d
-
-# -------------------------------------------------------------------
-# Verify LDAP container services
-# -------------------------------------------------------------------
-- name: Verify LDAP Container is running
-  shell: docker container ls
-  register: stack_status
   changed_when: false
 
-- name: Show stack verification output
+# -------------------------------------------------------------------
+# Show running containers (debug only)
+# -------------------------------------------------------------------
+- name: Show running containers
+  shell: docker ps --format "table {{ '{{.Names}}\t{{.Status}}' }}"
+  register: docker_ps
+  changed_when: false
+
+- name: Debug running containers
   debug:
-    msg: "{{ stack_status.stdout_lines }}"
+    msg: "{{ docker_ps.stdout_lines }}"
 
 # -------------------------------------------------------------------
-# Wait until LDAP container reaches running state
+# Discover LDAP container name dynamically
 # -------------------------------------------------------------------
-- name: Wait for LDAP container service to reach running state
-  shell: docker inspect -f '{{ "{{.State.Status}}" }}' ldap_1
-  register: ldap_state
-  until: ldap_state.stdout == "running"
-  retries: 30
-  delay: 10
+- name: Detect LDAP container name
+  shell: docker ps --format '{{ "{{.Names}}" }}' | grep -i ldap | head -n 1
+  register: ldap_container_detected
   changed_when: false
   failed_when: false
 
-- name: Show LDAP service task state
+- name: Set LDAP container name
+  set_fact:
+    ldap_container_name: "{{ ldap_container_detected.stdout }}"
+  when: ldap_container_detected.rc == 0
+
+# -------------------------------------------------------------------
+# Fail early if container not found
+# -------------------------------------------------------------------
+- name: Fail if LDAP container not found
+  fail:
+    msg: "LDAP container not found after docker-compose deployment"
+  when: ldap_container_detected.rc != 0
+
+# -------------------------------------------------------------------
+# Wait until container is RUNNING
+# -------------------------------------------------------------------
+- name: Wait for LDAP container to be running
+  shell: docker inspect -f '{{ "{{.State.Running}}" }}' {{ ldap_container_name }}
+  register: ldap_running
+  until: ldap_running.stdout == "true"
+  retries: 30
+  delay: 5
+  changed_when: false
+
+# -------------------------------------------------------------------
+# Wait until LDAP service is READY
+# -------------------------------------------------------------------
+- name: Wait for LDAP service to respond
+  shell: >
+    docker exec {{ ldap_container_name }}
+    ldapsearch -x -H ldap://127.0.0.1 -b "" -s base
+  register: ldap_ready
+  until: ldap_ready.rc == 0
+  retries: "{{ retries_attampt }}"
+  delay: "{{ delay_time }}"
+  changed_when: false
+
+# -------------------------------------------------------------------
+# Final success message
+# -------------------------------------------------------------------
+- name: LDAP service status
   debug:
-    msg: "LDAP service state: {{ ldap_state.stdout }}"
+    msg: >
+      LDAP container {{ ldap_container_name }} is running and LDAP service is responding.
+
