@@ -1,24 +1,37 @@
 ---
-- name: Check installed packages
+#####################################################################
+# STEP 1: Gather installed package facts
+#####################################################################
+
+- name: Gather installed package facts
   ansible.builtin.package_facts:
     manager: auto
 
-- name: Install NFS Server packages if missing and allowed
+#####################################################################
+# STEP 2: Install NFS server packages (optional)
+#####################################################################
+
+- name: Install NFS Server packages if missing
   ansible.builtin.package:
     name: "{{ nfs_server_packages }}"
     state: present
   when:
     - nfs_server_install_if_missing | bool
     - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
+  notify: Restart NFS service
 
-- name: Debug if NFS Server packages missing and install skipped
+- name: Warn if NFS packages missing but install skipped
   ansible.builtin.debug:
     msg: >
-      NFS Server packages missing, installation skipped
+      NFS server packages are missing, but installation is disabled
       (nfs_server_install_if_missing=false).
   when:
     - not nfs_server_install_if_missing | bool
     - nfs_server_packages | difference(ansible_facts.packages.keys()) | length > 0
+
+#####################################################################
+# STEP 3: Configure exports (HEADNODE ONLY)
+#####################################################################
 
 - name: Ensure /etc/exports exists
   ansible.builtin.file:
@@ -26,7 +39,7 @@
     state: touch
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   when: inventory_hostname == headnode_inventory_hostname
 
 - name: Ensure NFS export directories exist
@@ -35,13 +48,13 @@
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   loop: "{{ nfs_exports }}"
   loop_control:
     label: "{{ item.path }}"
   when: inventory_hostname == headnode_inventory_hostname
 
-- name: Configure multiple NFS exports
+- name: Configure NFS exports
   ansible.builtin.lineinfile:
     path: /etc/exports
     line: "{{ item.path }} {{ item.clients }}({{ item.options }})"
@@ -54,14 +67,33 @@
   notify: Reload NFS exports
   when: inventory_hostname == headnode_inventory_hostname
 
-- name: Manage NFS Server service
+#####################################################################
+# STEP 4: Ensure NFS service is enabled and running
+#####################################################################
+
+- name: Ensure NFS service is enabled and started
   ansible.builtin.service:
     name: "{{ nfs_server_service }}"
-    state: "{{ nfs_server_state }}"
-    enabled: "{{ nfs_server_enabled }}"
+    state: started
+    enabled: true
   when:
     - nfs_server_packages | difference(ansible_facts.packages.keys()) | length == 0
 
-# Handlers
-- name: Reload NFS exports
-  ansible.builtin.command: exportfs -r
+#####################################################################
+# STEP 5: Verify NFS service status
+#####################################################################
+
+- name: Check NFS service status
+  ansible.builtin.command: systemctl is-active "{{ nfs_server_service }}"
+  register: nfs_service_status
+  changed_when: false
+  failed_when: false
+
+- name: Debug NFS service status
+  ansible.builtin.debug:
+    msg: "NFS service '{{ nfs_server_service }}' status: {{ nfs_service_status.stdout }}"
+
+- name: Fail if NFS service is not active
+  ansible.builtin.fail:
+    msg: "NFS service '{{ nfs_server_service }}' is not running!"
+  when: nfs_service_status.stdout != "active"
