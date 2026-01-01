@@ -138,7 +138,6 @@ domain_name: pune.ac.in
 dhcp_interface: ens1f2:0,ens1f2
 
 
-
 ####################### Slurm Workload Manager Variable #####################
 slurm_version: "slurm-25.11.0-pmix-all"
 
@@ -149,6 +148,19 @@ secondary_ldap_node_ip: "{{ secondary_master_node_ip }}"
 ldap_base_dn: "dc=nsm,dc=in"
 ldap_container_img_tar: "cdac_openldap_multi-replication_{{ os_version}}_{{ ldap_version_tag }}"
 openldap_container_image: "cdac_openldap_multi-replication/{{ os_version}}:{{ ldap_version_tag }}"
+
+LDAP_ROOT_PASSWD: "Admin123"
+BASE_PRIMARY_DC: "in"
+BASE_SECONDARY_DC: "nsm"
+BASE_SUBDOMAIN_DC: "cdac"
+
+OU1: "People"
+OU2: "Group"
+OU3: "CDAC"
+OU4: "support"
+OU5: "nsmext"
+OU6: "nsmapp"
+OU7: "IIT"
 
 ####################### Monitoring Tools Variables #############################
 monitoring_log_server_ip: "{{ secondary_mgmt_node_ip }}"  # It can be any login nodes or mgmt nodes
@@ -172,3 +184,6 @@ intel_installer: "intel-oneapi-hpc-toolkit-2025.3.0.381_offline.sh"
 
 ####################### Monitoring Tools Variable #######################
 monitoring_log_server_ip: "172.10.3.25"
+
+LDAP_VERSION_TAG: "2.6.8"
+LDAP_BASE_DN: "dc=nsm,dc=in"
