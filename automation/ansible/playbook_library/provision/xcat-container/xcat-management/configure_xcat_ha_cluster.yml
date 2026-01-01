@@ -9,39 +9,40 @@
 
   vars_prompt:
     - name: "xcat_vip"
-      prompt: "Enter xCAT Virtual IP (VIP)"
+      prompt: "Enter xCAT Virtual IP (VIP), default:"
       private: no
+      default: "{{ xcat_vip_ip }}"
 
     - name: "mysql_port"
-      prompt: "Enter MySQL port (default: 3307)"
+      prompt: "Enter MySQL port, default:"
       private: no
       default: "3307"
 
     - name: "mysql_admin_pw"
-      prompt: "Enter MySQL admin password (alphanumeric only)"
+      prompt: "Enter MySQL admin password (alphanumeric only / don't add special character)"
       private: yes
 
     - name: "mysql_root_pw"
-      prompt: "Enter MySQL root password (alphanumeric only)"
+      prompt: "Enter MySQL root password (alphanumeric only / don't add special character)"
       private: yes
 
     - name: "domain_name"
-      prompt: "Enter DNS domain name (default: pune.ac.in)"
+      prompt: "Enter DNS domain name, default:"
       private: no
       default: "pune.ac.in"
 
     - name: "dhcp_interface"
-      prompt: "Enter DHCP interface(s), comma separated (default: ens3f0,ens3f0:0)"
+      prompt: "Enter DHCP interface(s), comma separated (You can add virtual interface or both), default:"
       private: no
-      default: "ens3f0,ens3f0:0"
+      default: "{{ xcat_vip_interface }}, {{ private_interface }}"
 
     - name: "private_ethernet_interface"
-      prompt: "Enter Private Ethernet interface for xCAT (default: ens3f0)"
+      prompt: "Enter Private Ethernet interface for xCAT, default:"
       private: no
       default: "{{ private_interface }}"
 
     - name: "gateway_ip"
-      prompt: "Enter Gateway/DHCP server IP (default: same as VIP)"
+      prompt: "Enter Gateway/DHCP server IP, default:"
       private: no
       default: "{{ xcat_vip_ip }}"
 
