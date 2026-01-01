@@ -1,30 +1,86 @@
 # tasks/swarm_join.yml
 
+#####################################################################
+# STEP 1: Validate NFS mount
+#####################################################################
+
+- name: Verify configuration directory is mounted
+  ansible.builtin.command: mountpoint -q "{{ configuration_dir_path }}"
+  register: mount_check
+  changed_when: false
+  failed_when: mount_check.rc != 0
+
+#####################################################################
+# STEP 2: Ensure swarm token directory exists
+#####################################################################
+
 - name: Ensure swarm token directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ configuration_dir_path }}/docker_swarm"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
-- name: Read swarm manager join token from NFS mount
-  slurp:
+#####################################################################
+# STEP 3: Wait for swarm token file (race-condition safe)
+#####################################################################
+
+- name: Wait for swarm manager join token file
+  ansible.builtin.wait_for:
+    path: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
+    state: present
+    timeout: 180
+    sleep: 5
+
+#####################################################################
+# STEP 4: Validate token file is readable
+#####################################################################
+
+- name: Stat swarm token file
+  ansible.builtin.stat:
+    path: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
+  register: swarm_token_stat
+
+- name: Fail if swarm token file missing or empty
+  ansible.builtin.fail:
+    msg: >
+      Swarm token file missing or empty at
+      {{ configuration_dir_path }}/docker_swarm/swarm_token_file
+  when:
+    - not swarm_token_stat.stat.exists
+    - swarm_token_stat.stat.size | int == 0
+
+#####################################################################
+# STEP 5: Read swarm token safely
+#####################################################################
+
+- name: Read swarm manager join token
+  ansible.builtin.slurp:
     src: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
   register: swarm_token_data
 
 - name: Set swarm join token fact
-  set_fact:
+  ansible.builtin.set_fact:
     manager_join_token: "{{ swarm_token_data.content | b64decode | trim }}"
 
-- name: Check if this node is already part of a swarm
-  command: docker info --format '{{ "{{ .Swarm.LocalNodeState }}" }}'
+#####################################################################
+# STEP 6: Check Swarm status
+#####################################################################
+
+- name: Check if node is already part of a swarm
+  ansible.builtin.command: docker info --format '{{ "{{ .Swarm.LocalNodeState }}" }}'
   register: swarm_status
-  failed_when: false
   changed_when: false
+  failed_when: false
+
+#####################################################################
+# STEP 7: Join swarm safely
+#####################################################################
 
 - name: Join node to Docker Swarm as manager
-  command: >
+  ansible.builtin.command: >
     docker swarm join
     --token {{ manager_join_token }}
     --advertise-addr {{ ansible_host }}
     {{ primary_swarm_manager_ip }}:2377
-  when: swarm_status.stdout != "active"
+  when:
+    - swarm_status.stdout != "active"
