@@ -25,6 +25,7 @@ run_module() {
 
 
 # Execute all modules
+run_module "update_vars_pxe.sh"
 run_module "lustre_vars.sh"
 run_module "drbd_vars.sh"
 run_module "swarm_vars.sh"
