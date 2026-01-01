@@ -1,12 +1,11 @@
 ####################### OpenCHAI Manager Tool Variable #####################
-openchai_version: openchai_v1.24.0
+openchai_version: openchai_ha_full_v1.25.0
 base_dir: /OpenCHAI
-os_version: alma8.9
+os_version: rocky9.6
 os_arch: x86_64
-rhel_linux_label: rh8
-enterprise_linux_label: el8
+rhel_linux_label: rh9
+enterprise_linux_label: el9
 default_kernel_version: "5.14.0-570.17.1.el9_6"
-
 
 # OpenCHAI Manager Environment Setup
 hpcsuite_registry_mount_path: "{{ base_dir }}/hpcsuite_registry"
@@ -48,10 +47,11 @@ secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventor
 
 ####################### PXE Server Configuration Variables #########################
 pxe_boot_iso: "Rocky-9.6-x86_64-dvd.iso"
+
 # PXE Network Configuration
 pxe_server_ip: "{{ headnode_ip }}"
-pxe_server_dhcp_range_start: "192.168.10.1"
-pxe_server_dhcp_range_end: "192.168.10.100"
+pxe_server_dhcp_range_start: "172.10.3.225"
+pxe_server_dhcp_range_end: "172.10.3.230"
 pxe_server_dns: "8.8.8.8"
 # Standard Partition Sizes (MB)
 part_efi_size: 600
@@ -110,8 +110,8 @@ drbd_fstype: "ext4"
 drbd_primitive_name: "drbdfs"
 drbd_sync_delay: "40"
 
-pcs_primary_master_node_hostname: "hpc-master01"
-pcs_secondary_master_node_hostname: "hpc-master02"
+pcs_primary_master_node_hostname: cn16
+pcs_secondary_master_node_hostname: cn17
 pcs_cluster_password: "StrongPass123"
 pcs_cluster_name: "drbd_xCAT"
 
@@ -120,13 +120,24 @@ pcs_cluster_name: "drbd_xCAT"
 primary_swarm_manager_ip: "{{ primary_master_node_ip }}"
 primary_swarm_manager: "{{ primary_master_node_inventory_hostname }}"
 secondary_swarm_manager: "{{ secondary_master_node_inventory_hostname }}"
-tertiary_swarm_manager: "headnode"           #It can be a login node, head node, or management node used solely to maintain quorum.
+tertiary_swarm_manager: "headnode"
 
 ####################### xCAT Management Tool Variable #######################
 xcat_version_tag: "2.17.0"
-xcat_repo_version_tag: "2.17"    # or 2.16 or latest (don't put 2.17.0, not supported )
+xcat_repo_version_tag: "2.17"
 xcat_container_img_tar: "cdac_xcat_{{ os_version }}_{{ xcat_version_tag }}"
 xcat_docker_img: "cdac_xcat/{{ os_version }}:{{ xcat_version_tag }}"
+
+gateway_ip: "{{ xcat_vip_ip }}"
+
+mysql_port: 3307
+mysql_admin_pw: Admin123
+mysql_root_pw: Admin123
+
+domain_name: pune.ac.in
+dhcp_interface: ens1f2:0,ens1f2
+
+
 
 ####################### Slurm Workload Manager Variable #####################
 slurm_version: "slurm-25.11.0-pmix-all"
@@ -140,7 +151,7 @@ ldap_container_img_tar: "cdac_openldap_multi-replication_{{ os_version}}_{{ ldap
 openldap_container_image: "cdac_openldap_multi-replication/{{ os_version}}:{{ ldap_version_tag }}"
 
 ####################### Monitoring Tools Variables #############################
-monitoring_log_server_ip: 192.168.10.10  # It can be any login nodes or mgmt nodes 
+monitoring_log_server_ip: "{{ secondary_mgmt_node_ip }}"  # It can be any login nodes or mgmt nodes
 
 
 
@@ -159,4 +170,5 @@ nvidia_cuda_version: "13.0"
 # Intel OneAPI installer path
 intel_installer: "intel-oneapi-hpc-toolkit-2025.3.0.381_offline.sh"
 
-
+####################### Monitoring Tools Variable #######################
+monitoring_log_server_ip: "172.10.3.25"
