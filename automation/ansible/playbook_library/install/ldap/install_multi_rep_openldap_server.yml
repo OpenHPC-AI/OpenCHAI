@@ -6,39 +6,6 @@
   vars_files:
     - ../../../group_vars/all.yml
 
-  vars_prompt:
-    - name: LDAP_ROOT_PASSWD
-      prompt: "Enter LDAP root password"
-      private: yes
-    - name: BASE_PRIMARY_DC
-      prompt: "Enter base primary DC (example: IN)"
-    - name: BASE_SECONDARY_DC
-      prompt: "Enter base secondary DC (example: NSM)"
-    - name: BASE_SUBDOMAIN_DC
-      prompt: "Enter base subdomain DC (example: CDAC)"
-    - name: OU1
-      prompt: "Enter OU1 name (default: People)"
-      default: "People"
-    - name: OU2
-      prompt: "Enter OU2 name (default: Group)"
-      default: "Group"
-    - name: OU3
-      prompt: "Enter OU3 name (default: CDAC)"
-      default: "CDAC"
-    - name: OU4
-      prompt: "Enter OU4 name (default: support)"
-      default: "support"
-    - name: OU5
-      prompt: "Enter OU5 name (default: nsmext)"
-      default: "nsmext"
-    - name: OU6
-      prompt: "Enter OU6 name (default: nsmapp)"
-      default: "nsmapp"
-    - name: OU7
-      prompt: "Enter OU7 name (default: IIT)"
-      default: "IIT"
-
-
   vars:
     ldap_pv_dir: "/hpc_container_pv/ldapdata"
     openldap_image: "{{ openldap_container_image }}"
@@ -48,7 +15,8 @@
     ssl_certificate_check: no
     primary_ldap_server_ip: "{{ primary_ldap_node_ip }}"
     secondary_ldap_server_ip: "{{ secondary_ldap_node_ip }}"
+    retries_attampt: 5
+    delay_time: 10
 
   roles:
     - "{{ roles_parent_path }}/install_lib/multi_rep_ldap_server_container"
-
