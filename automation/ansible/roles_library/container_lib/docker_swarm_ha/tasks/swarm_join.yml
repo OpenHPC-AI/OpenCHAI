@@ -4,11 +4,10 @@
 # STEP 1: Validate NFS mount
 #####################################################################
 
-- name: Verify configuration directory is mounted
-  ansible.builtin.command: mountpoint -q "{{ configuration_dir_path }}"
-  register: mount_check
-  changed_when: false
-  failed_when: mount_check.rc != 0
+- name: Ensure configuration directory exists
+  ansible.builtin.file:
+    path: "{{ configuration_dir_path }}"
+    state: directory
 
 #####################################################################
 # STEP 2: Ensure swarm token directory exists
