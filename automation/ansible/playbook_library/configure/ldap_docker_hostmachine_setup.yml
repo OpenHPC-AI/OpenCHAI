@@ -17,8 +17,8 @@
       set_fact:
         ldap_var:
           SERVER_ROLE: >-
-            {{ '1' if ansible_host == PRIMARY_LDAP_SERVER_IP
-               else ('2' if ansible_host == SECONDARY_LDAP_SERVER_IP else '0') }}
+            {{ '1' if ansible_host == primary_ldap_node_ip
+               else ('2' if ansible_host == secondary_ldap_node_ip else '0') }}
 
     - name: Set LDAP container name
       set_fact:
