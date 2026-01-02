@@ -1,0 +1,75 @@
+# ------------------------------------------------
+# OS ISO Check + Download (Fallback) + Mount
+# ------------------------------------------------
+
+- name: Ensure OS ISO directory exists
+  ansible.builtin.file:
+    path: "{{ os_iso_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Check if OS ISO exists locally
+  ansible.builtin.stat:
+    path: "{{ os_iso_path }}/{{ iso_name }}"
+  register: os_iso_stat
+
+- name: Download OS ISO from network if not present locally
+  ansible.builtin.get_url:
+    url: "{{ os_iso_network_url }}/{{ iso_name }}"
+    dest: "{{ os_iso_path }}/{{ iso_name }}"
+    mode: "0644"
+    timeout: 3600
+    force: false
+    validate_certs: "{{ ssl_certificate_check }}"
+  when: not os_iso_stat.stat.exists
+  retries: 3
+  delay: 5
+  register: download_result
+  until: download_result is succeeded
+
+- name: Fail if OS ISO is still missing
+  ansible.builtin.fail:
+    msg: >
+      OS ISO {{ iso_name }} not found locally and download failed.
+      Please check os_iso_network_url or network connectivity.
+  when: not os_iso_stat.stat.exists and
+        not (os_iso_path ~ '/' ~ iso_name) is exists
+
+- name: Create ISO mount directory
+  ansible.builtin.file:
+    path: "{{ iso_mount_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Mount OS ISO read-only
+  ansible.builtin.mount:
+    path: "{{ iso_mount_path }}"
+    src: "{{ os_iso_path }}/{{ iso_name }}"
+    fstype: iso9660
+    opts: loop,ro
+    state: mounted
+
+- name: Ensure ISO data destination exists
+  ansible.builtin.file:
+    path: "{{ openchai_vault_path }}/iso-data"
+    state: directory
+    mode: "0755"
+
+- name: Copy ISO contents to vault
+  ansible.builtin.shell: |
+    cp -a {{ iso_mount_path }}/. {{ openchai_vault_path }}/iso-data/
+  args:
+    executable: /bin/bash
+
+- name: Set permissions on ISO data
+  ansible.builtin.file:
+    path: "{{ openchai_vault_path }}/iso-data"
+    mode: "0755"
+    recurse: yes
+
+- name: Create Apache symlink for PXE
+  ansible.builtin.file:
+    src: "{{ openchai_vault_path }}/iso-data"
+    dest: "/var/www/html/iso-data"
+    state: link
+    force: yes
