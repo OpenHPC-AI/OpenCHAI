@@ -1,0 +1,35 @@
+---
+# -------------------------------------------------
+# Create systemd service for xcat container wrapper
+# -------------------------------------------------
+
+- name: Create xcat-container systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/xcat-container.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=HA wrapper for xcat container
+      After=network.target docker.service
+      Requires=docker.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/xcat_container_ra start
+      ExecStop=/usr/local/bin/xcat_container_ra stop
+      ExecReload=/usr/local/bin/xcat_container_ra restart
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable xcat-container service
+  ansible.builtin.systemd:
+    name: xcat-container.service
+    enabled: yes
