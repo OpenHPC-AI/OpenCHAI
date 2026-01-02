@@ -1,0 +1,87 @@
+---
+- name: Ensure TFTP root exists
+  file:
+    path: "{{ tftpboot_lib_path }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure working directory for EFI extraction exists
+  file:
+    path: /tmp/pxe-efi
+    state: directory
+    mode: "0755"
+
+- name: Extract shim EFI files
+  ansible.builtin.shell: "rpm2cpio {{ pxe_rpm_path }}/shim-x64-*.rpm | cpio -dim"
+  args:
+    chdir: /tmp/pxe-efi
+    creates: /tmp/pxe-efi/boot/efi/EFI/BOOT/BOOTX64.EFI
+
+- name: Extract grub EFI files
+  ansible.builtin.shell: "rpm2cpio {{ pxe_rpm_path }}/grub2-efi-x64-*.rpm | cpio -dim"
+  args:
+    chdir: /tmp/pxe-efi
+    creates: /tmp/pxe-efi/boot/efi/EFI/almalinux/grubx64.efi
+
+- name: Copy BOOTX64.EFI to TFTP
+  copy:
+    src: /tmp/pxe-efi/boot/efi/EFI/BOOT/BOOTX64.EFI
+    dest: "{{ tftpboot_lib_path }}/BOOTX64.EFI"
+    remote_src: yes
+    mode: "0644"
+
+#
+- name: Find EFI vendor directory (excluding BOOT)
+  ansible.builtin.find:
+    paths: /tmp/pxe-efi/boot/efi/EFI
+    file_type: directory
+    excludes: BOOT
+    depth: 1
+  register: efi_dirs
+
+- name: Fail if EFI vendor directory not detected
+  ansible.builtin.fail:
+    msg: "EFI vendor directory not found under /tmp/pxe-efi/boot/efi/EFI"
+  when: efi_dirs.matched == 0
+
+- name: Copy grubx64.efi to TFTP
+  ansible.builtin.copy:
+    src: "{{ efi_dirs.files[0].path }}/grubx64.efi"
+    dest: "{{ tftpboot_lib_path }}/grubx64.efi"
+    remote_src: yes
+    mode: "0644"
+
+#
+- name: Ensure PXE iso-data directory exists
+  file:
+    path: "{{ tftpboot_lib_path }}/iso-data"
+    state: directory
+    mode: "0755"
+
+- name: Copy PXE kernel and initrd
+  copy:
+    src: "{{ openchai_vault_path }}/iso-data/images/pxeboot/{{ item }}"
+    dest: "{{ tftpboot_lib_path }}/iso-data/{{ item }}"
+    remote_src: yes
+    mode: "0644"
+  loop:
+    - vmlinuz
+    - initrd.img
+
+- name: Deploy PXE grub.cfg
+  template:
+    src: grub.cfg.j2
+    dest: "{{ tftpboot_lib_path }}/grub.cfg"
+    mode: "0644"
+
+- name: Deploy Kickstart file
+  template:
+    src: ks.cfg.j2
+    dest: /var/www/html/ks.cfg
+    mode: "0644"
+
+- name: Deploy partitioning file
+  template:
+    src: partition.cfg.j2
+    dest: /var/www/html/partition.cfg
+    mode: "0644"
