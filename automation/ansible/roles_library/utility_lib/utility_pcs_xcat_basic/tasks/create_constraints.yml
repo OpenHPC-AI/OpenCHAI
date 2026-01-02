@@ -1,0 +1,41 @@
+########################################
+# 1. xcat-container PCS resource
+########################################
+- name: Create xcat-container PCS resource
+  command: >
+    pcs resource create xcat-container systemd:xcat-container
+    op start timeout=120
+    op stop timeout=120
+    op monitor interval=30s timeout=60s
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
+
+
+########################################
+# 2. Ordering constraints (SAFE & minimal)
+########################################
+
+# Container must stop before VIP
+- name: Stop xcat-container before vip_xCAT
+  command: >
+    pcs constraint order
+    stop xcat-container then stop vip_xCAT
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
+
+
+# Filesystem must start before container
+- name: Start filesystem before xcat-container
+  command: >
+    pcs constraint order
+    start xcatfs then start xcat-container
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
+
+# Container must stop before filesystem
+- name: Stop xcat-container before filesystem
+  command: >
+    pcs constraint order
+    stop xcat-container then stop xcatfs
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
