@@ -300,6 +300,8 @@
     ssl_certificate_check: no
     primary_ldap_server_ip: "{{ primary_ldap_node_ip }}"
     secondary_ldap_server_ip: "{{ secondary_ldap_node_ip }}"
+    retries_attampt: 5
+    delay_time: 10
 
 - import_playbook: ../../playbook_library/configure/ldap_docker_hostmachine_setup.yml
   vars:
