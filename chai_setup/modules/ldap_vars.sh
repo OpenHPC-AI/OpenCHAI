@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-BASE_DIR="/OpenCHAI"
-ALL_YML="$BASE_DIR/automation/ansible/group_vars/all.yml"
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
 [[ -f "$ALL_YML" ]] || {
   echo "❌ ERROR: $ALL_YML not found"
