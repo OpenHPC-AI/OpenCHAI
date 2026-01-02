@@ -110,8 +110,8 @@ drbd_fstype: "ext4"
 drbd_primitive_name: "drbdfs"
 drbd_sync_delay: "40"
 
-pcs_primary_master_node_hostname: cn16
-pcs_secondary_master_node_hostname: cn17
+pcs_primary_master_node_hostname: master01
+pcs_secondary_master_node_hostname: master02
 pcs_cluster_password: "StrongPass123"
 pcs_cluster_name: "drbd_xCAT"
 
