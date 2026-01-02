@@ -1,0 +1,60 @@
+# -------------------------------------------------
+# Unattended Install – LVM Partitioning
+# Managed by Ansible – DO NOT EDIT
+# -------------------------------------------------
+
+# 1. Install Mode
+text
+
+# 2. X Window Configuration
+skipx
+
+# 3. Install Source
+url --url={{ ks_baseos_url }}
+repo --name="AppStream" --baseurl={{ ks_appstream_url }}
+
+# 4. Localization
+keyboard --vckeymap={{ ks_keyboard }} --xlayouts='{{ ks_keyboard }}'
+lang {{ ks_lang }}
+timezone {{ ks_timezone }} --isUtc
+
+# 5. Network Configuration
+network --bootproto={{ ks_bootproto }} --device=link --activate
+
+# 6. Root Password
+rootpw --plaintext {{ ks_root_password }}
+
+# 7. Bootloader
+bootloader --location={{ ks_bootloader_location }} --append="{{ ks_bootloader_args }}"
+
+# 8. Disk Partitioning (GPT + LVM)
+clearpart --all --initlabel --disklabel=gpt
+
+# Physical partitions
+part /boot/efi --fstype="efi" --size={{ part_efi_size }}
+part /boot --fstype="xfs" --size={{ part_boot_size }}
+
+# LVM PV
+part pv.01 --fstype="lvmpv" --size=1 --grow
+
+# Volume Group
+volgroup {{ lvm_vg_name }} --pesize={{ lvm_pe_size }} pv.01
+
+# Logical Volumes
+logvol swap --name=swap --vgname={{ lvm_vg_name }} --size={{ lvm_swap_size }}
+logvol /var --fstype="xfs" --name=var --vgname={{ lvm_vg_name }} --size={{ lvm_var_size }}
+logvol / --fstype="xfs" --name=root --vgname={{ lvm_vg_name }} --size=1 --grow
+
+# 9. Post-install Reboot
+reboot
+
+# 10. Software Selection
+%packages
+@^{{ ks_environment }}
+@development
+@system-tools
+@standard
+{% for pkg in ks_extra_packages %}
+{{ pkg }}
+{% endfor %}
+%end
