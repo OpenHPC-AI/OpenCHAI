@@ -1,0 +1,16 @@
+# -------------------------------------------------
+# GRUB2 PXE Configuration (UEFI)
+# Managed by Ansible – DO NOT EDIT MANUALLY
+# -------------------------------------------------
+
+set default={{ pxe_grub_default | default(0) }}
+set timeout={{ pxe_grub_timeout | default(0) }}
+
+menuentry '{{ pxe_menu_title | default("Install Linux via PXE") }}' {
+    linuxefi {{ pxe_kernel_path | default("iso-data/vmlinuz") }} \
+        ip={{ pxe_ip_method | default("dhcp") }} \
+        inst.repo={{ pxe_repo_url }} \
+        inst.ks={{ pxe_ks_url }} \
+        {{ pxe_extra_kernel_args | default("text") }}
+    initrdefi {{ pxe_initrd_path | default("iso-data/initrd.img") }}
+}
