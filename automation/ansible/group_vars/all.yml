@@ -183,7 +183,5 @@ nvidia_cuda_version: "13.0"
 # Intel OneAPI installer path
 intel_installer: "intel-oneapi-hpc-toolkit-2025.3.0.381_offline.sh"
 
-####################### Monitoring Tools Variable #######################
-monitoring_log_server_ip: "172.10.3.25"
 
 
