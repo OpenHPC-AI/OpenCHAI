@@ -1,53 +1,70 @@
 ---
-# tasks/assign_docker_swarm_labels.yml
-# Safely assign xCAT Swarm labels using ONLY the Swarm leader
+# Assign xCAT Swarm labels to master nodes
+# Safe for fresh clusters, deterministic, idempotent
 
 ########################################################################
-# STEP 1: Detect Swarm Leader (run once)
+# STEP 0: Validate required variables (run once)
 ########################################################################
-- name: Detect Docker Swarm leader
-  become: true
-  shell: |
-    docker node ls --format '{{ "{{.Hostname}} {{.ManagerStatus}}" }}' \
-    | awk '$2 ~ /Leader/ {print $1}'
-  register: swarm_leader
-  changed_when: false
-  run_once: true
 
-- name: Fail if Swarm leader not detected
-  fail:
-    msg: "Docker Swarm leader could not be detected"
-  when: swarm_leader.stdout | length == 0
+- name: Validate Swarm and node variables
+  assert:
+    that:
+      - primary_swarm_manager is defined
+      - secondary_swarm_manager is defined
+      - primary_master_node_hostname is defined
+      - secondary_master_node_hostname is defined
+    fail_msg: "Required Swarm manager or master node variables are missing"
   run_once: true
 
 ########################################################################
-# STEP 2: Assign xCAT labels (leader only)
+# STEP 1: Ensure Docker Swarm manager is ready
 ########################################################################
-- name: Assign xCAT master label to Swarm master nodes (leader only)
+
+- name: Wait for Docker Swarm manager control plane
+  become: true
+  shell: docker info --format '{{ "{{.Swarm.ControlAvailable}}" }}'
+  register: swarm_ready
+  retries: 12
+  delay: 10
+  until: swarm_ready.stdout == "true"
+  when: inventory_hostname in
+        [ primary_swarm_manager, secondary_swarm_manager ]
+
+########################################################################
+# STEP 2: Assign xCAT Swarm labels (manager-only, run once)
+########################################################################
+
+- name: Assign xCAT master label to Swarm master nodes
   become: true
   shell: |
-    set -e
+    set -euo pipefail
+
     for host in {{ primary_master_node_hostname }} {{ secondary_master_node_hostname }}; do
-      node_id=$(docker node ls --format '{{ "{{.Hostname}} {{.ID}}" }}' | awk '$1=="'$host'" {print $2}')
-      if [ -n "$node_id" ]; then
-        docker node update --label-add xcat_master=true "$node_id"
-        echo "Label applied to $host"
-      else
-        echo "WARNING: Node $host not found in Docker Swarm"
+      node_id=$(docker node ls --format '{{ "{{.Hostname}} {{.ID}}" }}' \
+                | awk '$1=="'$host'" {print $2}')
+
+      if [ -z "$node_id" ]; then
+        echo "ERROR: Node $host not found in Docker Swarm"
+        exit 1
       fi
+
+      docker node update --label-add xcat_master=true "$node_id"
+      echo "Label xcat_master=true applied to $host"
     done
   args:
     executable: /bin/bash
-  when: inventory_hostname == swarm_leader.stdout
+  register: label_assign
+  retries: 10
+  delay: 5
+  until: label_assign.rc == 0
   run_once: true
-  retries: 5
-  delay: 3
-  register: label_update
-  until: label_update.rc == 0
+  when: inventory_hostname in
+        [ primary_swarm_manager, secondary_swarm_manager ]
 
 ########################################################################
-# STEP 3: Verification (safe read-only)
+# STEP 3: Verify labels (read-only, strict)
 ########################################################################
+
 - name: Verify xCAT Swarm labels
   become: true
   shell: |
@@ -56,6 +73,26 @@
   register: label_verify
   changed_when: false
   run_once: true
+  when: inventory_hostname in
+        [ primary_swarm_manager, secondary_swarm_manager ]
+
+########################################################################
+# STEP 4: Fail if any label is missing or incorrect
+########################################################################
+
+- name: Fail if xCAT Swarm labels are missing or incorrect
+  fail:
+    msg: "xCAT Swarm label missing or incorrect on one or more nodes: {{ label_verify.stdout_lines }}"
+  when: >
+    label_verify.stdout_lines
+    | reject('search', ' true$')
+    | list
+    | length > 0
+  run_once: true
+
+########################################################################
+# STEP 5: Display final verification
+########################################################################
 
 - name: Show Swarm label verification
   debug:
