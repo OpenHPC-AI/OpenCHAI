@@ -1,0 +1,21 @@
+# -------------------------------------------------
+# Custom Disk Partitioning
+# UEFI + GPT + LVM
+# Managed by Ansible
+# -------------------------------------------------
+
+# Wipe disk and use GPT
+clearpart --all --initlabel --disklabel=gpt
+
+# --- Standard Physical Partitions ---
+part /boot/efi --fstype="efi" --size={{ part_efi_size }}
+part /boot --fstype="xfs" --size={{ part_boot_size }}
+
+# --- LVM Setup ---
+part pv.01 --fstype="lvmpv" --size=1 --grow
+volgroup {{ lvm_vg_name }} --pesize={{ lvm_pe_size }} pv.01
+
+# --- Logical Volumes ---
+logvol swap --name=swap --vgname={{ lvm_vg_name }} --size={{ lvm_swap_size }}
+logvol /var --fstype="xfs" --name=var --vgname={{ lvm_vg_name }} --size={{ lvm_var_size }}
+logvol / --fstype="xfs" --name=root --vgname={{ lvm_vg_name }} --size=1 --grow
