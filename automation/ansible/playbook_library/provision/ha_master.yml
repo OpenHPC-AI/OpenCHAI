@@ -280,7 +280,7 @@
 
 - import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
   vars:
-    xcat_version: "{{ xcat_version_tag }}"
+    xcat_version: "{{ xcat_repo_version_tag }}"
     xcat_baseos: "{{ rhel_linux_label }}"
     xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
