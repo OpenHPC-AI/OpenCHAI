@@ -15,7 +15,7 @@
   file:
     path: "{{ configuration_dir_path }}/docker_swarm/swarm_token_file"
     state: absent
-
+  when: inventory_hostname == primary_swarm_manager
 - name: Remove old swarm directory if empty
   file:
     path: "{{ configuration_dir_path }}/docker_swarm"
