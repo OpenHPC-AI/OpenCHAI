@@ -1,0 +1,18 @@
+# ------------------------------------------------
+# Kickstart
+# ------------------------------------------------
+- name: Deploy Kickstart file
+  template:
+    src: "ks_{{ ks_type }}.cfg.j2"
+    dest: "/var/www/html/ks.cfg"
+    mode: "0644"
+
+# ------------------------------------------------
+# DHCP Config
+# ------------------------------------------------
+- name: Deploy dhcpd.conf
+  template:
+    src: dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+    mode: "0644"
+  notify: Restart DHCP
