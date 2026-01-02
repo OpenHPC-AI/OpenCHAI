@@ -5,8 +5,8 @@ set -euo pipefail
 # PXE / Kickstart Variable Update Module
 ############################################
 
-BASE_DIR="/OpenCHAI"
-ALL_YML="$BASE_DIR/automation/ansible/group_vars/all.yml"
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
 if [[ ! -f "$ALL_YML" ]]; then
   echo "❌ ERROR: $ALL_YML not found"
