@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-BASE_DIR="/OpenCHAI"
-ALL_YML="$BASE_DIR/automation/ansible/group_vars/all.yml"
+base_dir="/OpenCHAI"
+ALL_YML="$base_dir/automation/ansible/group_vars/all.yml"
 
 if [[ ! -f "$ALL_YML" ]]; then
   echo "❌ all.yml not found at $ALL_YML"
