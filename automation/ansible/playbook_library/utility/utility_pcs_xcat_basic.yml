@@ -1,0 +1,23 @@
+---
+- name: Basic xCAT pcs constraints setup
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: "{{ pcs_cluster_password }}"
+    pcs_cluster_name: "{{ pcs_cluster_name }}"
+
+    mounted_state: ephemeral
+
+  pre_tasks:
+    - name: Reset failed host state (if any)
+      meta: clear_host_errors
+
+
+  roles:
+    - "{{ roles_parent_path }}/utility_lib/utility_pcs_xcat_basic"
