@@ -27,8 +27,9 @@ update_var() {
   read -rp "$prompt [$current]: " input
   input="${input:-$current}"
 
+  # Escape sed replacement-sensitive characters: / & | \
   local safe_value
-  safe_value=$(printf '%s\n' "$input" | sed 's/[\/&]/\\&/g')
+  safe_value=$(printf '%s\n' "$input" | sed 's/[\/&|\\]/\\&/g')
 
   if grep -qE "^${key}:" "$ALL_YML"; then
     sed -i "s|^${key}:.*|${key}: ${safe_value}|" "$ALL_YML"
