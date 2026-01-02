@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# xcat_container_ra - Manage only the xcat container for HA failover
+#
+
+STACK_NAME="{{ xcat_stack_name }}"
+SERVICE_NAME="{{ xcat_service_name }}"
+NODE_HOSTNAME=$(hostname)
+
+case "$1" in
+  start)
+    # Nothing to do, Swarm will start it if node has correct label
+    exit 0
+    ;;
+  stop)
+    echo "Stopping xcat container on $NODE_HOSTNAME"
+    docker ps --filter "name=${STACK_NAME}_${SERVICE_NAME}" -q | xargs -r docker rm -f
+    ;;
+  monitor)
+    # Check if container is running here when DRBD is mounted
+    if mount | grep -q "{{ drbd_mount_point }} "; then
+      docker ps \
+        --filter "name=${STACK_NAME}_${SERVICE_NAME}" \
+        --filter "status=running" -q | grep -q .
+      exit $?
+    else
+      # DRBD not mounted here, no container should run
+      exit 0
+    fi
+    ;;
+  restart)
+    $0 stop
+    sleep 2
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|monitor|restart}"
+    exit 1
+    ;;
+esac
