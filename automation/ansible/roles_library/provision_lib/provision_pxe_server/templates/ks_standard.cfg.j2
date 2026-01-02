@@ -1,0 +1,60 @@
+# -------------------------------------------------
+# Unattended Install – Standard Partitioning
+# Managed by Ansible – DO NOT EDIT
+# -------------------------------------------------
+
+# 1. Install Mode
+text
+
+# 2. X Window Configuration
+skipx
+
+# 3. Install Source
+url --url={{ ks_baseos_url }}
+repo --name="AppStream" --baseurl={{ ks_appstream_url }}
+
+# 4. Localization
+keyboard --vckeymap={{ ks_keyboard }} --xlayouts='{{ ks_keyboard }}'
+lang {{ ks_lang }}
+timezone {{ ks_timezone }} --isUtc
+
+# 5. Network Configuration
+network --bootproto={{ ks_bootproto }} --device=link --activate
+
+# 6. Root Password
+rootpw --plaintext {{ ks_root_password }}
+
+# 7. Bootloader
+bootloader --location={{ ks_bootloader_location }} --append="{{ ks_bootloader_args }}"
+
+# 8. Disk Partitioning (GPT – Standard Layout)
+clearpart --all --initlabel --disklabel=gpt
+
+# EFI System Partition
+part /boot/efi --fstype="efi" --size={{ part_efi_size }}
+
+# /boot Partition
+part /boot --fstype="xfs" --size={{ part_boot_size }}
+
+# Swap
+part swap --size={{ part_swap_size }}
+
+# /var Partition
+part /var --fstype="xfs" --size={{ part_var_size }}
+
+# Root Partition (grow)
+part / --fstype="xfs" --size=1 --grow
+
+# 9. Post-install Reboot
+reboot
+
+# 10. Software Selection
+%packages
+@^{{ ks_environment }}
+@development
+@system-tools
+@standard
+{% for pkg in ks_extra_packages %}
+{{ pkg }}
+{% endfor %}
+%end
