@@ -1,0 +1,83 @@
+---
+- name: Configure PXE + ISO + Kickstart Server
+  hosts: all
+  become: yes
+  gather_facts: no
+  serial: 1
+  ignore_unreachable: yes
+  any_errors_fatal: false
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    # -------------------------------------------------
+    # PXE / ISO Paths
+    # -------------------------------------------------
+    pxe_rpm_path: "{{ rpm_stack_path }}/pxe_rpms"
+    iso_mount_path: "/mnt/iso-data"
+    iso_name: "{{ pxe_boot_iso }}"
+    os_iso_path: "{{ os_iso_dir_path }}"
+    tftpboot_lib_path: /var/lib/tftpboot
+    os_iso_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/os_iso/{{ os_version }}"
+    ssl_certificate_check: no #It can be yes
+    # -------------------------------------------------
+    # Network / PXE Server
+    # -------------------------------------------------
+    pxe_server_ip: "{{ headnode_ip }}"
+    dhcp_range_start: "{{ pxe_server_dhcp_range_start }}"
+    dhcp_range_end: "{{ pxe_server_dhcp_range_end }}"
+    dns_server: "{{ pxe_server_dns }}"
+
+    dhcp_clients:
+      - name: cn01
+        mac: 00:0C:29:43:18:B4
+        ip: 172.10.3.101
+      - name: cn02
+        mac: 00:0C:29:43:18:B5
+        ip: 172.10.3.102
+      - name: cn03
+        mac: 00:0C:29:43:18:B6
+        ip: 172.10.3.103
+
+    # -------------------------------------------------
+    # Kickstart Configuration
+    # -------------------------------------------------
+    ks_keyboard: us
+    ks_lang: en_IN.UTF-8
+    ks_timezone: Asia/Kolkata
+    ks_bootloader_location: mbr
+    ks_bootloader_args: "crashkernel=auto"
+
+    ks_baseos_url: "http://{{ pxe_server_ip }}/iso-data/BaseOS/"
+    ks_appstream_url: "http://{{ pxe_server_ip }}/iso-data/AppStream/"
+    iks_partition_url: "http://{{ pxe_server_ip }}/partition.cfg"
+
+    # -------------------------------------------------
+    # PXE Boot Menu
+    # -------------------------------------------------
+    pxe_menu_title: "Install {{ os_version }} (PXE)"
+    pxe_grub_default: 0
+    pxe_grub_timeout: 0
+    pxe_kernel_path: "iso-data/vmlinuz"
+    pxe_initrd_path: "iso-data/initrd.img"
+    pxe_repo_url: "http://{{ pxe_server_ip }}/iso-data"
+    pxe_ks_url: "http://{{ pxe_server_ip }}/ks.cfg"
+    pxe_ip_method: dhcp
+    pxe_extra_kernel_args: "text"
+
+  pre_tasks:
+    # -------------------------------------------------
+    # Reset previous failures
+    # -------------------------------------------------
+    - name: Reset failed host state
+      meta: clear_host_errors
+
+    # -------------------------------------------------
+    # Gather system facts
+    # -------------------------------------------------
+    - name: Gather system facts
+      ansible.builtin.setup:
+
+  roles:
+    - "{{ roles_parent_path }}/provision_lib/provision_pxe_server/"
