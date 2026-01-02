@@ -1,0 +1,4 @@
+---
+xcat_stack_name: "xcat_stack"
+xcat_service_name: "xcat"
+drbd_mount_point: "/drbd"
