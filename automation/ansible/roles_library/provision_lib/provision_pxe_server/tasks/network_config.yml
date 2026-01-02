@@ -1,0 +1,47 @@
+---
+# network_config.yml
+
+- name: Validate headnode_ip is provided
+  fail:
+    msg: "headnode_ip is not defined"
+  when: headnode_ip is not defined or headnode_ip | length == 0
+
+####################################################################
+# STEP 1: Detect interface and CIDR using `ip -o addr`
+####################################################################
+- name: Detect interface and CIDR for headnode IP
+  shell: |
+    ip -o -4 addr show | awk '$4 ~ /^{{ headnode_ip }}\// {print $2, $4}'
+  register: iface_detect
+  changed_when: false
+
+- name: Fail if interface not found for headnode IP
+  fail:
+    msg: "No interface found with IP {{ headnode_ip }}"
+  when: iface_detect.stdout | length == 0
+
+- name: Set interface name and CIDR
+  set_fact:
+    headnode_interface: "{{ iface_detect.stdout.split()[0] }}"
+    interface_cidr: "{{ iface_detect.stdout.split()[1] }}"
+
+####################################################################
+# STEP 2: Calculate subnet network and netmask using Python
+####################################################################
+- name: Calculate network address and netmask
+  set_fact:
+    subnet_network: "{{ lookup('pipe', 'python3 -c \"import ipaddress; net=ipaddress.ip_network(\\\"' + interface_cidr + '\\\", strict=False); print(net.network_address)\"') }}"
+    subnet_netmask: "{{ lookup('pipe', 'python3 -c \"import ipaddress; net=ipaddress.ip_network(\\\"' + interface_cidr + '\\\", strict=False); print(net.netmask)\"') }}"
+    subnet_prefix: "{{ interface_cidr.split('/')[1] }}"
+
+####################################################################
+# STEP 3: Debug output for validation
+####################################################################
+- name: Show detected PXE networking details
+  debug:
+    msg:
+      Interface: "{{ headnode_interface }}"
+      Headnode IP: "{{ headnode_ip }}"
+      Subnet CIDR: "{{ interface_cidr }}"
+      Subnet Network: "{{ subnet_network }}"
+      Subnet Netmask: "{{ subnet_netmask }}"
