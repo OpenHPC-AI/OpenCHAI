@@ -1,0 +1,23 @@
+---
+# -------------------------------------------------
+# Install xcat container resource agent script
+# -------------------------------------------------
+
+- name: Deploy xcat_container_ra script
+  ansible.builtin.template:
+    src: xcat_container_ra.j2
+    dest: /usr/local/bin/xcat_container_ra
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Verify xcat_container_ra is executable
+  ansible.builtin.stat:
+    path: /usr/local/bin/xcat_container_ra
+  register: xcat_ra_stat
+
+- name: Fail if xcat_container_ra is not executable
+  ansible.builtin.fail:
+    msg: "xcat_container_ra is not executable"
+  when:
+    - not xcat_ra_stat.stat.executable
