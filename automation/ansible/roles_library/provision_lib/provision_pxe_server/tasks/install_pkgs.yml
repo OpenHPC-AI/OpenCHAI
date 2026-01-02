@@ -1,0 +1,26 @@
+---
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ openchai_vault_path }}/iso-data"
+    - "{{ iso_mount_path }}"
+
+# ------------------------------------------------
+# Install packages (RPM first, fallback to dnf)
+# ------------------------------------------------
+- name: Install PXE packages from local RPMs if available
+  shell: |
+    for pkg in {{ pxe_packages | join(' ') }}; do
+      rpm -q $pkg >/dev/null 2>&1 && continue
+      rpmfile=$(ls {{ pxe_rpm_path }}/$pkg-*.rpm 2>/dev/null | head -1)
+      if [ -n "$rpmfile" ]; then
+        rpm -Uvh --nosignature --nodeps "$rpmfile"
+      else
+        dnf -y install $pkg
+      fi
+    done
+  args:
+    executable: /bin/bash
