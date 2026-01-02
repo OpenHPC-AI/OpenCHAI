@@ -186,5 +186,4 @@ intel_installer: "intel-oneapi-hpc-toolkit-2025.3.0.381_offline.sh"
 ####################### Monitoring Tools Variable #######################
 monitoring_log_server_ip: "172.10.3.25"
 
-LDAP_VERSION_TAG: "2.6.8"
-LDAP_BASE_DN: "dc=nsm,dc=in"
+
