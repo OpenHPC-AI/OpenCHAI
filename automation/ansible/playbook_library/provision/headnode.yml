@@ -11,6 +11,19 @@
       ansible.builtin.debug:
         msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
 
+
+- import_playbook: ../../playbook_library/security/configure_firewall.yml
+  vars:
+    fw_service_name: firewalld
+    fw_service_state: stopped       # Example of overriding variable
+    fw_service_enabled: false       # Custom value
+    fw_install_if_missing: true
+
+- import_playbook: ../../playbook_library/security/configure_selinux.yml
+  vars:
+    selinux_mode: disabled
+    selinux_install_if_missing: true        
+
 - import_playbook: ../../playbook_library/utility/utility_web_host.yml
   vars:
    web_server: nginx
