@@ -1,0 +1,24 @@
+---
+- name: Setup web server packages tasks
+  ansible.builtin.include_tasks: install_pkgs.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
+
+- name: Start services tasks
+  ansible.builtin.include_tasks: services.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
+
+- name: Detect Network Definition
+  ansible.builtin.include_tasks: network_config.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
+
+- name: Install and Mount OS ISO tasks
+  ansible.builtin.include_tasks: configure_os_iso.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
+
+- name: Setup dhcpd configuration tasks
+  ansible.builtin.include_tasks: configure_dhcpd.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
+
+- name: Setup configuration tasks
+  ansible.builtin.include_tasks: configure_pxe.yml
+  when: inventory_hostname in [headnode_inventory_hostname]
