@@ -1,0 +1,20 @@
+# ------------------------------------------------
+# Services
+# ------------------------------------------------
+- name: Ensure httpd is enabled and running
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Ensure dhcpd is enabled and running
+  service:
+    name: dhcpd
+    state: stopped
+    enabled: yes
+
+- name: Ensure tftp is enabled and running
+  service:
+    name: tftp
+    state: started
+    enabled: yes
