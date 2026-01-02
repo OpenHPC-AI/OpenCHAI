@@ -1,0 +1,11 @@
+---
+- name: Configure xcat container tasks
+  ansible.builtin.include_tasks: xcat_container_ra.yml
+
+
+- name: Configure xcat service tasks
+  ansible.builtin.include_tasks: xcat_container_service.yml
+
+
+- name: Configure xcat constarints in pcs tasks
+  ansible.builtin.include_tasks: create_constraints.yml
