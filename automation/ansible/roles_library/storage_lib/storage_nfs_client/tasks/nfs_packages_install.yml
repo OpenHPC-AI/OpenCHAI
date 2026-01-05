@@ -21,7 +21,7 @@
 
     - name: Determine missing required packages
       ansible.builtin.set_fact:
-        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}
 
     - name: Show missing packages
       ansible.builtin.debug:
@@ -38,7 +38,7 @@
 
     - name: Fail if any required RPM is missing locally
       ansible.builtin.fail:
-        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+        msg: "RPM for package {{ item.item }} not found in {{ nfs_rpm_dir }}"
       when:
         - missing_packages | length > 0
         - item.matched == 0
@@ -49,7 +49,7 @@
     - name: Install missing packages using rpm
       ansible.builtin.command: >
         rpm -Uvh --nosignature --nodeps
-        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | join(' ') }}
+        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | j
       when: missing_packages | length > 0
       ignore_errors: true
 
