@@ -109,3 +109,21 @@ ansible all -m ping -e "ansible_port=22"
 # After making the changes, run the script below to establish and enable proper communication between the nodes.
 bash ./chai_setup/update_inventory_def.sh
 ```
+
+**1.4 Update all HPC-AI cluster environment variables to enable end-to-end cluster deployment and configuration.**
+
+```bash
+bash ./chai_setup/update_group_var_all.sh
+```
+
+#HPC-AI Headnode Setup 
+
+```bash
+bash ./servicenodes/headnode_node_setup.sh
+```
+
+#HPC Cluster Nodes Deployment And Configuration
+
+```bash
+bash ./servicenodes/hpc_master_ha_node_setup.sh
+```
