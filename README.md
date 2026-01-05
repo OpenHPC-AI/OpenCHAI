@@ -42,14 +42,12 @@ Make sure to clone the repository into a directory with at least 60 GB of free d
 
 ```bash
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
+
+# Go to the OpenCHAI directory to configure OpenCHAI.
+cd ./OpenCHAI
 ```
 
 **1.3 Follow the instructions below to configure the OpenCHAI Manager tool.** 
-
-```bash
-# Go to the OpenCHAI directory (where the Git repository was cloned) to configure OpenCHAI.
-cd ./OpenCHAI
-```
 
 **1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
 
