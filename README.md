@@ -47,6 +47,7 @@ git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 **1.3 Follow the instructions below to configure the OpenCHAI Manager tool.** 
 
 ```bash
+# Go to the OpenCHAI directory (where the Git repository was cloned) to configure OpenCHAI.
 cd ./OpenCHAI
 ```
 
