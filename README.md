@@ -53,7 +53,11 @@ cd ./OpenCHAI
 
 **a.) Offline Mode:** Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive/local SSD/pen drive (which you are carrying) into the directory (./hpcsuite_registry/hostmachine_reg/) on the head node .If the stack is not available locally, follow option b. 
 
-**b.) Online Mode:** During the OpenCHAI Manager Tool setup (at 1.3.2 step), you will be given an option to download the openchai packages from the network. or you may alternatively download it directly from the online source using the following command:
+**b.) Online Mode:** During the OpenCHAI Manager Tool setup (Step 1.3.2), you can download the OpenCHAI packages from the network, 
+
+or alternatively download them using the document below.
+
+[HPC-Sangrah Vault](Documents/hpcsangrah.md)
 
 
 **1.3.1 Ansible Inventory Setup**
