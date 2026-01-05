@@ -4,5 +4,8 @@
   become: true
   vars_files:
     - ../../../group_vars/all.yml
+  vars:
+    docker_compose_local_bin_path: "{{ bin_dir_path }}/container_pkgs/docker-compose"
+    docker_compose_network_url: "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
   roles:
     - "{{ roles_parent_path }}/container_lib/docker_compose"
