@@ -44,7 +44,7 @@ Make sure to clone the repository into a directory with at least 60 GB of free d
 git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 ```
 
-**1.3 Run the configuration script configure_openchai_manager.sh to set up the OpenCHAI Manager tool.** 
+**1.3 Follow the instructions below to configure the OpenCHAI Manager tool.** 
 
 ```bash
 cd ./OpenCHAI
