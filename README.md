@@ -71,7 +71,7 @@ mkdir ./hpcsuite_registry/hostmachine_reg/alma8.9
 
 wget -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_ha_full_v1.25.0.tgz \
-| tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
+| tar -xzvf  -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
 #Make sure the openchai stack is pulled at  ../OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/ !
 
@@ -82,7 +82,7 @@ mkdir ./hpcsuite_registry/hostmachine_reg/rocky9.6
 
 wget -qO- \
 https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz \
-| tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
+| tar -xzvf  -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
 
 #Make sure the openchai stack is pulled at  ../OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/ !
 
