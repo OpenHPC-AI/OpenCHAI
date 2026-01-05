@@ -107,5 +107,5 @@ ansible all -m ping -e "ansible_port=22"
 
 # If you encounter any communication issues between the head node and the service nodes, update the chai_setup/inventory_def.txt file to match your environment.
 # After making the changes, run the script below to establish and enable proper communication between the nodes.
-bash update_inventory_def.sh
+bash ./chai_setup/update_inventory_def.sh
 ```
