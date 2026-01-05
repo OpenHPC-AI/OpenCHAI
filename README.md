@@ -115,6 +115,7 @@ bash ./chai_setup/update_inventory_def.sh
 ```bash
 bash ./chai_setup/update_group_var_all.sh
 ```
+***Enable public network access on every service nodes to ensure missing packages can be installed from public repositories without interrupting the installation.***
 
 **1.5 HPC-AI Headnode Setup**
 
@@ -122,8 +123,9 @@ bash ./chai_setup/update_group_var_all.sh
 bash ./servicenodes/headnode_node_setup.sh
 ```
 
-**1.6 HPC Cluster Nodes Deployment And Configuration**
+**1.6 HPC Cluster Nodes Deployment And Configuration** 
 
+To setup hpc-master nodes run the below script
 ```bash
 bash ./servicenodes/hpc_master_ha_node_setup.sh
 ```
