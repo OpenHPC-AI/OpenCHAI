@@ -32,9 +32,9 @@
   when: slurm_node_role == "compute"
 
 # Optional: For "others" group (login or utility nodes)
-#- name: Enable and start slurmdbd (db only)
-#  ansible.builtin.systemd:
-#    name: slurmdbd
-#    state: started
-#    enabled: true
-#  when: slurm_node_role == "master"
+- name: Enable and start slurmdbd (db only)
+  ansible.builtin.systemd:
+    name: slurmdbd
+    state: started
+    enabled: true
+  when: slurm_node_role == "mgmt"
