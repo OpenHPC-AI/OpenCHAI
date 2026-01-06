@@ -286,6 +286,15 @@
     xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
     os_architecture: "{{ os_arch }}"
 
+- import_playbook: ../../playbook_library/utility/utility_pcs_xcat_basic.yml
+  vars:
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: "{{ pcs_cluster_password }}"
+    pcs_cluster_name: "{{ pcs_cluster_name }}"
+    xcat_service_name: "xcat"
+    mounted_state: ephemeral
+
 # =======================================================================================================
 # =====================  PHASE 5: Authentication: OpenLDAP Container Installation   =====================
 # =======================================================================================================
