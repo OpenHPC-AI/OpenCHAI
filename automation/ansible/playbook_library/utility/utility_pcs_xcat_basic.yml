@@ -11,7 +11,7 @@
     secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
     pcs_cluster_password: "{{ pcs_cluster_password }}"
     pcs_cluster_name: "{{ pcs_cluster_name }}"
-
+    xcat_service_name: "xcat"
     mounted_state: ephemeral
 
   pre_tasks:
