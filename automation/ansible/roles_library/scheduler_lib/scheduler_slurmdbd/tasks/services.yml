@@ -1,0 +1,10 @@
+---
+- name: Enable slurmdbd service
+  ansible.builtin.systemd:
+    name: slurmdbd
+    enabled: true
+
+- name: Start slurmdbd service
+  ansible.builtin.systemd:
+    name: slurmdbd
+    state: started
