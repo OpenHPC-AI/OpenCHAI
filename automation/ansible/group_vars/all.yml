@@ -141,7 +141,8 @@ dhcp_interface: ens1f2:0,ens1f2
 
 ####################### Slurm Workload Manager Variable #####################
 slurm_version: "slurm-25.11.0-pmix-all"
-
+vault_slurmdb_password: "SlrumPass"
+vault_slurmdb_ro_password: "SlrumPass"
 ######################## OpenLDAP Tool variable ##########################
 ######################## OpenLDAP Tool variable ##########################
 primary_ldap_node_ip: "{{ primary_master_node_ip }}"
