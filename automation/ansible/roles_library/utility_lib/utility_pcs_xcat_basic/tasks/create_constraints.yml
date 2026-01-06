@@ -39,3 +39,16 @@
     stop xcat-container then stop xcatfs
   failed_when: false
   when: ansible_hostname == primary_master_node_hostname
+
+- name: Create order constraint (promote drbdfs-clone then start xcat-container)
+  command: >
+    pcs constraint order promote drbdfs-clone then start xcat-container
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
+
+
+- name: Create colocation constraint (xcat-container with Promoted drbdfs-clone)
+  command: >
+    pcs constraint colocation add xcat-container with drbdfs-clone INFINITY with-rsc-role=Promoted
+  failed_when: false
+  when: ansible_hostname == primary_master_node_hostname
