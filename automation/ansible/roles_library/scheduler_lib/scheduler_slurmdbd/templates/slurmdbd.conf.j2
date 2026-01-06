@@ -1,0 +1,16 @@
+# Managed by Ansible – DO NOT EDIT
+
+# slurmDBD info
+DbdHost={{ slurmdbd_host }}
+DbdPort={{ slurmdbd_port }}
+SlurmUser=slurm
+LogFile={{ slurmdbd_log }}
+PidFile=/var/run/slurmdbd/slurmdbd.pid
+DebugLevel=verbose
+
+# Database info
+StorageType=accounting_storage/mysql
+StorageHost={{ slurmdb_storage_host }}
+StorageUser={{ slurmdb_storage_user }}
+StoragePass={{ slurmdb_storage_pass }}
+StorageLoc={{ slurmdb_storage_loc }}
