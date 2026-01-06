@@ -3,7 +3,6 @@
 # ------------------------------------------------------------
 # Detect installed packages
 # ------------------------------------------------------------
-#
 
 - name: Ensure required packages are installed using rpm only
   block:
@@ -21,7 +20,7 @@
 
     - name: Determine missing required packages
       ansible.builtin.set_fact:
-        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}
+        missing_packages: "{{ required_packages | difference(installed_rpms.stdout_lines) }}"
 
     - name: Show missing packages
       ansible.builtin.debug:
@@ -45,18 +44,26 @@
       loop: "{{ found_rpms.results }}"
       ignore_errors: true
 
-
-    - name: Install missing packages using rpm
+    - name: Install missing packages using local RPMs
       ansible.builtin.command: >
         rpm -Uvh --nosignature --nodeps
-        {{ found_rpms.results | map(attribute='files') | flatten | map(attribute='path') | j
+        {{ found_rpms.results
+           | map(attribute='files')
+           | flatten
+           | map(attribute='path')
+           | join(' ') }}
+      register: local_install
       when: missing_packages | length > 0
       ignore_errors: true
 
+    - name: Set local install success flag
+      ansible.builtin.set_fact:
+        local_install_success: "{{ local_install.rc | default(1) == 0 }}"
 
 # ------------------------------------------------------------
 # HEADNODE fallback (optional)
 # ------------------------------------------------------------
+
 - name: Check headnode RPM directory
   ansible.builtin.stat:
     path: "{{ nfs_rpm_dir }}"
@@ -72,7 +79,7 @@
     mode: pull
   when:
     - missing_packages | length > 0
-    - not local_install_success | default(false)
+    - not local_install_success
     - headnode_rpm_dir.stat.exists | default(false)
   failed_when: false
 
@@ -81,18 +88,19 @@
   register: headnode_install
   when:
     - missing_packages | length > 0
-    - not local_install_success | default(false)
+    - not local_install_success
     - headnode_rpm_dir.stat.exists | default(false)
   failed_when: false
 
 # ------------------------------------------------------------
 # FINAL fallback — public network repo
 # ------------------------------------------------------------
+
 - name: Install from public repository
   ansible.builtin.package:
     name: "{{ missing_packages }}"
     state: present
   when:
     - missing_packages | length > 0
-    - local_install_success | default(false) == false
+    - not local_install_success
     - headnode_install.rc | default(1) != 0
