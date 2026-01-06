@@ -1,0 +1,17 @@
+---
+- name: Configure InnoDB tuning
+  ansible.builtin.copy:
+    dest: /etc/my.cnf.d/innodb.cnf
+    content: |
+      [mysqld]
+      innodb_buffer_pool_size={{ innodb_buffer_pool_size }}
+      innodb_log_file_size={{ innodb_log_file_size }}
+      innodb_lock_wait_timeout={{ innodb_lock_wait_timeout }}
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart MariaDB to apply InnoDB changes
+  ansible.builtin.systemd:
+    name: "{{ slurmdb_mysql_service }}"
+    state: restarted
