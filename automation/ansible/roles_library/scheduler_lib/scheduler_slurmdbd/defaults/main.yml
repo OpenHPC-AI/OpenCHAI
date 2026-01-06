@@ -1,0 +1,11 @@
+---
+slurmdbd_conf: /etc/slurm/slurmdbd.conf
+slurmdbd_log: /var/log/slurm/slurmdbd.log
+
+slurmdbd_host: "{{ inventory_hostname }}"
+slurmdbd_port: 6819
+
+slurmdb_storage_host: localhost
+slurmdb_storage_loc: slurm_acct_db
+slurmdb_storage_user: slurm
+slurmdb_storage_pass: "{{ vault_slurmdb_password }}"   # ⚠ override securely
