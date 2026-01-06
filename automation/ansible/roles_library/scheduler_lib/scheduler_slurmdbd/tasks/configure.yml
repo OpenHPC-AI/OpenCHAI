@@ -1,0 +1,50 @@
+---
+- name: Ensure Slurm log directory exists
+  ansible.builtin.file:
+    path: /var/log/slurm
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: "0755"
+
+- name: Ensure slurmdbd log file exists
+  ansible.builtin.file:
+    path: "{{ slurmdbd_log }}"
+    state: touch
+    owner: slurm
+    group: slurm
+    mode: "0644"
+
+- name: Ensure slurmdbd.conf ownership and permissions
+  ansible.builtin.file:
+    path: "{{ slurmdbd_conf }}"
+    owner: slurm
+    group: slurm
+    mode: "0600"
+
+
+- name: Remove old ANSIBLE SLURMDBD CONFIG block
+  ansible.builtin.blockinfile:
+    path: "{{ slurmdbd_conf }}"
+    marker: "# {mark} ANSIBLE SLURMDBD CONFIG"
+    state: absent
+
+
+- name: Deploy slurmdbd.conf (authoritative)
+  ansible.builtin.template:
+    src: slurmdbd.conf.j2
+    dest: "{{ slurmdbd_conf }}"
+    owner: slurm
+    group: slurm
+    mode: "0600"
+  notify: Restart slurmdbd
+
+
+- name: Ensure AccountingStorageType is set to slurmdbd
+  ansible.builtin.lineinfile:
+    path: /etc/slurm/slurm.conf
+    regexp: '^AccountingStorageType='
+    line: 'AccountingStorageType=accounting_storage/slurmdbd'
+    create: yes
+    backup: yes
+  notify: Restart slurmctld
