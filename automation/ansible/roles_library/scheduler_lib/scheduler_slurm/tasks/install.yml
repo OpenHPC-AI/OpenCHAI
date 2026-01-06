@@ -97,27 +97,83 @@
 # Slurm Installation (Role-Aware)
 # =========================================================
 
+# =========================================================
+# Slurm Installation (Role-Aware)
+# =========================================================
+
 - name: Find Slurm RPMs
   ansible.builtin.find:
     paths: "{{ slurm_rpm_base }}/{{ slurm_version }}"
     patterns: "*.rpm"
   register: slurm_rpm_files
 
+
+# ---------------------------------------------------------
+# Build RPM map safely (pkg_name -> rpm_path)
+# ---------------------------------------------------------
+
+- name: Initialize Slurm RPM map
+  ansible.builtin.set_fact:
+    slurm_rpm_map: {}
+
+- name: Build Slurm RPM map (pkg → rpm)
+  ansible.builtin.set_fact:
+    slurm_rpm_map: >-
+      {{
+        slurm_rpm_map
+        | combine({
+            (item.path | basename | regex_replace('-[0-9].*$', '')): item.path
+          })
+      }}
+  loop: "{{ slurm_rpm_files.files }}"
+
+
+# ---------------------------------------------------------
+# Resolve excluded packages for this role
+# ---------------------------------------------------------
+
+- name: Resolve excluded Slurm packages for role
+  ansible.builtin.set_fact:
+    slurm_excluded_for_role: >-
+      {{
+        slurm_excluded_packages.get(
+          slurm_node_role,
+          slurm_excluded_packages.get('others', [])
+        )
+      }}
+
+
+# ---------------------------------------------------------
+# Build final install list
+# ---------------------------------------------------------
+
 - name: Build Slurm install list for role
   ansible.builtin.set_fact:
     slurm_install_list: >-
-      {{ slurm_rpm_files.files
-         | map(attribute='path')
-         | reject('search', (slurm_excluded_packages[slurm_node_role] | join('|')))
-         | list }}
+      {{
+        slurm_rpm_map
+        | dict2items
+        | rejectattr('key', 'in', slurm_excluded_for_role)
+        | map(attribute='value')
+        | list
+      }}
 
-- name: Remove excluded Slurm packages (reinstall only)
-  ansible.builtin.yum:
-    name: "{{ slurm_excluded_packages[slurm_node_role] }}"
-    state: absent
-  when:
-    - slurm_reinstall | default(false) | bool
-    - slurm_excluded_packages[slurm_node_role] | length > 0
+
+# ---------------------------------------------------------
+# Debug (keep while validating roles)
+# ---------------------------------------------------------
+
+- name: Debug Slurm package resolution
+  ansible.builtin.debug:
+    msg:
+      node_role: "{{ slurm_node_role }}"
+      excluded_packages: "{{ slurm_excluded_for_role }}"
+      will_install: "{{ slurm_install_list | map('basename') | list }}"
+
+
+# ---------------------------------------------------------
+# Install Slurm
+# ---------------------------------------------------------
 
 - name: Install Slurm packages
   ansible.builtin.yum:
