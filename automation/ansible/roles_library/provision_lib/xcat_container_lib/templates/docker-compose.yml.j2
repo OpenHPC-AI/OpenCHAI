@@ -1,9 +1,7 @@
 version: "3.9"
-
 services:
-  xcat:
+  {{ xcat_service_name }}:
     image: {{ xcat_image }}
-    container_name: xcat-service
     hostname: xcat-container
     env_file:
       - .env
