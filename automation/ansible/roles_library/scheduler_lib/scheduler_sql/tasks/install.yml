@@ -1,0 +1,14 @@
+---
+- name: Install MariaDB packages
+  ansible.builtin.dnf:
+    name:
+      - mariadb-server
+      - mariadb-devel
+    state: present
+
+- name: Enable and start MariaDB
+  ansible.builtin.systemd:
+    name: "{{ slurmdb_mysql_service }}"
+    enabled: true
+    state: started
+
