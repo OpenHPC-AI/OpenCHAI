@@ -116,7 +116,6 @@
   ansible.builtin.debug:
     var: required_packages
 
-
 - name: Set Mellanox download URL based on VERSION_ID
   ansible.builtin.set_fact:
     mellanox_ofed_url: >-
@@ -151,14 +150,6 @@
   ansible.builtin.set_fact:
     mellanox_ofed_dir: "{{ mellanox_ofed_url | basename | regex_replace('\\.tgz$', '') }}"
 
-#- name: Download Mellanox OFED tgz if not present
-#  ansible.builtin.get_url:
-#    url: "{{ mellanox_ofed_url }}"
-#    dest: "{{ rpm_stack_path }}/{{ mellanox_tgz }}"
-#    mode: '0644'
-#    force: no
-#  when: mellanox_ofed_url | length > 0
-
 - name: Check if Mellanox OFED tgz already exists
   ansible.builtin.stat:
     path: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
@@ -181,6 +172,7 @@
     dest: "{{ mlnx_dir_path }}"
     remote_src: yes
 
+
 # -------------------------------------------------
 # Install Mellanox OFED (normal → fallback to add-kernel-support)
 # -------------------------------------------------
@@ -188,38 +180,50 @@
 # Mellanox OFED installation (idempotent with fallback)
 # -------------------------------------------------
 
+# -------------------------------------------------
 # 1. Pre-check: Is OFED already installed?
+# -------------------------------------------------
 - name: Check if Mellanox OFED is installed
-  command: ofed_info -s
+  ansible.builtin.command: ofed_info -s
   register: ofed_check
   failed_when: false
   changed_when: false
 
 - name: Set mellanox_installed fact
-  set_fact:
+  ansible.builtin.set_fact:
     mellanox_installed: "{{ ofed_check.rc == 0 }}"
 
-# 2. Install only if NOT installed and install_mellanox is true
+
+# -------------------------------------------------
+# 2. Decide whether installation is required
+# -------------------------------------------------
+- name: Decide Mellanox installation requirement
+  ansible.builtin.set_fact:
+    mellanox_do_install: >-
+      {{ install_mellanox | bool or not mellanox_installed }}
+
+
+# -------------------------------------------------
+# 3. Install Mellanox OFED (normal → fallback)
+# -------------------------------------------------
 - block:
 
     - name: Attempt Mellanox OFED installation (normal)
-      command: "{{ mlnx_dir_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --force"
+      ansible.builtin.command: >
+        {{ mlnx_dir_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --force
       register: ofed_install_attempt
       failed_when: false
       changed_when: true
 
-    # Re-check after normal install
     - name: Re-check Mellanox OFED installation
-      command: ofed_info -s
+      ansible.builtin.command: ofed_info -s
       register: ofed_check_after
       failed_when: false
       changed_when: false
 
     - name: Retry Mellanox OFED installation with kernel support
-      command: "{{ mlnx_dir_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --force --add-kernel-support"
+      ansible.builtin.command: >
+        {{ mlnx_dir_path }}/{{ mellanox_ofed_dir }}/mlnxofedinstall --force --add-kernel-support
       when: ofed_check_after.rc != 0
 
-  when:
-    - install_mellanox | bool
-    - not mellanox_installed
-
+  when: mellanox_do_install
