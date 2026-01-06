@@ -63,6 +63,7 @@ read_var "dhcp_interface" "Enter DHCP interfaces (comma separated)"
 ###############################################################################
 # xCAT IMAGE / VERSION VARIABLES
 ###############################################################################
+read_var "xcat_service_name"      "Enter xCAT docker container service name"
 read_var "xcat_version_tag"       "Enter xCAT version tag"
 read_var "xcat_repo_version_tag"  "Enter xCAT repo version tag"
 
