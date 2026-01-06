@@ -1,0 +1,24 @@
+---
+- name: Create Slurm accounting database
+  ansible.builtin.command: >
+    mysql -e "CREATE DATABASE IF NOT EXISTS {{ slurmdb_name }};"
+  changed_when: false
+
+- name: Create Slurm DB user with full access
+  ansible.builtin.command: >
+    mysql -e "GRANT ALL ON {{ slurmdb_name }}.* TO
+    '{{ slurmdb_user }}'@'localhost'
+    IDENTIFIED BY '{{ slurmdb_password }}'
+    WITH GRANT OPTION;"
+  changed_when: false
+
+- name: Create read-only DB user
+  ansible.builtin.command: >
+    mysql -e "GRANT SELECT ON {{ slurmdb_name }}.* TO
+    '{{ slurmdb_readonly_user }}'@'%'
+    IDENTIFIED BY '{{ slurmdb_readonly_password }}';"
+  changed_when: false
+
+- name: Flush MySQL privileges
+  ansible.builtin.command: mysql -e "FLUSH PRIVILEGES;"
+  changed_when: false
