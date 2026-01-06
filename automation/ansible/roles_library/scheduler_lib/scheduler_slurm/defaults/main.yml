@@ -21,7 +21,7 @@ auth_packages:
   - mariadb-server
   - perl-Switch
   - libaec
-    #  - perl-autouse
+  - perl-autouse
   - freeipmi
   - hdf5-mpich
   - libgfortran
@@ -29,22 +29,22 @@ auth_packages:
   - libquadmath
   - mpich
   - hdf5
-
-
-# Directory base path containing rpm dirs
-#slurm_rpm_base: "/home/CHAI_Sk/rpm-stack"
-
+  - http-parser
 
 
 # Define excluded packages per role
 slurm_excluded_packages:
   master:
-    - slurm
+    - slurm-slurmd     # exclude only the main slurm rpm
   compute:
     - slurm-slurmdbd
     - slurm-slurmctld
+  mgmt:
+    - slurm-slurmctld
+    - slurm-slurmd
   others:
     - slurm-slurmdbd
     - slurm-slurmctld
     - slurm-slurmd
+
 
