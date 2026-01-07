@@ -6,7 +6,7 @@ version: 2
 
 # Build environment
 build:
-  os: rocky9.6
+  os: ubuntu-22.04
   tools:
     python: "3.10"
 
@@ -26,4 +26,3 @@ python:
 formats:
   - htmlzip
   - pdf
-
