@@ -58,19 +58,22 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "sphinx_rtd_theme"
 
-html_title = "OpenCHAI Manager Documentation"
-
-html_logo = "_static/openchai_logo.png"   # optional
-html_favicon = "_static/favicon.ico"      # optional
-
+html_logo = "_static/openchai_logo.png"
 html_static_path = ["_static"]
 
 html_theme_options = {
+    "logo_only": True,
+    "display_version": False,
     "collapse_navigation": False,
     "navigation_depth": 4,
     "sticky_navigation": True,
     "style_external_links": True,
 }
+
+html_css_files = [
+    "custom.css",
+]
+
 
 # -- Todo extension ----------------------------------------------------------
 
