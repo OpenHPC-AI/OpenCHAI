@@ -1,1 +1,29 @@
+# .readthedocs.yaml
+# Read the Docs configuration file for OpenCHAI Manager
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html
+
+version: 2
+
+# Build environment
+build:
+  os: rocky9.6
+  tools:
+    python: "3.10"
+
+# Sphinx configuration
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: false
+
+# Python dependencies
+python:
+  install:
+    - method: pip
+      path: .
+    - requirements: docs/requirements.txt
+
+# Formats to build
+formats:
+  - htmlzip
+  - pdf
 
