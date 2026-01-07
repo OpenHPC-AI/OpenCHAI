@@ -133,15 +133,6 @@
   when: lmod_check.stdout == "" and (local_lmod_rpms is not defined or local_lmod_rpms.matched == 0)
   ignore_errors: yes
 
-# 7. Deploy lmod.sh profile script
-- name: Deploy lmod.sh profile script
-  ansible.builtin.template:
-    src: lmod.sh.j2
-    dest: /etc/profile.d/lmod.sh
-    owner: root
-    group: root
-    mode: '0644'
-
 # 8. Configure MODULEPATH
 - name: Configure MODULEPATH
   ansible.builtin.copy:
