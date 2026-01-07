@@ -1,0 +1,52 @@
+# Open CHAI – Software Stack Release (v1.1)
+
+This document describes the **Open CHAI 1.1** software stack based on **Rocky Linux 9.6**, intended for HPC and AI cluster deployments.
+
+---
+
+## Platform Details
+
+| Category | Component | Version / Details |
+|--------|----------|-------------------|
+| Base OS | Rocky Linux | 9.6 |
+| Kernel | Linux Kernel | 5.14.0-570.17.1.el9 |
+| Architecture | System | x86_64 |
+| Provisioning | xCAT | 2.17.0 |
+| Monitoring | Prometheus | 2.47.1 |
+| Monitoring | Nagios | 4.4.9 |
+| Monitoring | Ganglia | 3.7.2 |
+| Resource Manager | Slurm | 25.05.1 (PMIx 3 / 4 / 5 / 6) |
+| User Management | OpenLDAP | 2.4.46 |
+| User Support | osTicket | 1.18.2 |
+| Interconnect | Mellanox InfiniBand | 24.10-3.2.5.0 |
+| Toolchain | Intel oneAPI | 2025.2.1.44 |
+| Toolchain | Intel oneAPI | 2024.2.0.634 |
+| Compiler | GCC | 8.5.0 |
+| Compiler | G++ | 8.5.0 |
+| Compiler | GFortran | 8.5.0 |
+| MPI | MVAPICH | 4.1 |
+| MPI | OpenMPI | 4.1 |
+| MPI | MPICH (NVIDIA Peer Memory) | 1.3-0 |
+| GPU Toolkit | CUDA | 11.0.2 (Driver 450.51.05) |
+| GPU Toolkit | CUDA | 11.8.0 (Driver 520.61.05) |
+| GPU Toolkit | CUDA | 12.4.0 (Driver 550.54.14) |
+| GPU Toolkit | CUDA | 12.6.0 (Driver 560.28.03) |
+| GPU Toolkit | CUDA | 12.8.0 (Driver 570.86.10) |
+| GPU Toolkit | CUDA | 12.9.1 (Driver 575.57.08) |
+| GPU Toolkit | CUDA | 13.0.0 (Driver 580.65.06) |
+
+---
+
+## Release Information
+
+- **Release Name:** Open CHAI  
+- **Version:** 1.1  
+- **Base Operating System:** Rocky Linux 9.6  
+
+---
+
+## Notes
+
+- Validated for **HPC, AI/ML, and GPU-accelerated workloads**
+- Supports **multi-MPI** and **multi-CUDA** environments
+- Designed for **enterprise and research cluster deployments**
