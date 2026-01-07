@@ -5,6 +5,12 @@ The **Open CDAC HPC-AI Manager Tool (OpenCHAI)** is a unified and modular automa
 
 [OpenCHAI – Software Stack Releases](Releases/v1.25.0.md)
 
+# C-DAC HPC Software stack
+
+
+![Flow Diagram](images/)
+
+
 
 # OpenCHAI Flow Diagram for HPC-AI Cluster Provisioning, Deployment & Configuration
 
