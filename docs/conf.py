@@ -60,7 +60,7 @@ html_theme = "sphinx_rtd_theme"
 
 html_title = "OpenCHAI Manager Documentation"
 
-html_logo = "_static/openchai_logo_new.png"
+html_logo = "_static/openchai_manager_tool_logo.png"
 html_static_path = ["_static"]
 
 html_theme_options = {
