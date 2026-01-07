@@ -1,5 +1,5 @@
 /* Fix OpenCHAI logo visibility on Read the Docs */
 .wy-side-nav-search img {
-    max-height: 80px;
+    max-height: 180px;
     width: auto;
 }
