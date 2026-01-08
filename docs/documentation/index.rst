@@ -8,4 +8,5 @@ Documentation
    overview/index
    releases/index
    architecture/index
+   software_stack/index
    upgrade/index
