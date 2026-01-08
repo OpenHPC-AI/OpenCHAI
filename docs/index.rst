@@ -41,7 +41,6 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
 
    documentation/index
    getting_started/index
