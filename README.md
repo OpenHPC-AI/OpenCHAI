@@ -7,13 +7,13 @@ The **Open CDAC HPC-AI Cluster Manager Tool (OpenCHAI)** is a unified and modula
 
 ![Flow Diagram](images/HPC-AI-Cluster-Architecture.png)
 
-# Releases | OpenCHAI
-
-[OpenCHAI – Software Stack Releases](Releases/v1.25.0.md)
-
 # C-DAC HPC Software stack
 
 ![Flow Diagram](images/CDAC-HPC-Software-Stack.png)
+
+# Releases | OpenCHAI
+
+[OpenCHAI – Software Stack Releases](Releases/v1.25.0.md)
 
 # Getting Started: OpenCHAI Deployment Guide
 
