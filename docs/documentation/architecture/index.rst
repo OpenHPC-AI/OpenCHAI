@@ -9,8 +9,9 @@ The architecture separates responsibilities across clearly defined node roles, e
    :align: center
    :width: 90%
 
+--------------------------------
 Architecture Components
-=======================
+--------------------------------
 
 This section provides a component-wise overview of the OpenCHAI cluster architecture. Each component plays a well-defined role in enabling scalable, secure, and automated HPC-AI cluster operations.
 
