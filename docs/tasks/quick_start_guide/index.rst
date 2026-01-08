@@ -105,7 +105,7 @@ Alternatively, Manual Downloads
 .. toctree::
    :maxdepth: 1
 
-   ../../documentation/releases/hpcsangrah
+   ../../documentation/releases/index
 
 
 Ansible Inventory Setup
