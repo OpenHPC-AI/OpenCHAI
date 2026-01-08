@@ -1,13 +1,9 @@
-HPC Software Stack
+HPC System Software Stack
 =================
 
-The HPC Software Stack defines the layered software ecosystem required to build,
-operate, and optimize High Performance Computing (HPC) and AI-enabled clusters.
-This stack integrates operating systems, drivers, middleware, resource management,
-programming environments, and user-facing tools into a cohesive and scalable platform.
-
-OpenCHAI automates the deployment, configuration, and lifecycle management of
-this complete software stack across heterogeneous cluster environments.
+System Software Stack is an aggregation of software components that work together to accomplish various task. These tasks can range from facilitating users in executing their jobs to enable system administrator to manage the system efficiently. Each software component within the stack is equipped with the necessary tools to achieve its specific task, and there may be multiple components of different flavors for different sub-tasks. Users have the flexibility to mix and match these components according to their preferences. For users, the primary focus is on preparing executables, executing them with their datasets, and visualizing the output. This typically involves compiling codes, linking them with communication libraries, math libraries, and numerical algorithm libraries, preparing executables, running them with desired datasets, monitoring job progress, collecting results, and visualizing output.
+System administrators, on the other hand, are concerned with ensuring optimal resource utilization. To achieve this, they may require installation tools, health-check tools for all components, efficient schedulers, and tools for resource allocation and usage monitoring.
+The software stack provided with this system have a wide range of software components that meet the needs of both users and administrators. Figure 2 illustrates the components of the software stack.
 
 .. image:: ../../_static/HPC-Software-Stack.png
    :alt: OpenCHAI - HPC Software Stack Diagram
