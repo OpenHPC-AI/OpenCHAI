@@ -41,34 +41,12 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation
+   :caption: Contents
 
-   overview/index
-   releases/index
-   architecture/index
-   upgrade/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Getting started
-
-   learning_environment/index
-   operational_environment/index
-   operational_best_practices/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Tasks
-
-   quick_start_guide/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Concepts
-
-   xcat/index
-   openldap/index
-   slurm/index
+   documentation/index
+   getting_started/index
+   tasks/index
+   concepts/index
    
 
    
