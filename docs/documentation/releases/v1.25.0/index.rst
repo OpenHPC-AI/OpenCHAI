@@ -1,0 +1,62 @@
+# OpenCHAI – Software Stack Release (v1.25.0)
+
+This document describes the **OpenCHAI 1.25.0** software stack based on **Rocky Linux 9.6**, intended for HPC and AI cluster deployments.
+
+---
+
+## Platform Details
+
+| Category | Component | Version / Details |
+|--------|----------|-------------------|
+| Base OS | Rocky Linux | 9.6 |
+| Kernel | Linux Kernel | 5.14.0-570.17.1.el9 |
+| Architecture | System | x86_64 |
+| Manager Tool | Ansible | latest |
+| Container | Docker | latest |
+| Container | Apptainer | latest |
+| Container | Enroot| latest |
+| Orchestration | Docker-Compose | latest |
+| Orchestration | Kubernetes | latest |
+| Device Replication | DRBD | 9.31.0 |
+| Resource Manager | PCS | 0.11.9 |
+| Provisioning | xCAT | 2.17.0 |
+| Monitoring | C-Chakshu | latest |
+| Monitoring | Prometheus | 2.47.1 |
+| Monitoring | Nagios | 4.4.9 |
+| Monitoring | Ganglia | 3.7.2 |
+| Resource Manager | Slurm | 25.05.1 (PMIx 3 / 4 / 5 / 6) |
+| Resource Manager Plugin | Pyxis | latest |
+| User Management | OpenLDAP | 2.4.46 |
+| User Support | osTicket | 1.18.2 |
+| Interconnect | Mellanox InfiniBand | 24.10-3.2.5.0 |
+| Toolchain | Intel oneAPI | 2025.2.1.44 |
+| Toolchain | Intel oneAPI | 2024.2.0.634 |
+| Toolchain | NvHPC-SDK | 25.9 |
+| Compiler | GCC | 11.5.0 |
+| Compiler | G++ | 8.5.0 |
+| Compiler | GFortran | 8.5.0 |
+| MPI | MVAPICH | 4.1 |
+| MPI | OpenMPI | 4.1 |
+| MPI | MPICH (NVIDIA Peer Memory) | 1.3-0 |
+| GPU Toolkit | CUDA | 13.0.0 (Driver 580.65.06) |
+| Application  Package Manager | Spack |  1.2.0  |
+---
+
+## Release Information
+
+- **Product Name:** OpenCHAI  
+- **Full Release Version:** 1.25.0  
+- **Release Stream (Major):** 1.x  
+- **Integrated Slurm Version Line:** 25.x  
+- **Patch Level (Minor):** 0  
+- **Base Operating System:** Rocky Linux 9.6 (x86_64)
+
+
+---
+
+## Notes
+
+- Validated for **HPC, AI/ML, and GPU-accelerated workloads**
+- Supports **multi-MPI** and **multi-CUDA** environments
+- Designed for **enterprise and research cluster deployments**
+
