@@ -101,7 +101,7 @@ directly from the network if they are not available locally.
 
 Alternatively, refer to the document below for manual downloads:
 
-`HPC-Sangrah Vault <Documents/hpcsangrah.md>`_
+`HPC-Sangrah Vault <docs/documents/releases/hpcsangrah.md>`_
 
 ----
 
