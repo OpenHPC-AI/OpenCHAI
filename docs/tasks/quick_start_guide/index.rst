@@ -82,7 +82,7 @@ for an improved setup experience:
 
 ::
 
-   OpenCHAI/hpcsuite_registry/hostmachine_reg/
+   ./hpcsuite_registry/hostmachine_reg/
 
 **Offline Mode**
 
