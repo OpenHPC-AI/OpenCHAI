@@ -34,7 +34,6 @@ Minimum hardware requirements for testing:
 ----
 
 OpenCHAI Manager Tool Setup
-==========================
 
 This section provides a **step-by-step guide** for installing the **Open CDAC HPC-AI Manager Tool
 (OpenCHAI)** on a **bare-metal server**.
