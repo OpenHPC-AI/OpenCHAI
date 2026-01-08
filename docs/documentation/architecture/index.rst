@@ -4,7 +4,7 @@ OpenCHAI is designed as a centralized cluster management and automation platform
 
 The architecture separates responsibilities across clearly defined node roles, enabling modular deployment, independent scaling, and high availability.
 
-.. image:: /_static/HPC-AI_cluster_architecture_flowchart.png
+.. image:: ../../_static/HPC-AI_cluster_architecture_flowchart.png
    :alt: OpenCHAI Architecture Diagram
    :align: center
    :width: 90%
