@@ -11,7 +11,7 @@ The framework currently supports:
 - Both **bare-metal** and **containerized software stack** of **HPC-AI infrastructure**
 - **Multi-tenant Kubernetes control planes** for AI user(Team) isolation
 
-### **HPC Cluster Management and Service Nodes**
+# HPC Cluster Management and Service Nodes*
 
 To efficiently manage the cluster, dedicated **service nodes** handle installation, deployment, and administrative tasks. These include:
 
