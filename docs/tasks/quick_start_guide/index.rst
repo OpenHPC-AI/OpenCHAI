@@ -1,124 +1,204 @@
 Quickstart Guide
-=====================
+================
 
-The Quickstart is intended for deployment on **dedicated nodes or virtual machines (VMs)** running an **RPM-based Linux distribution** with an **x86_64 architecture**.
+The Quickstart guide is intended for deployment on **dedicated nodes or virtual machines (VMs)**
+running an **RPM-based Linux distribution** on **x86_64 architecture**.
 
-A **minimum high-availability (HA) master node configuration** requires **three stateful nodes** — two permanent and one temporary (which can also be made permanent if desired) — along with at least **one stateless compute node** and an **optional stateless GPU node**.
+A minimum **high-availability (HA) master node configuration** requires:
 
-**Hardware Requirements**
+- **Three stateful nodes** (two permanent and one temporary; the temporary node may also be made permanent)
+- **At least one stateless compute node**
+- **Optional stateless GPU node**
 
-Both master nodes must include a **25 GB /drbd partition** to support data replication and synchronization between them. Additionally, ensure that the head node has **at least 60 GB of free disk space** in the directory where the OpenCHAI repository and the rpm-stack will be cloned, as these are required for offline installation.
+----
 
-For testing purposes, the minimum hardware requirements are:
+Hardware Requirements
+---------------------
 
-**Head Node**: 4 CPU cores and 4 GB RAM (recommended: 8 CPU cores and 8 GB RAM)
+Both master nodes must include a **25 GB `/drbd` partition** to support data replication and
+synchronization. In addition, ensure the head node has **at least 60 GB of free disk space**
+in the directory where the OpenCHAI repository and RPM stack are cloned.
+This space is required for **offline installation**.
 
-**Master Nodes**: Minimum 8 to 12 CPU cores and 8 GB RAM each
+Minimum hardware requirements for testing:
 
+- **Head Node**
+  - 4 CPU cores
+  - 4 GB RAM  
+  - *(Recommended: 8 CPU cores and 8 GB RAM)*
 
-# OpenCHAI Manager Tool Setup
+- **Master Nodes**
+  - 8–12 CPU cores
+  - 8 GB RAM (each)
 
-This chapter provides a straightforward, step-by-step guide for installing the Open CDAC HPC-AI Manager Tool (OpenCHAI) on **bare-metal server**. It focuses on a quick installation process with minimal explanation of each step. By following these instructions, a moderately experienced cluster administrator can set up and configure a standard cluster environment efficiently—without needing to go through the entire OpenCHAI Administrator Manual or its detailed sections.
+----
 
-The quick installation steps are outlined below:
+OpenCHAI Manager Tool Setup
+==========================
 
-### **1  Installing The Head Node**
+This section provides a **step-by-step guide** for installing the **Open CDAC HPC-AI Manager Tool
+(OpenCHAI)** on a **bare-metal server**.
 
-**1.1 Install the git package**
+The guide focuses on a **quick installation workflow** with minimal explanation. A moderately
+experienced cluster administrator can use these steps to deploy and configure a standard
+HPC-AI cluster without referring to the full OpenCHAI Administrator Manual.
 
-```bash
-yum install git
-```
+----
 
-**1.2 Clone the Repository:**
-Make sure to clone the repository into a directory with at least 60 GB of free disk space. This space is essential for offline installation, as the complete software stack RPMs will be downloaded into the same directory. Adequate space ensures a smooth and error-free installation and configuration process.
+Installing the Head Node
+------------------------
 
-```bash
-git clone https://github.com/OpenHPC-AI/OpenCHAI.git
+Install Git
+~~~~~~~~~~~
 
-# Go to the OpenCHAI directory to configure OpenCHAI.
-cd ./OpenCHAI
-```
+Install the Git package on the head node:
 
-**1.3 Follow the instructions below to configure the OpenCHAI Manager tool.** 
+.. code-block:: bash
 
-**1.3.0 Ensure that the OpenCHAI tar file is already downloaded and available in the OpenCHAI/hpcsuite_registry/hostmachine_reg directory for better experience.**
+   yum install git
 
-**a.) Offline Mode:** Copy the OpenCHAI stack for Alma Linux or Rocky Linux from your USB drive/local SSD/pen drive (which you are carrying) into the directory (./hpcsuite_registry/hostmachine_reg/) on the head node .If the stack is not available locally, follow option b. 
+Clone the OpenCHAI Repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**b.) Online Mode:** During the OpenCHAI Manager Tool setup (Step 1.3.2), you can download the OpenCHAI packages from the network, 
+Clone the repository into a directory with **at least 60 GB of free disk space**.
+This space is required to store the **offline software stack RPMs**.
 
-or alternatively download them using the document below.
+.. code-block:: bash
 
-[HPC-Sangrah Vault](Documents/hpcsangrah.md)
+   git clone https://github.com/OpenHPC-AI/OpenCHAI.git
 
+   # Navigate to the OpenCHAI directory
+   cd OpenCHAI
 
-**1.3.1 Ansible Inventory Setup**
+----
 
-Configure the Ansible inventory on the head node to enable communication with all service nodes in the HPC-AI cluster, including:
+Configure the OpenCHAI Manager Tool
+-----------------------------------
 
--HPC Master nodes
+Ensure OpenCHAI Stack Availability
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--Management nodes
+Ensure that the **OpenCHAI stack tar file** is available in the following directory
+for an improved setup experience:
 
--AI Master nodes
+::
 
--Login nodes
+   OpenCHAI/hpcsuite_registry/hostmachine_reg/
 
--BMC nodes
+**Offline Mode**
 
-This setup allows the head node to orchestrate tasks, deploy configurations, and manage the cluster using Ansible.
-```python
+Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux**
+from a USB drive, local SSD, or other removable media into:
 
-#Update the inventory file with all service node details for your cluster, based on your environment configuration.
+::
 
-vim chai_setup/inventory_def.txt
+   ./hpcsuite_registry/hostmachine_reg/
 
-```
+**Online Mode**
 
-**1.3.2 Proceed to CHAI-Manager Head Node Setup**
+During the OpenCHAI Manager Tool setup, packages can be downloaded
+directly from the network if they are not available locally.
 
-After completing all the above configurations, you can now begin the setup of the CHAI-Manager Head Node. This step initializes the primary control node responsible for managing the HPC-AI cluster services, deployments, and orchestration workflows.
+Alternatively, refer to the document below for manual downloads:
 
-```bash
-#Once the inventory definition file is updated, set up the Chai Manager tool on the head node to deploy and configure the HPC-AI cluster
-#If the OpenCHAI packages are already available at the correct location—either copied from a USB drive or downloaded from the network—the setup will proceed more smoothly. If not, don’t worry; the OpenCHAI setup provides an option to download them during installation.
+`HPC-Sangrah Vault <Documents/hpcsangrah.md>`_
 
-bash ./configure_openchai_manager.sh
-```
+----
 
-**1.3.3 Post-setup verification of communication between all OpenCHAI Manager service nodes in the cluster from the HeadNode**
-- **Inventory Setup**
-```bash
-ansible-inventory --list
-```
-- **Ping ALL Cluster hosts in inventory**
-```bash
-ansible all -m ping
-# Verify Cluster connection with ssh port, adjust ssh port according to your environment
-ansible all -m ping -e "ansible_port=22"
+Ansible Inventory Setup
+~~~~~~~~~~~~~~~~~~~~~~~
 
-# If you encounter any communication issues between the head node and the service nodes, update the chai_setup/inventory_def.txt file to match your environment.
-# After making the changes, run the script below to establish and enable proper communication between the nodes.
-bash ./chai_setup/update_inventory_def.sh
-```
+Configure the Ansible inventory on the head node to enable communication
+with all service nodes in the HPC-AI cluster, including:
 
-**1.4 Update all HPC-AI cluster environment variables to enable end-to-end cluster deployment and configuration**
+- HPC master nodes
+- Management nodes
+- AI master nodes
+- Login nodes
+- BMC nodes
 
-```bash
-bash ./chai_setup/update_group_var_all.sh
-```
-***Enable public network access on every service nodes to ensure missing packages can be installed from public repositories without interrupting the installation.***
+Edit the inventory file according to your environment:
 
-**1.5 HPC-AI Headnode Setup**
+.. code-block:: bash
 
-```bash
-bash ./servicenodes/headnode_node_setup.sh
-```
+   vim chai_setup/inventory_def.txt
 
-**1.6 HPC Cluster Nodes Deployment And Configuration** 
+----
 
-To setup hpc-master nodes run the below script
-```bash
-bash ./servicenodes/hpc_master_ha_node_setup.sh
-```
+Proceed with CHAI Manager Head Node Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once the inventory is configured, initialize the **CHAI Manager Head Node**.
+This step prepares the primary control node for managing cluster services
+and orchestration workflows.
+
+.. code-block:: bash
+
+   bash ./configure_openchai_manager.sh
+
+If OpenCHAI packages are already available locally, the setup proceeds faster.
+Otherwise, the installer provides an option to download them during execution.
+
+----
+
+Post-Setup Verification
+-----------------------
+
+Verify inventory configuration:
+
+.. code-block:: bash
+
+   ansible-inventory --list
+
+Verify connectivity with all cluster hosts:
+
+.. code-block:: bash
+
+   ansible all -m ping
+
+   # Verify connectivity using a specific SSH port
+   ansible all -m ping -e "ansible_port=22"
+
+If communication issues occur, update the inventory file and reapply:
+
+.. code-block:: bash
+
+   bash ./chai_setup/update_inventory_def.sh
+
+----
+
+Update Cluster Environment Variables
+------------------------------------
+
+Update all HPC-AI cluster environment variables:
+
+.. code-block:: bash
+
+   bash ./chai_setup/update_group_var_all.sh
+
+.. note::
+
+   Ensure **public network access** is enabled on all service nodes
+   so that missing packages can be installed from public repositories.
+
+----
+
+HPC-AI Head Node Setup
+---------------------
+
+Run the head node setup script:
+
+.. code-block:: bash
+
+   bash ./servicenodes/headnode_node_setup.sh
+
+----
+
+HPC Cluster Nodes Deployment and Configuration
+----------------------------------------------
+
+To deploy and configure HPC master nodes, execute:
+
+.. code-block:: bash
+
+   bash ./servicenodes/hpc_master_ha_node_setup.sh
