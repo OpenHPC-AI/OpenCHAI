@@ -59,7 +59,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 
 html_short_title = "OpenCHAI"
-html_logo = "_static/openchai_manager_tool_logo.png"
+html_logo = "_static/openchai_tool_logo.png"
 html_static_path = ["_static"]
 
 html_theme_options = {
