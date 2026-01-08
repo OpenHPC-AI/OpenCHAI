@@ -1,5 +1,8 @@
-/* Fix OpenCHAI logo visibility on Read the Docs */
+/* OpenCHAI logo – full width of RTD sidebar */
 .wy-side-nav-search img {
+    max-width: 100%;
+    height: auto;
     max-height: 180px;
-    width: 540px;
+    display: block;
+    margin: 0 auto;
 }
