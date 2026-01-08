@@ -17,6 +17,7 @@ To efficiently manage the cluster, dedicated **service nodes** handle installati
 
 - **Head Node -** A head node which is CHAI Manger tool. To configure all the service nodes. (It can be temporary or permanent.)
 - **Master Nodes** – Manage compute nodes using **xCAT** for provisioning and **SLURM** for workload scheduling and ldap for central user authentication.
+- **AI Nodes** – **Kubernetes** based orchestration for AI clusters, supporting containerized AI workloads and workload management.
 - **Management Nodes** – Handle monitoring, logging, and ticketing systems.
 - **Login Nodes** – Provide user access to the cluster.
 - **BMC (Baseboard Management Controller) Nodes** – Oversee hardware health and remote management.
