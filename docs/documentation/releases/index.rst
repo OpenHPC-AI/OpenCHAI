@@ -34,7 +34,7 @@ Supported operating systems include:
 
 You can browse all available OpenCHAI package options at:
 
-`OpenCHAI Package Vault <https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/>`_
+`OpenCHAI Package Vault <https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/>`_
 
 ----
 
