@@ -1,5 +1,5 @@
-Architecture Overview
-=====================
+OpenCHAI Architecture Flowchart 
+===============================
 OpenCHAI is designed as a centralized cluster management and automation platform for large-scale HPC and AI environments. The architecture follows a control-plane–driven model, where all cluster components are provisioned, configured, and managed from a single OpenCHAI Manager (Head Node). This approach ensures operational consistency, scalability, and repeatability across heterogeneous infrastructure.
 
 The architecture separates responsibilities across clearly defined node roles, enabling modular deployment, independent scaling, and high availability.
