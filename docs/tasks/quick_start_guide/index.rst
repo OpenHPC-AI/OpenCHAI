@@ -99,11 +99,14 @@ from a USB drive, local SSD, or other removable media into:
 During the OpenCHAI Manager Tool setup, packages can be downloaded
 directly from the network if they are not available locally.
 
-Alternatively, refer to the document below for manual downloads:
+Alternatively, Manual Downloads
+----------------
 
-`HPC-Sangrah Vault <../../documentation/releases/hpcsangrah.md>`_
+.. toctree::
+   :maxdepth: 1
 
-----
+   ../../documentation/releases/hpcsangrah
+
 
 Ansible Inventory Setup
 ~~~~~~~~~~~~~~~~~~~~~~~
