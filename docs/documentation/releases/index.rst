@@ -17,4 +17,4 @@ Release History
    :maxdepth: 1
    :caption: Available Releases
 
-   v1.25.0
+   v1.25.0/index
