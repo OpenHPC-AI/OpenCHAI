@@ -1,8 +1,30 @@
-/* OpenCHAI logo – full width of RTD sidebar */
+/* ================================
+   OpenCHAI Read the Docs Branding
+   ================================ */
+
+/* Sidebar logo container */
+.wy-side-nav-search {
+    background-color: #1f77b4;   /* optional: match OpenCHAI theme */
+    padding: 12px 8px;
+}
+
+/* Logo image */
 .wy-side-nav-search img {
+    width: 100%;           /* Fill full sidebar width */
     max-width: 100%;
-    height: auto;
-    max-height: 180px;
+    height: auto;          /* Maintain aspect ratio (600x150) */
+    max-height: 150px;     /* Prevent vertical overflow */
     display: block;
     margin: 0 auto;
 }
+
+/* Remove default RTD extra spacing */
+.wy-side-nav-search > a {
+    padding: 0;
+}
+
+/* Optional: remove RTD project title text spacing */
+.wy-side-nav-search .project-title {
+    display: none;
+}
+
