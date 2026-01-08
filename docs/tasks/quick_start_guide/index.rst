@@ -16,7 +16,7 @@ Hardware Requirements
 ---------------------
 
 Both master nodes must include a **25 GB `/drbd` partition** to support data replication and
-synchronization. In addition, ensure the head node has **at least 60 GB of free disk space**
+synchronization for high availability. In addition, ensure the head node has **at least 60 GB of free disk space**
 in the directory where the OpenCHAI repository and RPM stack are cloned.
 This space is required for **offline installation**.
 
