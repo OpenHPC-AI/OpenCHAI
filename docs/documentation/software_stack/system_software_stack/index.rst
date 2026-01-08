@@ -5,7 +5,7 @@ System Software Stack is an aggregation of software components that work togethe
 System administrators, on the other hand, are concerned with ensuring optimal resource utilization. To achieve this, they may require installation tools, health-check tools for all components, efficient schedulers, and tools for resource allocation and usage monitoring.
 The software stack provided with this system have a wide range of software components that meet the needs of both users and administrators. Figure 2 illustrates the components of the software stack.
 
-.. image:: ../../_static/HPC-Software-Stack.png
+.. image:: ../../../_static/HPC-Software-Stack.png
    :alt: OpenCHAI - HPC Software Stack Diagram
    :align: center
    :width: 90%
