@@ -35,7 +35,7 @@ The platform leverages established open-source technologies such as xCAT, OpenLD
 Open Source and Community
 -------------------------
 
-OpenCHAI is developed and maintained as an open-source project. The source code, issue tracking, and contribution workflows are hosted on `GitHub <https://github.com/OpenHPC-AI/OpenCHAI>`_.. Users and contributors are encouraged to participate by reviewing the codebase, reporting issues, submitting enhancements, and engaging with the community.
+OpenCHAI is developed and maintained as an open-source project. The source code, issue tracking, and contribution workflows are hosted on `GitHub <https://github.com/OpenHPC-AI/OpenCHAI>`_. Users and contributors are encouraged to participate by reviewing the codebase, reporting issues, submitting enhancements, and engaging with the community.
 
 Table of Contents
 
