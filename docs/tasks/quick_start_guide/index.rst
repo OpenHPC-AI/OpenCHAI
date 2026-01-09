@@ -80,18 +80,14 @@ Ensure OpenCHAI Stack Availability
 Ensure that the **OpenCHAI stack tar file** is available in the following directory
 for an improved setup experience:
 
-::
-
-   ./hpcsuite_registry/hostmachine_reg/
-
 **Offline Mode**
 
-Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux**
-from a USB drive, local SSD, or other removable media into:
+Copy the OpenCHAI software stack for Alma Linux or Rocky Linux from removable media (such as a USB drive or local storage) into the directory below.
+Alternatively, the stack can be downloaded during the OpenCHAI Manager Tool setup.
 
 ::
 
-   ./hpcsuite_registry/hostmachine_reg/
+ ls -la  ./hpcsuite_registry/hostmachine_reg/<os-version>/
 
 **Online Mode**
 
@@ -133,6 +129,22 @@ Proceed with CHAI Manager Head Node Setup
 Once the inventory is configured, initialize the **CHAI Manager Head Node**.
 This step prepares the primary control node for managing cluster services
 and orchestration workflows.
+
+During the OpenCHAI Manager head-node setup, you are presented with an option to
+select the OpenCHAI software packages to be installed. Review the available
+package options carefully and choose the configuration that best aligns with
+your target environment, deployment model, and workload requirements.
+
+
+Available OpenCHAI Versions
+===========================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Available Releases
+
+   ../../documentation/releases/index
+
 
 .. code-block:: bash
 
