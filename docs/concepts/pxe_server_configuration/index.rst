@@ -21,7 +21,6 @@ The PXE server configuration performs the following tasks:
 - Supports **interactive review and modification** of DHCP clients
 - Allows execution to be restricted to specific nodes using Ansible ``-l``
 
----
 
 PXE-Server Setup to boot service nodes
 ---------------------
