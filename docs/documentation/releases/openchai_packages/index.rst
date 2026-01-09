@@ -95,6 +95,4 @@ Notes
 
 - Ensure the OpenCHAI stack is placed under the correct
   ``hpcsuite_registry/hostmachine_reg/`` directory.
-- The extracted packages are required for **offline installation**
-  during OpenCHAI Manager setup.
-- Network access is required only if packages are not available locally.
+
