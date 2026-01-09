@@ -190,6 +190,45 @@ Step 6: Configure the PXE Server for Service Node Booting
 Follow this section to set up the PXE server, which enables network booting
 and automated installation of service nodes.
 
+**Define DHCP Clients**
+
+Create or edit the DHCP client input file:
+
+::
+
+  vim ./servicenodes/dhcp_clients_mac.txt
+
+Format:
+
+::
+
+  <node_name>,<mac_address>,<ip_address>
+
+Example:
+
+::
+
+  master01,00:0C:29:43:18:B4,172.10.3.101
+  master02,00:0C:29:43:18:B5,172.10.3.102
+  login01,00:0C:29:43:18:B6,172.10.3.103
+
+This file is used to generate static DHCP reservations.
+
+Run the PXE server setup script:
+
+::
+
+  bash servicenodes/pxe_server_setup.sh
+
+During execution:
+
+- All DHCP clients are displayed in a table
+- You are prompted to update MAC or IP values if required
+- Final confirmation is requested before execution
+
+For detailed PXE server configuration, refer to the link below.
+-----------------------------------------
+
 .. toctree::
    :maxdepth: 1
 
