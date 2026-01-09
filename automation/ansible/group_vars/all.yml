@@ -50,8 +50,6 @@ pxe_boot_iso: "Rocky-9.6-x86_64-dvd.iso"
 
 # PXE Network Configuration
 pxe_server_ip: "{{ headnode_ip }}"
-pxe_server_dhcp_range_start: "172.10.3.225"
-pxe_server_dhcp_range_end: "172.10.3.230"
 pxe_server_dns: "8.8.8.8"
 # Standard Partition Sizes (MB)
 part_efi_size: 600
