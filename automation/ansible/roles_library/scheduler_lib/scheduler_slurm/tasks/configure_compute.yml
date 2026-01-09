@@ -1,0 +1,95 @@
+# ============================
+# SLURM CENTRAL CONFIG SYNC
+# ============================
+
+- name: Run slurmd -C on compute nodes
+  command: slurmd -C
+  register: slurmd_c_output
+  changed_when: false
+  when: slurm_node_role == "compute"
+
+- name: Extract Slurm Node definition (NO RealMemory)
+  set_fact:
+    slurm_node_def: "{{ slurmd_c_output.stdout_lines[0].split(                                                                            ' RealMemory=')[0] }}"
+  when:
+    - slurm_node_role == "compute"
+    - slurmd_c_output.stdout_lines | length > 0
+
+# ----------------------------
+# MASTER NODE ONLY
+# ----------------------------
+
+- name: Ensure central slurm config directory exists
+  file:
+    path: "{{ configuration_dir_path }}/slurm_config"
+    state: directory
+    mode: "0755"
+  when: slurm_node_role == "compute"
+  run_once: true
+
+- name: Check if central slurm.conf exists
+  stat:
+    path: "{{ configuration_dir_path }}/slurm_config/{{ cluste                                                                            r_name }}_slurm.conf"
+  register: central_slurm_stat
+  when: slurm_node_role == "compute"
+  run_once: true
+
+- name: Create central slurm.conf from system if missing
+  copy:
+    src: /etc/slurm/slurm.conf
+    dest: "{{ configuration_dir_path }}/slurm_config/{{ cluste                                                                            r_name }}_slurm.conf"
+    remote_src: true
+    mode: "0644"
+  when:
+    - slurm_node_role == "compute"
+    - not central_slurm_stat.stat.exists
+  run_once: true
+
+- name: Collect compute node definitions
+  set_fact:
+    slurm_compute_nodes: >-
+      {{
+        hostvars
+        | dict2items
+        | map(attribute='value.slurm_node_def')
+        | select('defined')
+        | select('string')
+        | unique
+        | list
+      }}
+  when: slurm_node_role == "compute"
+  run_once: true
+
+- name: Ensure NodeName entries exist in central slurm.conf
+  lineinfile:
+    path: "{{ configuration_dir_path }}/slurm_config/{{ cluste                                                                            r_name }}_slurm.conf"
+    regexp: "^NodeName={{ item.split(' ')[0].split('=')[1] }}\                                                                            \b"
+    line: "{{ item }}"
+    insertafter: EOF
+  loop: "{{ slurm_compute_nodes }}"
+  when:
+    - slurm_node_role == "compute"
+    - slurm_compute_nodes | length > 0
+  run_once: true
+
+# ----------------------------
+# ALL NODES
+# ----------------------------
+
+- name: Sync central slurm.conf to local node
+  copy:
+    src: "{{ configuration_dir_path }}/slurm_config/{{ cluster                                                                            _name }}_slurm.conf"
+    dest: /etc/slurm/slurm.conf
+    remote_src: true
+    owner: slurm
+    group: slurm
+    mode: "0644"
+
+# ----------------------------
+# MASTER RECONFIGURE
+# ----------------------------
+
+- name: Reconfigure Slurm
+  command: scontrol reconfigure
+  when: slurm_node_role == "master"
+  run_once: true
