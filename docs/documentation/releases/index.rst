@@ -19,5 +19,11 @@ Release History
 
    v1.25.0/index
 
+OpenCHAI Packages
+-----------------
 
+.. toctree::
+   :maxdepth: 1
+   :caption: OpenCHAI Packages
 
+   openchai_packages/index
