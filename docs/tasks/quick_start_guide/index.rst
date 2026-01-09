@@ -140,7 +140,7 @@ Available OpenCHAI Versions
 .. toctree::
    :maxdepth: 1
 
-   ../../documentation/releases/index
+   ../../documentation/releases/openchai_packages/index
 
 
 .. code-block:: bash
