@@ -78,20 +78,7 @@
 # PMIx Installation (FORCED – multiple versions allowed)
 # =========================================================
 
-- name: Find PMIx RPMs
-  ansible.builtin.find:
-    paths: "{{ slurm_rpm_base }}/{{ pmix_version }}"
-    patterns: "*.rpm"
-  register: pmix_rpms
-
-- name: Force install ALL PMIx RPMs (ignore conflicts)
-  ansible.builtin.command: >
-    rpm -Uvh --force --replacepkgs --replacefiles
-    {{ pmix_rpms.files | map(attribute='path') | join(' ') }}
-  when: pmix_rpms.files | length > 0
-  register: pmix_install
-  changed_when: "'installed' in pmix_install.stdout or 'upgraded' in pmix_install.stdout"
-
+- import_tasks: install_pmix.yml
 
 # =========================================================
 # Slurm Installation (Role-Aware)
