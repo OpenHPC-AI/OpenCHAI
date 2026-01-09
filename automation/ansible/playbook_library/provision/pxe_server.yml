@@ -25,8 +25,6 @@
     # Network / PXE Server
     # -------------------------------------------------
     pxe_server_ip: "{{ headnode_ip }}"
-    dhcp_range_start: "{{ pxe_server_dhcp_range_start }}"
-    dhcp_range_end: "{{ pxe_server_dhcp_range_end }}"
     dns_server: "{{ pxe_server_dns }}"
     httpd_listen_port: 80
 
