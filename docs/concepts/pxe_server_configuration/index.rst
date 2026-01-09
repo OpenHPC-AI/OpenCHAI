@@ -31,7 +31,7 @@ Create or edit the DHCP client input file:
 
 ::
 
-  servicenodes/dhcp_clients_mac.txt
+  OpenCHAI/servicenodes/dhcp_clients_mac.txt
 
 Format:
 
@@ -49,22 +49,16 @@ Example:
 
 This file is used to generate static DHCP reservations.
 
----
 
 Step 2: Run PXE Server Setup
 ----------------------------
 
-Navigate to the ``servicenodes`` directory:
-
-::
-
-  cd OpenCHAI/servicenodes
-
 Run the PXE server setup script:
 
 ::
-
-  bash pxe_server_setup.sh
+  # Go to the OpenCHAI directory where the repository was cloned from GitHub
+  cd OpenCHAI
+  bash servicenodes/pxe_server_setup.sh
 
 During execution:
 
@@ -72,7 +66,6 @@ During execution:
 - You are prompted to update MAC or IP values if required
 - Final confirmation is requested before execution
 
----
 
 Step 3: Restrict Execution (Optional)
 -------------------------------------
@@ -91,7 +84,7 @@ or
 
 This internally maps to the Ansible ``-l`` (limit) option.
 
----
+
 
 Step 4: PXE Boot Client Nodes
 -----------------------------
