@@ -1,0 +1,49 @@
+# ------------------------------------------------
+# Update Apache (httpd) listen port dynamically
+# ------------------------------------------------
+
+- name: Validate httpd_listen_port is defined
+  ansible.builtin.assert:
+    that:
+      - httpd_listen_port is defined
+      - httpd_listen_port | int > 0
+      - httpd_listen_port | int < 65536
+    fail_msg: "httpd_listen_port must be a valid TCP port (1–65535)"
+
+- name: Ensure Apache config directory exists
+  ansible.builtin.file:
+    path: /etc/httpd/conf.d
+    state: directory
+    mode: "0755"
+
+# Best practice: DO NOT edit httpd.conf directly
+- name: Configure Apache to listen on custom port
+  ansible.builtin.copy:
+    dest: /etc/httpd/conf.d/openchai-listen-port.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by OpenCHAI
+      Listen {{ httpd_listen_port }}
+
+- name: Remove default Listen 80 from httpd.conf (if present)
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen\s+80'
+    state: absent
+  notify: Restart httpd
+
+- name: Ensure ServerName is set to avoid startup warnings
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^ServerName'
+    line: "ServerName localhost"
+    insertafter: '^#ServerName'
+  notify: Restart httpd
+
+- name: Ensure httpd is enabled and running
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true
