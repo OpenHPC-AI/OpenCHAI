@@ -21,6 +21,8 @@
     tftpboot_lib_path: /var/lib/tftpboot
     os_iso_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/os_iso/{{ os_version }}"
     ssl_certificate_check: no #It can be yes
+    # Security
+    ks_root_password: root
     # -------------------------------------------------
     # Network / PXE Server
     # -------------------------------------------------
