@@ -185,7 +185,20 @@ Update all HPC-AI cluster environment variables:
 
 ----
 
-Step 6. HPC-AI Head Node Setup
+Step 6: Configure the PXE Server for Service Node Booting
+--------------------------------------------------------
+
+Follow this section to set up the PXE server, which enables network booting
+and automated installation of service nodes.
+
+.. toctree::
+   :maxdepth: 1
+
+   ../../concepts/pxe_server_configuration/index
+
+
+
+Step 7. HPC-AI Head Node Setup
 ---------------------
 
 Run the head node setup script:
@@ -196,7 +209,7 @@ Run the head node setup script:
 
 ----
 
-Step 7. Inventory Verification
+Step 8. Inventory Verification
 -----------------------
 
 Verify connectivity with all cluster hosts:
@@ -216,7 +229,7 @@ If communication issues occur, update the inventory file and reapply:
 
 ---
 
-Step 8. HPC Master Nodes Deployment and Configuration
+Step 9. HPC Master Nodes Deployment and Configuration
 ----------------------------------------------
 
 To deploy and configure HPC master nodes, execute:
