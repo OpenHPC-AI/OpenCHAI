@@ -43,8 +43,6 @@ update_var() {
 ############################################
 update_var pxe_boot_iso "PXE boot ISO filename"
 update_var pxe_server_ip "PXE server IP"
-update_var pxe_server_dhcp_range_start "PXE DHCP range start"
-update_var pxe_server_dhcp_range_end "PXE DHCP range end"
 update_var pxe_server_dns "PXE DNS server"
 
 ############################################
