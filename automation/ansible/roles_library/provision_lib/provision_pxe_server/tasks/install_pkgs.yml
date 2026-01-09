@@ -1,6 +1,6 @@
 ---
 - name: Ensure required directories exist
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: "0755"
@@ -9,17 +9,35 @@
     - "{{ iso_mount_path }}"
 
 # ------------------------------------------------
-# Install packages (RPM first, fallback to dnf)
+# Install PXE packages (local RPM preferred, fallback to dnf)
 # ------------------------------------------------
-- name: Install PXE packages from local RPMs if available
-  shell: |
+- name: Install PXE packages from local RPMs or network
+  ansible.builtin.shell: |
+    set -e
+
     for pkg in {{ pxe_packages | join(' ') }}; do
-      rpm -q $pkg >/dev/null 2>&1 && continue
-      rpmfile=$(ls {{ pxe_rpm_path }}/$pkg-*.rpm 2>/dev/null | head -1)
+      echo ">>> Processing package: $pkg"
+
+      # Skip if already installed
+      if rpm -q "$pkg" &>/dev/null; then
+        echo ">>> $pkg already installed, skipping"
+        continue
+      fi
+
+      # Try local RPM first
+      rpmfile=$(ls {{ pxe_rpm_path }}/$pkg-*.rpm 2>/dev/null | head -n 1)
+
       if [ -n "$rpmfile" ]; then
+        echo ">>> Installing $pkg from local RPM: $rpmfile"
         rpm -Uvh --nosignature --nodeps "$rpmfile"
       else
-        dnf -y install $pkg
+        echo ">>> Local RPM not found for $pkg, trying network install"
+        if dnf -y install "$pkg"; then
+          echo ">>> Installed $pkg from network"
+        else
+          echo "!!! Failed to install $pkg from both local RPM and network"
+          exit 1
+        fi
       fi
     done
   args:
