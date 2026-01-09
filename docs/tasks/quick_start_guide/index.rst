@@ -40,9 +40,8 @@ Software Stack
 
 .. toctree::
    :maxdepth: 1
-   :caption: HPC-Sangrah Vault
 
-   ../../documentation/releases/index
+   ../../documentation/releases
 
 ----
 
@@ -105,9 +104,8 @@ HPC-Sangrah Vault
 
 .. toctree::
    :maxdepth: 1
-   :caption: HPC-Sangrah Vault
 
-   ../../documentation/releases/index
+   ../../documentation/releases
 
 **Online Mode**
 
