@@ -32,10 +32,12 @@ This space is required for **offline installation**.
   - 8 GB RAM (each)
 
 **Software Requirements**
+
 Explore:
 
 HPC-Sangrah Vault
------------------
+================
+
 .. toctree::
    :maxdepth: 1
    :caption: HPC-Sangrah Vault
@@ -97,7 +99,8 @@ Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux** from remo
 For manual package downloads, refer to the **HPC-Sangrah Vault**:
 
 HPC-Sangrah Vault
------------------
+=================
+
 .. toctree::
    :maxdepth: 1
    :caption: HPC-Sangrah Vault
