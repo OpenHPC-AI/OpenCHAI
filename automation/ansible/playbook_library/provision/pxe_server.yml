@@ -28,7 +28,7 @@
     dhcp_range_start: "{{ pxe_server_dhcp_range_start }}"
     dhcp_range_end: "{{ pxe_server_dhcp_range_end }}"
     dns_server: "{{ pxe_server_dns }}"
-    httpd_listen_port: 8080
+    httpd_listen_port: 80
 
     dhcp_clients:
       - name: master01
