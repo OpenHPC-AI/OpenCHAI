@@ -15,10 +15,11 @@ interact to form a cohesive, scalable, and production-ready HPC–AI platform.
    :maxdepth: 2
    :caption: Concepts
 
+   pxe_server_configuration/index
    xcat/index
    openldap/index
    slurm/index
-
+   
 --------
 
 Feedback
