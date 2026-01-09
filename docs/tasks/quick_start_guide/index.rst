@@ -81,7 +81,7 @@ This space is required to store the **offline software stack RPMs**.
 ----
 
 Step 3. Configure the OpenCHAI Manager Tool
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 3.1 Ensure that the **OpenCHAI software stack tar file** is available in the directory below to enable a smooth and reliable setup. 
 
