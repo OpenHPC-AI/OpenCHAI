@@ -95,7 +95,6 @@ During the OpenCHAI Manager Tool setup, packages can be downloaded
 directly from the network if they are not available locally.
 
 Alternatively, Manual Downloads
-----------------
 
 .. toctree::
    :maxdepth: 1
