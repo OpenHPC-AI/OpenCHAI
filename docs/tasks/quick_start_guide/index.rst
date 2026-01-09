@@ -33,10 +33,7 @@ This space is required for **offline installation**.
 
 **Software Requirements**
 
-Explore:
-
-Software Stack
----------------
+View the OpenCHAI Software Stack
 
 .. toctree::
    :maxdepth: 1
