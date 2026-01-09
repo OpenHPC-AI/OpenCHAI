@@ -134,9 +134,6 @@ select the OpenCHAI software packages to be installed. Review the available
 package options carefully and choose the configuration that best aligns with
 your target environment, deployment model, and workload requirements.
 
-
-Available OpenCHAI Versions
-
 .. toctree::
    :maxdepth: 1
 
