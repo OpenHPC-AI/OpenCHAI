@@ -55,7 +55,7 @@ Download and extract the OpenCHAI package:
 
 .. code-block:: bash
 
-wget --no-check-certificate -O - https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
+   wget --no-check-certificate -O - https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
 Verify that the OpenCHAI stack has been extracted correctly:
 
