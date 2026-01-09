@@ -57,7 +57,7 @@ Installing the Head Node
 ------------------------
 
 Step 1. Install Git
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the Git package on the head node:
 
@@ -159,8 +159,7 @@ Otherwise, the installer provides an option to download them during execution.
 
 
 Step 4. Inventory Verification
------------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Verify inventory configuration:
 
 .. code-block:: bash
@@ -170,7 +169,7 @@ Verify inventory configuration:
 ----
 
 Step 5. Update Cluster Environment Variables
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Update all HPC-AI cluster environment variables:
 
@@ -186,7 +185,7 @@ Update all HPC-AI cluster environment variables:
 ----
 
 Step 6: Configure the PXE Server for Service Node Booting
---------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Follow this section to set up the PXE server, which enables network booting
 and automated installation of service nodes.
@@ -199,7 +198,7 @@ and automated installation of service nodes.
 
 
 Step 7. HPC-AI Head Node Setup
----------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run the head node setup script:
 
@@ -210,7 +209,7 @@ Run the head node setup script:
 ----
 
 Step 8. Inventory Verification
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Verify connectivity with all cluster hosts:
 
@@ -230,7 +229,7 @@ If communication issues occur, update the inventory file and reapply:
 ---
 
 Step 9. HPC Master Nodes Deployment and Configuration
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To deploy and configure HPC master nodes, execute:
 
