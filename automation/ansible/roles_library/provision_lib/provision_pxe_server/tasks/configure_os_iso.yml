@@ -67,10 +67,10 @@
     mode: "0755"
     recurse: yes
 
-- name: Copy ISO data to Apache document root (no symlink)
+- name: Copy ISO data to Apache document root
   ansible.builtin.synchronize:
-    src: "{{ openchai_vault_path }}/iso-data/"
-    dest: "/var/www/html/iso-data/"
+    src: "{{ openchai_vault_path }}/iso-data"
+    dest: "/var/www/html/"
     recursive: yes
     delete: no
 
