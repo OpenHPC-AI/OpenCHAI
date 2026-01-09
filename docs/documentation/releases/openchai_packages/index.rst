@@ -47,15 +47,15 @@ Create the destination directory:
 
 .. code-block:: bash
 
+   # Change to the OpenCHAI repository directory cloned from the GitHub repository
+   cd OpenCHAI
    mkdir -p ./hpcsuite_registry/hostmachine_reg/alma8.9
 
 Download and extract the OpenCHAI package:
 
 .. code-block:: bash
 
-   wget -qO- \
-   https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/alma8.9/openchai_ha_full_v1.25.0.tgz \
-   | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
+wget --no-check-certificate -O - https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/alma8.9"
 
 Verify that the OpenCHAI stack has been extracted correctly:
 
@@ -72,15 +72,15 @@ Create the destination directory:
 
 .. code-block:: bash
 
-   mkdir -p ./hpcsuite_registry/hostmachine_reg/rocky9.6
+    # Change to the OpenCHAI repository directory cloned from the GitHub repository
+   cd OpenCHAI
+   mkdir -p ./hpcsuite_registry/hostmachine_reg/alma8.9
 
 Download and extract the OpenCHAI package:
 
 .. code-block:: bash
 
-   wget -qO- \
-   https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz \
-   | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
+   wget --no-check-certificate -O - https://hpcsangrah-test.pune.cdac.in:8008/vault/OpenCHAI/hpcsuite_registry/hostmachine_reg/rocky9.6/openchai_ha_full_v1.25.0.tgz | tar -xzvf - -C "./hpcsuite_registry/hostmachine_reg/rocky9.6"
 
 Verify that the OpenCHAI stack has been extracted correctly:
 
