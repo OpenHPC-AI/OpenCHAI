@@ -9,36 +9,30 @@
     - "{{ iso_mount_path }}"
 
 # ------------------------------------------------
-# Install PXE packages (local RPM preferred, fallback to dnf)
+# Install PXE packages (LOCAL RPMs first, SAFE fallback to network)
 # ------------------------------------------------
-- name: Install PXE packages from local RPMs or network
+- name: Install PXE packages from local RPMs or network (dependency-safe)
   ansible.builtin.shell: |
     set -e
 
+    echo ">>> Checking local RPM availability in {{ pxe_rpm_path }}"
+
+    if ls {{ pxe_rpm_path }}/*.rpm &>/dev/null; then
+      echo ">>> Local RPMs found. Installing using DNF localinstall (dependency-safe)"
+      dnf -y localinstall {{ pxe_rpm_path }}/*.rpm
+    else
+      echo ">>> No local RPMs found. Falling back to network install"
+      dnf -y install {{ pxe_packages | join(' ') }}
+    fi
+
+    echo ">>> Verifying required packages are installed"
     for pkg in {{ pxe_packages | join(' ') }}; do
-      echo ">>> Processing package: $pkg"
-
-      # Skip if already installed
-      if rpm -q "$pkg" &>/dev/null; then
-        echo ">>> $pkg already installed, skipping"
-        continue
-      fi
-
-      # Try local RPM first
-      rpmfile=$(ls {{ pxe_rpm_path }}/$pkg-*.rpm 2>/dev/null | head -n 1)
-
-      if [ -n "$rpmfile" ]; then
-        echo ">>> Installing $pkg from local RPM: $rpmfile"
-        rpm -Uvh --nosignature --nodeps "$rpmfile"
-      else
-        echo ">>> Local RPM not found for $pkg, trying network install"
-        if dnf -y install "$pkg"; then
-          echo ">>> Installed $pkg from network"
-        else
-          echo "!!! Failed to install $pkg from both local RPM and network"
-          exit 1
-        fi
-      fi
+      rpm -q "$pkg" >/dev/null 2>&1 || {
+        echo "!!! Package $pkg failed to install"
+        exit 1
+      }
     done
+
+    echo ">>> PXE package installation completed successfully"
   args:
     executable: /bin/bash
