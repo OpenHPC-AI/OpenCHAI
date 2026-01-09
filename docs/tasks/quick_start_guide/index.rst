@@ -214,13 +214,13 @@ Example:
 
 This file is used to generate static DHCP reservations.
 
-Run the PXE server setup script:
+**Run the PXE server setup script:**
 
 ::
 
   bash servicenodes/pxe_server_setup.sh
 
-During execution:
+**During execution:**
 
 - All DHCP clients are displayed in a table
 - You are prompted to update MAC or IP values if required
