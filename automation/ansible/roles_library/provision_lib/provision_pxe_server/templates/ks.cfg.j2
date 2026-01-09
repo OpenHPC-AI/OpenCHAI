@@ -22,7 +22,10 @@ timezone {{ ks_timezone }} --isUtc
 network --bootproto={{ ks_bootproto }} --device=link --activate
 
 # 6. Root Password
-rootpw --plaintext {{ ks_root_password }}
+rootpw --plaintext {{ ks_root_password }} --allow-ssh
+#rootpw --iscrypted $6$RcvB/GEcecFbrQLm$SIhv2kYGTV4NJfEIJhWx0ZOWZWY8mSI7K.yZTPQPGTUlPAFVRXeN2DBq3/c6tYIsp1rH0dzidJD7G6eOZGxbw0
+#user --groups=wheel --name=rudra_admin --password=$6$DWKmOQUsJ9KBBFu8$jifDehTJ/icBzZ03P61iOFwjkIAuRCJYGm5xeadkfd3yp3/YFkDEAoJq7nkECBayxh9zNYHz68WQf8cMBtAKw. --iscrypted --gecos="rudra_admin"
+
 
 # 7. Bootloader
 bootloader --location={{ ks_bootloader_location }} --append="{{ ks_bootloader_args }}"
