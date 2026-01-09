@@ -28,15 +28,16 @@
     dhcp_range_start: "{{ pxe_server_dhcp_range_start }}"
     dhcp_range_end: "{{ pxe_server_dhcp_range_end }}"
     dns_server: "{{ pxe_server_dns }}"
+    httpd_listen_port: 8080
 
     dhcp_clients:
-      - name: cn01
+      - name: master01
         mac: 00:0C:29:43:18:B4
         ip: 172.10.3.101
-      - name: cn02
+      - name: master02
         mac: 00:0C:29:43:18:B5
         ip: 172.10.3.102
-      - name: cn03
+      - name: login01
         mac: 00:0C:29:43:18:B6
         ip: 172.10.3.103
 
