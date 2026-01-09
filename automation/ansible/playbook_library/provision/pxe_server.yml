@@ -1,6 +1,6 @@
 ---
 - name: Configure PXE + ISO + Kickstart Server
-  hosts: all
+  hosts: headnode
   become: yes
   gather_facts: no
   serial: 1
