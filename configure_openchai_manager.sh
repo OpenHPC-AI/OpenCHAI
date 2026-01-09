@@ -517,6 +517,7 @@ SCRIPT_FILES=(
     "$BASE_DIR/chai_setup/update_group_var_all.sh"
     "$BASE_DIR/chai_setup/modules/"*.sh
     "$BASE_DIR/chai_setup/update_inventory_def.sh"
+    "$BASE_DIR/servicenodes/*.sh"
 )
 
 for file in "${SCRIPT_FILES[@]}"; do
