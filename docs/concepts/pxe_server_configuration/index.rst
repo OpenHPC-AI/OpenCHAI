@@ -24,6 +24,10 @@ The PXE server configuration performs the following tasks:
 
 PXE-Server Setup to boot service nodes
 ---------------------
+::
+
+  # Go to the OpenCHAI directory where the repository was cloned from GitHub
+  cd OpenCHAI
 
 **Define DHCP Clients**
 
@@ -31,7 +35,7 @@ Create or edit the DHCP client input file:
 
 ::
 
-  OpenCHAI/servicenodes/dhcp_clients_mac.txt
+  vim ./servicenodes/dhcp_clients_mac.txt
 
 Format:
 
@@ -56,8 +60,7 @@ Step 2: Run PXE Server Setup
 Run the PXE server setup script:
 
 ::
-  # Go to the OpenCHAI directory where the repository was cloned from GitHub
-  cd OpenCHAI
+
   bash servicenodes/pxe_server_setup.sh
 
 During execution:
