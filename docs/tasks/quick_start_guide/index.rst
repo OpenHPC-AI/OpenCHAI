@@ -137,7 +137,6 @@ your target environment, deployment model, and workload requirements.
 
 
 Available OpenCHAI Versions
-===========================
 
 .. toctree::
    :maxdepth: 1
