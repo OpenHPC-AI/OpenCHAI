@@ -67,9 +67,10 @@
     mode: "0755"
     recurse: yes
 
-- name: Create Apache symlink for PXE
-  ansible.builtin.file:
-    src: "{{ openchai_vault_path }}/iso-data"
-    dest: "/var/www/html/iso-data"
-    state: link
-    force: yes
+- name: Copy ISO data to Apache document root (no symlink)
+  ansible.builtin.synchronize:
+    src: "{{ openchai_vault_path }}/iso-data/"
+    dest: "/var/www/html/iso-data/"
+    recursive: yes
+    delete: no
+
