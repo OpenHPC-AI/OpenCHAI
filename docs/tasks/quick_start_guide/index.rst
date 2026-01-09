@@ -47,7 +47,7 @@ HPC-AI cluster without referring to the full OpenCHAI Administrator Manual.
 Installing the Head Node
 ------------------------
 
-Install Git
+Step 1. Install Git
 ~~~~~~~~~~~
 
 Install the Git package on the head node:
@@ -56,7 +56,7 @@ Install the Git package on the head node:
 
    yum install git
 
-Clone the OpenCHAI Repository
+Step 2. Clone the OpenCHAI Repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Clone the repository into a directory with **at least 60 GB of free disk space**.
@@ -71,38 +71,32 @@ This space is required to store the **offline software stack RPMs**.
 
 ----
 
-Configure the OpenCHAI Manager Tool
+Step 3. Configure the OpenCHAI Manager Tool
 -----------------------------------
 
-Ensure OpenCHAI Stack Availability
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3.1 Ensure that the **OpenCHAI software stack tar file** is available in the directory below to enable a smooth and reliable setup.
 
-Ensure that the **OpenCHAI stack tar file** is available in the following directory
-for an improved setup experience:
+**Offline Mode (Recommended)**
 
-**Offline Mode**
-
-Copy the OpenCHAI software stack for Alma Linux or Rocky Linux from removable media (such as a USB drive or local storage) into the directory below.
-Alternatively, the stack can be downloaded during the OpenCHAI Manager Tool setup.
+Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux** from removable media (USB drive, local disk, or external storage) into:
 
 ::
 
- ls -la  ./hpcsuite_registry/hostmachine_reg/<os-version>/
+  ./hpcsuite_registry/hostmachine_reg/<os-version>/
 
-**Online Mode**
-
-During the OpenCHAI Manager Tool setup, packages can be downloaded
-directly from the network if they are not available locally.
-
-Alternatively, Manual Downloads
+For manual package downloads, refer to the **HPC-Sangrah Vault**:
 
 .. toctree::
    :maxdepth: 1
-
+   :caption: HPC-Sangrah Vault
    ../../documentation/releases/index
 
+**Online Mode**
 
-Ansible Inventory Setup
+If the stack is not available locally, the OpenCHAI Manager Tool can download the required packages from the network during **Step 3.3** of the setup process.
+
+
+3.2 Ansible Inventory Setup
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Configure the Ansible inventory on the head node to enable communication
@@ -122,7 +116,7 @@ Edit the inventory file according to your environment:
 
 ----
 
-Proceed with CHAI Manager Head Node Setup
+3.3 Proceed with CHAI Manager Head Node Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once the inventory is configured, initialize the **CHAI Manager Head Node**.
@@ -149,7 +143,7 @@ Otherwise, the installer provides an option to download them during execution.
 
 ----
 
-Post-Setup Verification
+Step 4. Post-Setup Verification
 -----------------------
 
 Verify inventory configuration:
@@ -175,7 +169,7 @@ If communication issues occur, update the inventory file and reapply:
 
 ----
 
-Update Cluster Environment Variables
+Step 5. Update Cluster Environment Variables
 ------------------------------------
 
 Update all HPC-AI cluster environment variables:
@@ -191,7 +185,7 @@ Update all HPC-AI cluster environment variables:
 
 ----
 
-HPC-AI Head Node Setup
+Step 6. HPC-AI Head Node Setup
 ---------------------
 
 Run the head node setup script:
@@ -202,7 +196,7 @@ Run the head node setup script:
 
 ----
 
-HPC Cluster Nodes Deployment and Configuration
+Step 7. HPC Master Nodes Deployment and Configuration
 ----------------------------------------------
 
 To deploy and configure HPC master nodes, execute:
