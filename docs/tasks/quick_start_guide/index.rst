@@ -141,7 +141,6 @@ Available OpenCHAI Versions
 
 .. toctree::
    :maxdepth: 1
-   :caption: Available Releases
 
    ../../documentation/releases/index
 
