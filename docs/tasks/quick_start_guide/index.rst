@@ -41,7 +41,7 @@ Software Stack
 .. toctree::
    :maxdepth: 1
 
-   ../../documentation/releases
+   ../../documentation/releases/index
 
 ----
 
@@ -105,7 +105,7 @@ HPC-Sangrah Vault
 .. toctree::
    :maxdepth: 1
 
-   ../../documentation/releases
+   ../../documentation/releases/openchai_packages/index
 
 **Online Mode**
 
