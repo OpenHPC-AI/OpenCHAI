@@ -10,17 +10,11 @@ OpenCHAI versions follow the **x.y.z** versioning scheme, where:
 
 ----
 
-Release History
----------------
-
 .. toctree::
    :maxdepth: 1
    :caption: Available Releases
 
    v1.25.0/index
-
-OpenCHAI Packages
------------------
 
 .. toctree::
    :maxdepth: 1
