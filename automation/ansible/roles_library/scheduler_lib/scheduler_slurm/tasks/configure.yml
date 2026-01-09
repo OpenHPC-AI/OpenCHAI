@@ -87,8 +87,6 @@
     mode: "0400"
     remote_src: true
 
-
-
 # 🔹 Override: Copy real files if replacement is enabled
 - name: Deploy Slurm config and helper scripts
   ansible.builtin.copy:
@@ -195,3 +193,52 @@
   ansible.builtin.fail:
     msg: "/etc/slurm/slurm.conf is missing! Please ensure it is created before starting services."
   when: not slurm_conf.stat.exists
+
+- name: Determine Slurm master topology dynamically
+  ansible.builtin.set_fact:
+    slurm_primary_master: "{{ groups['hpc_master'][0] }}"
+    slurm_backup_master: "{{ groups['hpc_master'][1] | default(omit) }}"
+  run_once: true
+
+- name: Build Slurm master attributes dynamically
+  ansible.builtin.set_fact:
+    slurm_master_attrs:
+      - key: ClusterName
+        value: "{{ slurm_cluster_name }}"
+      - key: ControlMachine
+        value: "{{ hostvars[slurm_primary_master].ansible_hostname }}"
+      - key: ControlAddr
+        value: "{{ hostvars[slurm_primary_master].ansible_default_ipv4.address }}"
+      - key: BackupController
+        value: "{{ hostvars[slurm_backup_master].ansible_hostname }}"
+      - key: BackupAddr
+        value: "{{ hostvars[slurm_backup_master].ansible_default_ipv4.address }}"
+  when:
+    - slurm_node_role == "master"
+    - slurm_backup_master is defined
+
+
+
+
+
+- name: Update Slurm master attributes in slurm.conf
+  ansible.builtin.lineinfile:
+    path: /etc/slurm/slurm.conf
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    backup: yes
+  loop: "{{ slurm_master_attrs }}"
+  when: slurm_node_role == "master"
+
+- name: Validate primary and backup Slurm masters are different
+  ansible.builtin.assert:
+    that:
+      - slurm_primary_master != slurm_backup_master
+    fail_msg: "Primary and Backup Slurm masters must be different hosts"
+  run_once: true
+  when:
+    - slurm_backup_master is defined
+
+
+- import_tasks: configure_compute.yml
+                                                                                        
