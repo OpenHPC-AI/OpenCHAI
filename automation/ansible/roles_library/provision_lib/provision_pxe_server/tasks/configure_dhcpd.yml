@@ -15,4 +15,4 @@
     src: dhcpd.conf.j2
     dest: /etc/dhcp/dhcpd.conf
     mode: "0644"
-  notify: Restart DHCP
+  notify: restart dhcpd
