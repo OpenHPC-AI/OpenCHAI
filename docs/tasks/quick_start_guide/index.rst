@@ -20,7 +20,7 @@ synchronization for high availability. In addition, ensure the head node has **a
 in the directory where the OpenCHAI repository and RPM stack are cloned.
 This space is required for **offline installation**.
 
-Minimum hardware requirements for testing:
+**Minimum hardware requirements for testing:**
 
 - **Head Node**
   - 4 CPU cores
@@ -33,7 +33,7 @@ Minimum hardware requirements for testing:
 
 ----
 
-OpenCHAI Manager Tool Setup
+**OpenCHAI Manager Tool Setup**
 
 This section provides a **step-by-step guide** for installing the **Open CDAC HPC-AI Manager Tool
 (OpenCHAI)** on a **bare-metal server**.
