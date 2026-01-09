@@ -204,3 +204,14 @@ To deploy and configure HPC master nodes, execute:
 .. code-block:: bash
 
    bash ./servicenodes/hpc_master_ha_node_setup.sh
+
+
+--------
+
+Feedback
+--------
+
+Was this page helpful?
+
+- 👍 `Yes <https://github.com/OpenHPC-AI/OpenCHAI/issues/new?title=Docs+Feedback:+Helpful>`_
+- 👎 `No <https://github.com/OpenHPC-AI/OpenCHAI/issues/new?title=Docs+Feedback:+Needs+Improvement>`_
