@@ -74,15 +74,15 @@ This space is required to store the **offline software stack RPMs**.
 Step 3. Configure the OpenCHAI Manager Tool
 -----------------------------------
 
-3.1 Ensure that the **OpenCHAI software stack tar file** is available in the directory below to enable a smooth and reliable setup.
+3.1 Ensure that the **OpenCHAI software stack tar file** is available in the directory below to enable a smooth and reliable setup. 
 
-**Offline Mode (Recommended)**
+**Offline Mode** (Recommended if Available)
 
 Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux** from removable media (USB drive, local disk, or external storage) into:
 
 ::
 
-  ./hpcsuite_registry/hostmachine_reg/<os-version>/
+  ls -la ./hpcsuite_registry/hostmachine_reg/<os-version>/
 
 For manual package downloads, refer to the **HPC-Sangrah Vault**:
 
@@ -95,6 +95,7 @@ For manual package downloads, refer to the **HPC-Sangrah Vault**:
 
 If the stack is not available locally, the OpenCHAI Manager Tool can download the required packages from the network during **Step 3.3** of the setup process.
 
+----
 
 3.2 Ansible Inventory Setup
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,7 +144,8 @@ Otherwise, the installer provides an option to download them during execution.
 
 ----
 
-Step 4. Post-Setup Verification
+
+Step 4. Inventory Verification
 -----------------------
 
 Verify inventory configuration:
@@ -151,21 +153,6 @@ Verify inventory configuration:
 .. code-block:: bash
 
    ansible-inventory --list
-
-Verify connectivity with all cluster hosts:
-
-.. code-block:: bash
-
-   ansible all -m ping
-
-   # Verify connectivity using a specific SSH port
-   ansible all -m ping -e "ansible_port=22"
-
-If communication issues occur, update the inventory file and reapply:
-
-.. code-block:: bash
-
-   bash ./chai_setup/update_inventory_def.sh
 
 ----
 
@@ -196,7 +183,27 @@ Run the head node setup script:
 
 ----
 
-Step 7. HPC Master Nodes Deployment and Configuration
+Step 7. Inventory Verification
+-----------------------
+
+Verify connectivity with all cluster hosts:
+
+.. code-block:: bash
+
+   ansible all -m ping
+
+   # Verify connectivity using a specific SSH port
+   ansible all -m ping -e "ansible_port=22"
+
+If communication issues occur, update the inventory file and reapply:
+
+.. code-block:: bash
+
+   bash ./chai_setup/update_inventory_def.sh
+
+---
+
+Step 8. HPC Master Nodes Deployment and Configuration
 ----------------------------------------------
 
 To deploy and configure HPC master nodes, execute:
