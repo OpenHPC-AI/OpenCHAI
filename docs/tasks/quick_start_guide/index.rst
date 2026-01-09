@@ -35,12 +35,13 @@ This space is required for **offline installation**.
 
 Explore:
 
-HPC-Sangrah Vault
-================
+Software Stack
+---------------
 
 .. toctree::
    :maxdepth: 1
    :caption: HPC-Sangrah Vault
+
    ../../documentation/releases/index
 
 ----
@@ -98,12 +99,14 @@ Copy the OpenCHAI software stack for **Alma Linux** or **Rocky Linux** from remo
 
 For manual package downloads, refer to the **HPC-Sangrah Vault**:
 
+
 HPC-Sangrah Vault
-=================
+---------------
 
 .. toctree::
    :maxdepth: 1
    :caption: HPC-Sangrah Vault
+
    ../../documentation/releases/index
 
 **Online Mode**
