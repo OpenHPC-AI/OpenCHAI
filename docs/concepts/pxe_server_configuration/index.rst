@@ -8,7 +8,6 @@ It enables automated provisioning of HPC, AI, and login nodes over the network.
 The PXE server setup is fully automated using **Ansible**, with a **Python-based CLI**
 to manage DHCP client definitions in an enterprise-safe manner.
 
----
 
 Overview
 --------
@@ -23,6 +22,7 @@ The PXE server configuration performs the following tasks:
 - Allows execution to be restricted to specific nodes using Ansible ``-l``
 
 ---
+
 PXE-Server Setup to boot service nodes
 ---------------------
 
