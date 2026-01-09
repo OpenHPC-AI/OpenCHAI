@@ -1,13 +1,20 @@
 # -------------------------------------------------
 # PXE Packages
 # -------------------------------------------------
+
 pxe_packages:
+  - dhcp-common
   - dhcp-server
+  - grub2-efi-x64
   - httpd
+  - httpd-core
+  - mod_http2
+  - mod_lua
+  - rocky-logos-httpd
+  - shim-x64
   - syslinux
   - syslinux-tftpboot
   - tftp-server
-
 
 
 # -------------------------------------------------
@@ -82,5 +89,3 @@ ks_extra_packages:
   - vim
   - wget
   - zip
-
-
