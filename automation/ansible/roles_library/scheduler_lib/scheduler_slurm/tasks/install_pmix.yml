@@ -1,0 +1,44 @@
+---
+# =========================================================
+# PMIx Installation (only if any RPM is missing)
+# =========================================================
+
+- name: Find PMIx RPMs
+  ansible.builtin.find:
+    paths: "{{ slurm_rpm_base }}/{{ pmix_version }}"
+    patterns: "*.rpm"
+  register: pmix_rpms
+
+- name: Extract PMIx package names from RPMs
+  ansible.builtin.command: >
+    rpm -qp --queryformat '%{NAME}\n' {{ item.path }}
+  loop: "{{ pmix_rpms.files }}"
+  register: pmix_pkg_names
+  changed_when: false
+
+- name: Check installed PMIx packages
+  ansible.builtin.command: "rpm -q {{ item.stdout }}"
+  loop: "{{ pmix_pkg_names.results }}"
+  register: pmix_installed_check
+  failed_when: false
+  changed_when: false
+
+- name: Determine if PMIx install is required
+  ansible.builtin.set_fact:
+    pmix_install_required: >-
+      {{
+        pmix_installed_check.results
+        | selectattr('rc', '!=', 0)
+        | list
+        | length > 0
+      }}
+
+- name: Force install ALL PMIx RPMs (ignore deps & conflicts)
+  ansible.builtin.command: >
+    rpm -ivh --force --nodeps
+    {{ pmix_rpms.files | map(attribute='path') | join(' ') }}
+  when:
+    - pmix_rpms.files | length > 0
+    - pmix_install_required
+  register: pmix_install
+  ignore_errors: true
