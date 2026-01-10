@@ -36,12 +36,12 @@
     selinux_mode: disabled
     selinux_install_if_missing: true
 
-- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
-  tags: [phase1, bootstrap, web_repo]
-  vars:
-    repo_server: "http://{{ headnode_ip }}:8080"
-    clone_dest: "{{ openchai_vault_path }}/"
-    download_tool: wget
+#- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+#  tags: [phase1, bootstrap, web_repo]
+#  vars:
+#    repo_server: "http://{{ headnode_ip }}:8080"
+#    clone_dest: "{{ openchai_vault_path }}/"
+#    download_tool: wget
 
 - import_playbook: ../../playbook_library/bootstrap/update_hosts.yml
   tags: [phase1, bootstrap, hosts_file]
