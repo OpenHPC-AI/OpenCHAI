@@ -1,0 +1,3 @@
+usb_mount_enable: false        # set true if you want auto-mount
+usb_device: /dev/sda1
+usb_mount_point: /mnt
