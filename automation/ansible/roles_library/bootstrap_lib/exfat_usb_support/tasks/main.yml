@@ -1,0 +1,82 @@
+---
+- name: Validate OS family
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == "RedHat"
+      - ansible_facts.distribution_major_version | int >= 8
+    fail_msg: "This task supports only RHEL-like EL8/EL9 systems"
+
+# -------------------------------------------------------------------
+# Enable CRB / PowerTools (required for dependencies)
+# -------------------------------------------------------------------
+
+- name: Enable CRB on EL9
+  ansible.builtin.command: dnf config-manager --set-enabled crb
+  when: ansible_facts.distribution_major_version | int == 9
+  changed_when: false
+  tags: exfat_repo
+
+- name: Enable PowerTools on EL8
+  ansible.builtin.command: dnf config-manager --set-enabled powertools
+  when: ansible_facts.distribution_major_version | int == 8
+  changed_when: false
+  tags: exfat_repo
+
+# -------------------------------------------------------------------
+# Install EPEL
+# -------------------------------------------------------------------
+
+- name: Install EPEL release
+  ansible.builtin.package:
+    name: epel-release
+    state: present
+  tags: exfat_repo
+
+# -------------------------------------------------------------------
+# Install exFAT support
+# -------------------------------------------------------------------
+
+- name: Install exFAT tools (preferred)
+  ansible.builtin.package:
+    name: exfatprogs
+    state: present
+  register: exfat_install
+  ignore_errors: true
+  tags: exfat_install
+
+- name: Fallback – Install fuse-exfat RPM (EL8 only)
+  ansible.builtin.dnf:
+    name: "https://download1.rpmfusion.org/free/el/updates/8/x86_64/f/fuse-exfat-1.3.0-3.el8.x86_64.rpm"
+    state: present
+    disable_gpg_check: true
+  when:
+    - exfat_install is failed
+    - ansible_facts.distribution_major_version | int == 8
+  tags: exfat_install
+
+# -------------------------------------------------------------------
+# Optional: Create mount directory
+# -------------------------------------------------------------------
+
+- name: Create USB mount directory
+  ansible.builtin.file:
+    path: "{{ usb_mount_point }}"
+    state: directory
+    mode: '0755'
+  when: usb_mount_enable | bool
+  tags: exfat_mount
+
+# -------------------------------------------------------------------
+# Optional: Mount USB device
+# -------------------------------------------------------------------
+
+- name: Mount USB exFAT device
+  ansible.builtin.mount:
+    src: "{{ usb_device }}"
+    path: "{{ usb_mount_point }}"
+    fstype: exfat
+    opts: rw,nosuid,nodev,noexec
+    state: mounted
+  when: usb_mount_enable | bool
+  tags: exfat_mount
+
