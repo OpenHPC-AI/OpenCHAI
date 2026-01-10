@@ -1,0 +1,15 @@
+---
+- name: Install Provision Osimage
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+  vars:
+    xcat_install_root: "{{ drbd_mount_dir }}/xcatdata/install/netboot"
+    registry_osimage_dir: "{{ base_dir }}/hpcsuite_registry/provisioning_osimage"
+    source_role: netboot-compute
+    target_role: netboot-rudra-compute
+
+  roles:
+    - "{{ roles_parent_path }}/provision_lib/provision_xcat_osimage"
