@@ -1,0 +1,15 @@
+---
+- name: exFAT USB Support Configuration
+  hosts: headnode
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+
+  vars:
+    usb_mount_enable: false        # set true if you want auto-mount
+    usb_device: /dev/sda1
+    usb_mount_point: /mnt
+
+  roles:
+    - "{{ roles_parent_path }}/bootstrap_lib/exfat_usb_support"
