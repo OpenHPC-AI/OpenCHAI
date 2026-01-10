@@ -1,0 +1,179 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+###############################################################################
+# PHASE 1 – PRE-REQUISITES
+###############################################################################
+
+- import_playbook: ../../playbook_library/security/configure_firewall.yml
+  tags: [phase1, security, firewall]
+  vars:
+    fw_service_name: firewalld
+    fw_service_state: stopped
+    fw_service_enabled: false
+    fw_install_if_missing: true
+
+- import_playbook: ../../playbook_library/security/configure_selinux.yml
+  tags: [phase1, security, selinux]
+  vars:
+    selinux_mode: disabled
+    selinux_install_if_missing: true
+
+- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+  tags: [phase1, bootstrap, web_repo]
+  vars:
+    repo_server: "http://{{ headnode_ip }}:8080"
+    clone_dest: "{{ openchai_vault_path }}/"
+    download_tool: wget
+
+- import_playbook: ../../playbook_library/bootstrap/update_hosts.yml
+  tags: [phase1, bootstrap, hosts_file]
+
+- import_playbook: ../../playbook_library/configure/standard_dir_setup.yml
+  tags: [phase1, bootstrap, standard_dir]
+  vars:
+    hpc_container_pv_dir: /hpc_container_pv
+    hpctool_stack_dir: /hpctool_stack
+    hpc_cluster_suite_dir: /root/hpc_cluster_suite
+
+- import_playbook: ../../playbook_library/storage/storage_nfs_client.yml
+  tags: [phase1, storage, nfs]
+  vars:
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms/"
+    required_packages:
+      - nfs-utils
+      - libnfsidmap
+      - rpcbind
+    nfs_client_service: nfs-client.target
+    nfs_client_state: started
+    nfs_client_enabled: true
+    nfs_client_install_if_missing: true
+    nfs_mounts:
+      - src: "{{ headnode_ip }}:{{ rpm_stack_path }}"
+        dest: "{{ rpm_stack_path }}"
+        fstype: nfs
+        opts: ro,_netdev
+      - src: "{{ headnode_ip }}:{{ configuration_dir_path }}"
+        dest: "{{ configuration_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+      - src: "{{ headnode_ip }}:{{ bin_dir_path }}"
+        dest: "{{ bin_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+    mounted_state: ephemeral
+
+- import_playbook: ../../playbook_library/security/security_sshd.yml
+  tags: [phase1, security, sshd]
+
+- import_playbook: ../../playbook_library/services/sshd.yml
+  tags: [phase1, security, sshd]
+
+- import_playbook: ../../playbook_library/bootstrap/configure_chrony_server.yml
+  tags: [phase1, bootstrap, chrony]
+
+###############################################################################
+# PHASE 2 – HIGH AVAILABILITY
+###############################################################################
+
+- import_playbook: ../../playbook_library/utility/update_kernel.yml
+  tags: [phase2, ha, kernel]
+
+- import_playbook: ../../playbook_library/utility/utility_pcs_drbd.yml
+  tags: [phase2, ha, pcs_drbd_pkg]
+
+- import_playbook: ../../playbook_library/storage/storage_drbd_configure.yml
+  tags: [phase2, ha, drbd_config]
+
+- import_playbook: ../../playbook_library/utility/utility_pcs_basic.yml
+  tags: [phase2, ha, pcs_config]
+
+###############################################################################
+# PHASE 3 – NETWORK
+###############################################################################
+
+- import_playbook: ../../playbook_library/network/setup_mellanox.yml
+  tags: [phase3, network, mellanox]
+
+- import_playbook: ../../playbook_library/bootstrap/update_interface_ipaddr.yml
+  tags: [phase3, network, ip_config]
+
+- import_playbook: ../../playbook_library/network/network_manager.yml
+  tags: [phase3, network, nm_service]
+
+###############################################################################
+# PHASE 4 – CONTAINER PLATFORM
+###############################################################################
+
+- import_playbook: ../../playbook_library/container/docker-engine/install_docker_latest.yml
+  tags: [phase4, container, docker_engine]
+
+- import_playbook: ../../playbook_library/container/docker-compose/install_docker_compose.yml
+  tags: [phase4, container, docker_compose]
+
+- import_playbook: ../../playbook_library/container/docker-swarm/swarm_ha_setup.yml
+  tags: [phase4, container, docker_swarm]
+
+###############################################################################
+# PHASE 5 – xCAT PROVISIONING
+###############################################################################
+
+- import_playbook: ../../playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
+  tags: [phase5, provisioning, xcat_container]
+
+- import_playbook: ../../playbook_library/configure/xcat_docker_hostmachine_setup.yml
+  tags: [phase5, provisioning, xcat_hostmachine]
+
+
+- import_playbook: ../../playbook_library/utility/utility_pcs_xcat_basic.yml
+  tags: [phase5, provisioning, pcs_xcat_resource]
+
+- import_playbook: ../../playbook_library/provision/provision_osimage_build.yml
+  tags: [phase5, provisioning, xcat_osimage]
+
+###############################################################################
+# PHASE 6 – AUTHENTICATION
+###############################################################################
+
+- import_playbook: ../../playbook_library/install/ldap/install_multi_rep_openldap_server.yml
+  tags: [phase6, auth, ldap_container]
+
+- import_playbook: ../../playbook_library/configure/ldap_docker_hostmachine_setup.yml
+  tags: [phase6, auth, ldap_hostmachine]
+
+###############################################################################
+# PHASE 7 – WORKLOAD MANAGEMENT
+###############################################################################
+
+- import_playbook: ../../playbook_library/install/slurm/install_slurm_master.yml
+  tags: [phase7, workload, slurm_config]
+
+###############################################################################
+# PHASE 8 – UTILITIES & MONITORING
+###############################################################################
+
+- import_playbook: ../../playbook_library/utility/utility_lmod.yml
+  tags: [phase8, utilities, lmod]
+
+- import_playbook: ../../playbook_library/monitoring/configure_mcelog.yml
+  tags: [phase8, monitoring, mcelog]
+
+- import_playbook: ../../playbook_library/monitoring/configure_rsyslog_client.yml
+  tags: [phase8, monitoring, rsyslog]
