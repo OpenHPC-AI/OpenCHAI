@@ -16,18 +16,22 @@
     osimage_extract_path: "{{ xcat_install_root }}/{{ os_version }}/{{ os_arch }}"
     osimage_tarball: "{{ registry_osimage_dir }}/{{ os_version }}/rudra-compute_{{ os_version }}.tgz"
 
+- name: Extract osimage role name from tarball
+  set_fact:
+    osimage_role: "{{ osimage_tarball | basename | regex_replace('_(.*)\\.tgz$', '') }}"
+
 # -------------------------------------------------
 # Show summary
 # -------------------------------------------------
 - name: Show selected osimage parameters
   debug:
     msg:
-      - "Source osimage  : {{ source_osimage }}"
-      - "Target osimage  : {{ target_osimage }}"
-      - "OS Extract Path : {{ osimage_extract_path }}"
-      - "Tarball         : {{ osimage_tarball }}"
-      - "Force Replace   : {{ force_osimage_replace }}"
-
+      - "Source osimage        : {{ source_osimage }}"
+      - "Target osimage        : {{ target_osimage }}"
+      - "OS Extract Path       : {{ osimage_extract_path }}"
+      - "Tarball               : {{ osimage_tarball }}"
+      - "Force Replace         : {{ force_osimage_replace }}"
+      - "Provisioning osimage  : {{ osimage_role }}"
 # -------------------------------------------------
 # Validate source osimage
 # -------------------------------------------------
