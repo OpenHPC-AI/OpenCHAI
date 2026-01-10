@@ -24,10 +24,10 @@
     selinux_mode: disabled
     selinux_install_if_missing: true        
 
-- import_playbook: ../../playbook_library/utility/utility_web_host.yml
-  vars:
-   web_server: nginx
-   web_port: 8080
+#- import_playbook: ../../playbook_library/utility/utility_web_host.yml
+#  vars:
+#   web_server: nginx
+#   web_port: 8080
 
 - import_playbook: ../../playbook_library/storage/storage_nfs_server.yml
   vars:
