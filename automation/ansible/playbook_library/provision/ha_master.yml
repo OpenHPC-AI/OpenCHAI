@@ -4,7 +4,7 @@
 ###############################################################################
 
 - name: Master HPC Provisioning Playbook
-  hosts: all
+  hosts: hpc_master
   gather_facts: no
   ignore_unreachable: yes
   become: true
