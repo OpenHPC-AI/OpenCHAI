@@ -1,0 +1,64 @@
+---
+# -------------------------------------------------
+# Defaults safety (even if not defined elsewhere)
+# -------------------------------------------------
+- name: Ensure force_osimage_replace has default
+  set_fact:
+    force_osimage_replace: "{{ force_osimage_replace | default(false) }}"
+
+# -------------------------------------------------
+# Build variables
+# -------------------------------------------------
+- name: Build osimage names and paths
+  set_fact:
+    source_osimage: "{{ os_version }}-{{ os_arch }}-{{ source_role }}"
+    target_osimage: "{{ os_version }}-{{ os_arch }}-{{ target_role }}"
+    osimage_extract_path: "{{ xcat_install_root }}/{{ os_version }}/{{ os_arch }}"
+    osimage_tarball: "{{ registry_osimage_dir }}/{{ os_version }}/rudra-compute_{{ os_version }}.tgz"
+
+# -------------------------------------------------
+# Show summary
+# -------------------------------------------------
+- name: Show selected osimage parameters
+  debug:
+    msg:
+      - "Source osimage  : {{ source_osimage }}"
+      - "Target osimage  : {{ target_osimage }}"
+      - "OS Extract Path : {{ osimage_extract_path }}"
+      - "Tarball         : {{ osimage_tarball }}"
+      - "Force Replace   : {{ force_osimage_replace }}"
+
+# -------------------------------------------------
+# Validate source osimage
+# -------------------------------------------------
+- name: Verify source osimage exists
+  command: lsdef -t osimage -z {{ source_osimage }}
+  register: source_osimage_check
+  changed_when: false
+  failed_when: source_osimage_check.rc != 0
+
+# -------------------------------------------------
+# Check target osimage existence
+# -------------------------------------------------
+- name: Check if target osimage already exists
+  command: lsdef -t osimage -z {{ target_osimage }}
+  register: target_osimage_check
+  changed_when: false
+  failed_when: false
+
+# -------------------------------------------------
+# Clone osimage definition (safe + idempotent)
+# -------------------------------------------------
+- name: Create or replace target osimage definition
+  shell: |
+    lsdef -t osimage -z {{ source_osimage }} \
+    | sed 's/{{ source_role }}:/{{ target_role }}:/' \
+    | mkdef -z {{ '-f' if force_osimage_replace | bool else '' }}
+  args:
+    executable: /bin/bash
+  when:
+    - target_osimage_check.rc != 0
+      or force_osimage_replace | bool
+  register: mkdef_result
+  changed_when: target_osimage_check.rc != 0 or force_osimage_replace | bool
+  failed_when: false
