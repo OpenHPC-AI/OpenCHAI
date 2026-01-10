@@ -37,10 +37,35 @@ curl -f -o /tmp/partition.cfg {{ ks_partition_url }}
 
 %include /tmp/partition.cfg
 
-# 9. Post-install Reboot
+# ------------------------------------------------------------
+# Security & Services Configuration
+# ------------------------------------------------------------
+
+# 9. Disable SELinux at install time (BEST PRACTICE)
+selinux --disabled
+
+# 10. Disable firewall
+firewall --disabled
+
+
+# ------------------------------------------------------------
+# Post-install configuration
+# ------------------------------------------------------------
+%post --log=/root/ks-post.log
+
+# Ensure firewalld is disabled (safety)
+systemctl disable --now firewalld || true
+
+# Ensure NetworkManager is enabled
+systemctl enable --now NetworkManager
+
+%end
+
+
+# 11. Post-install Reboot
 reboot
 
-# 10. Software Selection
+# 12. Software Selection
 %packages
 @^{{ ks_environment }}
 @system-tools
