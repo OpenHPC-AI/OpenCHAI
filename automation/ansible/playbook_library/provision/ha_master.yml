@@ -33,11 +33,11 @@
 # ---------------------------------------------------------------------------
 # Clone Hosted Repositories to Client Nodes
 # ---------------------------------------------------------------------------
-- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
-  vars:
-    repo_server: "http://{{ headnode_ip }}:8080"
-    clone_dest: "{{openchai_vault_path}}/"
-    download_tool: wget
+#- import_playbook: ../../playbook_library/utility/utility_repo_clone.yml
+#  vars:
+#    repo_server: "http://{{ headnode_ip }}:8080"
+#    clone_dest: "{{openchai_vault_path}}/"
+#    download_tool: wget
 
 # ---------------------------------------------------------------------------
 # Hosts file setup for master nodes
