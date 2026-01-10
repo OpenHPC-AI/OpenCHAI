@@ -220,7 +220,7 @@ Run the PXE server setup script:
 
 ::
 
-  bash servicenodes/pxe_server_setup.sh
+  bash servicenodes/pxe_server_setup.sh headnode
 
 **During execution**
 
@@ -272,11 +272,18 @@ If communication issues occur, update the inventory file and reapply:
 Step 9. HPC Master Nodes Deployment and Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+   Currently, the platform supports both **online** and **offline** deployment modes in a mixed configuration.
+   Ensure that all service nodes (including both master nodes) have **public network connectivity** available.
+   Additionally, verify that **time synchronization (NTP/Chrony)** is properly configured and consistent across all nodes.
+
+
 To deploy and configure HPC master nodes, execute:
 
 .. code-block:: bash
 
-   bash ./servicenodes/hpc_master_ha_node_setup.sh
+   bash ./servicenodes/hpc_master_ha_node_setup.sh hpc_master
 
 
 --------
