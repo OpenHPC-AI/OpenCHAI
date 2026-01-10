@@ -47,18 +47,17 @@
     - drbd_mount_check.rc == 0
 
 
-- name: Show final osimage verification result (readable)
-  debug:
+- name: Show final OS image verification
+  ansible.builtin.debug:
     msg: |
       ==================================================
-      OSIMAGE VERIFICATION
+      OS IMAGE VERIFICATION SUMMARY
       ==================================================
+
       Command:
         lsdef -t osimage -z {{ target_osimage }}
 
-      Result:
-      {{ final_osimage_check.stdout | default('NOT FOUND') | indent(2) }}
-      ==================================================
+      Result: {{ final_osimage_check.stdout | default('OS image definition NOT FOUND.') | trim | indent(6) }}
   when:
     - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
     - drbd_mount_check.rc == 0
