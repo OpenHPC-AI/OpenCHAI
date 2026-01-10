@@ -26,14 +26,25 @@
 - name: Update provisioning osimage rootimgdir
   command: >
     chdef -t osimage -o {{ target_osimage }}
-    rootimgdir={{ osimage_extract_path }}
+    rootimgdir={{ osimage_extract_path }}/{{ osimage_role }}
   register: chdef_result
   changed_when: "'Object definition has been modified' in chdef_result.stdout"
   failed_when: false
+  when:
+    - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+    - drbd_mount_check.rc == 0
 
 # -------------------------------------------------
 # Final verification
 # -------------------------------------------------
 - name: Verify final osimage definition
   command: lsdef -t osimage -z {{ target_osimage }}
+  register: final_osimage_check
   changed_when: false
+  failed_when: false
+
+- name: Show final osimage verification result
+  debug:
+    msg:
+      - "Command : lsdef -t osimage -z {{ target_osimage }}"
+      - "Result  : {{ final_osimage_check.stdout | default('NOT FOUND') }}"
