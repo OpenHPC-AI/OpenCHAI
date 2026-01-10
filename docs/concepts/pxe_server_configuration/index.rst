@@ -98,3 +98,13 @@ Once the PXE server setup completes successfully:
 2. Enable **PXE / Network Boot** in BIOS or UEFI
 3. Select network boot option
 4. Installation proceeds automatically using Kickstart
+
+Bonus: PXE Client Node 
+-----------------------
+
+On the PXE client nodes, wait for a minute the following screen is appearing.
+
+.. image:: ../../_static/pxe_client_boot_time.png
+   :alt: PXE Client Node Message Screen
+   :align: center
+   :width: 90%
