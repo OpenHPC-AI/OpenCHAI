@@ -42,6 +42,10 @@
   register: final_osimage_check
   changed_when: false
   failed_when: false
+  when:
+    - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+    - drbd_mount_check.rc == 0
+
 
 - name: Show final osimage verification result
   debug:
