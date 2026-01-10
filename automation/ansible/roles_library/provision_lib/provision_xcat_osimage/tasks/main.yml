@@ -1,0 +1,39 @@
+---
+# Check if /drbd is mounted
+- name: Check if /drbd is mounted
+  command: mountpoint -q /drbd
+  register: drbd_mount_check
+  failed_when: false
+  changed_when: false
+  when: inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+
+# tasks file for provision_xcat_osimage
+- name: Create a definition of osimage
+  include_tasks: osimage_clone.yml
+  when:
+    - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+    - drbd_mount_check.rc == 0
+
+- name: Install provisioning osimage
+  include_tasks: provision_osimage_install.yml
+  when:
+    - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+    - drbd_mount_check.rc == 0
+
+# -------------------------------------------------
+# Update rootimgdir (correct syntax)
+# -------------------------------------------------
+- name: Update provisioning osimage rootimgdir
+  command: >
+    chdef -t osimage -o {{ target_osimage }}
+    rootimgdir={{ osimage_extract_path }}
+  register: chdef_result
+  changed_when: "'Object definition has been modified' in chdef_result.stdout"
+  failed_when: false
+
+# -------------------------------------------------
+# Final verification
+# -------------------------------------------------
+- name: Verify final osimage definition
+  command: lsdef -t osimage -z {{ target_osimage }}
+  changed_when: false
