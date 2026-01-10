@@ -59,3 +59,6 @@
       Result:
       {{ final_osimage_check.stdout | default('NOT FOUND') | indent(2) }}
       ==================================================
+  when:
+    - inventory_hostname in [primary_swarm_manager, secondary_swarm_manager]
+    - drbd_mount_check.rc == 0
