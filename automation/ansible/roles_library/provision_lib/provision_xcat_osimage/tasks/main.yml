@@ -47,8 +47,15 @@
     - drbd_mount_check.rc == 0
 
 
-- name: Show final osimage verification result
+- name: Show final osimage verification result (readable)
   debug:
-    msg:
-      - "Command : lsdef -t osimage -z {{ target_osimage }}"
-      - "Result  : {{ final_osimage_check.stdout | default('NOT FOUND') }}"
+    msg: |
+      ==================================================
+      OSIMAGE VERIFICATION
+      ==================================================
+      Command:
+        lsdef -t osimage -z {{ target_osimage }}
+
+      Result:
+      {{ final_osimage_check.stdout | default('NOT FOUND') | indent(2) }}
+      ==================================================
