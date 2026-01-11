@@ -4,6 +4,41 @@
     name: chrony
     state: present
 
+# --------------------------------------------------
+# Normalize chrony_allow_networks
+# --------------------------------------------------
+
+- name: Normalize chrony_allow_networks (string → list)
+  ansible.builtin.set_fact:
+    chrony_allow_networks: "{{ chrony_allow_networks | split(',') }}"
+  when:
+    - chrony_allow_networks is defined
+    - chrony_allow_networks | type_debug in ['AnsibleUnsafeText', 'str']
+
+- name: Auto-detect default IPv4 network if not provided
+  ansible.builtin.set_fact:
+    chrony_allow_networks:
+      - "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.prefix }}"
+  when:
+    - chrony_allow_networks is not defined
+    - ansible_default_ipv4 is defined
+
+- name: Fail if chrony_allow_networks is still empty
+  ansible.builtin.fail:
+    msg: "chrony_allow_networks is empty or undefined. Provide networks explicitly."
+  when:
+    - chrony_allow_networks is not defined or chrony_allow_networks | length == 0
+
+- name: Debug normalized chrony_allow_networks
+  ansible.builtin.debug:
+    msg:
+      - "Final chrony_allow_networks = {{ chrony_allow_networks }}"
+      - "Type = {{ chrony_allow_networks | type_debug }}"
+
+# --------------------------------------------------
+# Configure Chrony
+# --------------------------------------------------
+
 - name: Backup existing chrony.conf
   ansible.builtin.copy:
     src: /etc/chrony.conf
@@ -12,7 +47,6 @@
     owner: root
     group: root
     mode: "0644"
-  when: ansible_facts['os_family'] in ['RedHat', 'Rocky', 'AlmaLinux']
   ignore_errors: true
 
 - name: Configure chrony as NTP server
