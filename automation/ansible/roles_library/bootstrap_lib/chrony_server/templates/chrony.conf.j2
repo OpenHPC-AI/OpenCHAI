@@ -25,13 +25,10 @@ rtcsync
 # Allow NTP client access from local network.
 #allow 192.168.0.0/16
 # Allow NTP client access from defined networks
-{% if chrony_allow_networks is defined and chrony_allow_networks | length > 0 %}
+# Allow NTP client access from defined networks
 {% for net in chrony_allow_networks %}
 allow {{ net }}
 {% endfor %}
-{% else %}
-# No allow networks defined
-{% endif %}
 
 # Serve time even if not synchronized to a time source.
 #local stratum 10
