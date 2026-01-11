@@ -11,7 +11,7 @@
       search_domains:
         - pune.cdac.in
         - cdac.in
-       nameservers:
+      nameservers:
         - 10.208.192.11
         - 10.208.192.12
 
