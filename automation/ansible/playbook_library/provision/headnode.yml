@@ -29,6 +29,15 @@
 #   web_server: nginx
 #   web_port: 8080
 
+- import_playbook: ../../playbook_library/network/internet_server.yml
+
+- import_playbook: ../../playbook_library/bootstrap/configure_chrony_server.yml
+  vars:
+    chrony_allow_networks:
+      - 10.10.0.0/16
+      - 192.168.1.0/24
+
+
 - import_playbook: ../../playbook_library/storage/storage_nfs_server.yml
   vars:
     nfs_server_service: nfs-server
