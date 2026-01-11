@@ -1,0 +1,21 @@
+# -------------------------------------------------
+# DNS configuration
+# -------------------------------------------------
+primary_nameserver: "{{ headnode_ip }}"
+dns_options: "timeout:2 attempts:3"
+
+fallback_dns:
+  search_domains:
+    - pune.cdac.in
+    - cdac.in
+  nameservers:
+    - 10.208.192.11
+    - 10.208.192.12
+
+# -------------------------------------------------
+# Internet connectivity checks
+# -------------------------------------------------
+internet_check:
+  curl_url: "https://www.google.com"
+  curl_timeout: 5
+  dns_test_domain: "www.goole.com"
