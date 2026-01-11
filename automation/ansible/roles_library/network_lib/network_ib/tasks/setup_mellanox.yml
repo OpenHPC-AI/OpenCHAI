@@ -116,6 +116,7 @@
   ansible.builtin.debug:
     var: required_packages
 
+
 - name: Set Mellanox download URL based on VERSION_ID
   ansible.builtin.set_fact:
     mellanox_ofed_url: >-
@@ -150,6 +151,14 @@
   ansible.builtin.set_fact:
     mellanox_ofed_dir: "{{ mellanox_ofed_url | basename | regex_replace('\\.tgz$', '') }}"
 
+#- name: Download Mellanox OFED tgz if not present
+#  ansible.builtin.get_url:
+#    url: "{{ mellanox_ofed_url }}"
+#    dest: "{{ rpm_stack_path }}/{{ mellanox_tgz }}"
+#    mode: '0644'
+#    force: no
+#  when: mellanox_ofed_url | length > 0
+
 - name: Check if Mellanox OFED tgz already exists
   ansible.builtin.stat:
     path: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
@@ -171,7 +180,6 @@
     src: "{{ mlnx_dir_path }}/{{ mellanox_tgz }}"
     dest: "{{ mlnx_dir_path }}"
     remote_src: yes
-
 
 # -------------------------------------------------
 # Install Mellanox OFED (normal → fallback to add-kernel-support)
