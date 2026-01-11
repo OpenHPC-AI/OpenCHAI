@@ -76,7 +76,7 @@ part_var_size: 4096
 lvm_vg_name: rockylinux
 lvm_pe_size: 4096
 lvm_swap_size: 2048
-lvm_var_size: 4096
+lvm_var_size: 40960
 # Localization
 ks_timezone: Asia/Kolkata
 # Network (Kickstart)
