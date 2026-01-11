@@ -7,6 +7,14 @@
 
   vars:
     primary_nameserver: "{{ headnode_ip }}"
+    fallback_dns:
+      search_domains:
+        - pune.cdac.in
+        - cdac.in
+       nameservers:
+        - 10.208.192.11
+        - 10.208.192.12
+
 
   roles:
     - "{{ roles_parent_path }}/network_lib/network_internet_client"
