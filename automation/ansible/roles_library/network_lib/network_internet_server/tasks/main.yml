@@ -1,0 +1,64 @@
+---
+# -------------------------------------------------
+# Verify internet connectivity
+# -------------------------------------------------
+- name: Verify internet connectivity using curl
+  ansible.builtin.command: curl -s https://www.google.com
+  register: curl_test
+  failed_when: curl_test.rc != 0
+  changed_when: false
+
+- name: Verify DNS resolution
+  ansible.builtin.command: host google.com
+  register: dns_test
+  failed_when: dns_test.rc != 0
+  changed_when: false
+
+# -------------------------------------------------
+# Enable IP forwarding
+# -------------------------------------------------
+- name: Enable IPv4 forwarding
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: yes
+
+# -------------------------------------------------
+# Detect firewalld
+# -------------------------------------------------
+- name: Check if firewalld is running
+  ansible.builtin.systemd:
+    name: firewalld
+  register: firewalld_status
+  failed_when: false
+  changed_when: false
+
+# -------------------------------------------------
+# NAT using firewalld
+# -------------------------------------------------
+- name: Enable masquerading via firewalld
+  ansible.builtin.command: firewall-cmd --add-masquerade --permanent
+  when: firewalld_status.status.ActiveState == "active"
+
+- name: Reload firewalld
+  ansible.builtin.command: firewall-cmd --reload
+  when: firewalld_status.status.ActiveState == "active"
+
+# -------------------------------------------------
+# NAT using iptables (fallback)
+# -------------------------------------------------
+- name: Enable NAT masquerade via iptables
+  ansible.builtin.command: >
+    iptables -t nat -C POSTROUTING -o {{ ansible_default_ipv4.interface }} -j MASQUERADE
+  register: nat_check
+  failed_when: false
+  changed_when: false
+  when: firewalld_status.status.ActiveState != "active"
+
+- name: Add NAT masquerade rule
+  ansible.builtin.command: >
+    iptables -t nat -A POSTROUTING -o {{ ansible_default_ipv4.interface }} -j MASQUERADE
+  when:
+    - firewalld_status.status.ActiveState != "active"
+    - nat_check.rc != 0
