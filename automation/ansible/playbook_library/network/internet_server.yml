@@ -1,0 +1,10 @@
+---
+- name: Configure internet server
+  hosts: all
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml
+
+
+  roles:
+    - "{{ roles_parent_path }}/network_lib/network_internet_server"
