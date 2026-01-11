@@ -67,4 +67,5 @@ required_packages:
   - automake
   - libtool
   - kernel-srpm-macros
+  - perl-File-Find
 
