@@ -45,6 +45,22 @@ secondary_master_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-master02 ' + inve
 primary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt01 ' + inventory_file)).split()[5] }}"
 secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventory_file)).split()[5] }}"
 
+####################### Pre-Requisite Variables #################################
+# internet client variable
+nameservers:
+  - 10.208.192.11
+  - 10.208.192.12
+
+search_domains:
+  - pune.cdac.in
+  - cdac.in
+
+chrony_allow_networks:
+  - 10.10.0.0/16
+  - 192.168.1.0/24
+
+
+
 ####################### PXE Server Configuration Variables #########################
 pxe_boot_iso: "Rocky-9.6-x86_64-dvd.iso"
 
