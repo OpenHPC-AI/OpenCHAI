@@ -9,11 +9,11 @@
     primary_nameserver: "{{ headnode_ip }}"
     fallback_dns:
       search_domains:
-        - pune.cdac.in
-        - cdac.in
+        - dns.server.in
+        - server.in
       nameservers:
-        - 10.208.192.11
-        - 10.208.192.12
+        - 192.168.192.11
+        - 192.168.192.12
 
 
   roles:
