@@ -1,3 +1,15 @@
-- name: Configuring the Chrony Server for Time Synchronization
+---
+- name: Decide if this node should act as Chrony server
+  ansible.builtin.set_fact:
+    chrony_is_server: "{{ inventory_hostname in [primary_master_node_inventory_hostname, secondary_master_node_inventory_hostname, headnode_inventory_hostname] }}"
+
+- name: Debug chrony server decision
+  ansible.builtin.debug:
+    msg:
+      - "chrony_is_server = {{ chrony_is_server }}"
+      - "chrony_allow_networks (raw) = {{ chrony_allow_networks | default('UNDEFINED') }}"
+      - "chrony_allow_networks type = {{ chrony_allow_networks | default('') | type_debug }}"
+
+- name: Configure Chrony Server for Time Synchronization
   include_tasks: chrony_server_conf.yml
-  when: inventory_hostname in [primary_master_node_inventory_hostname, secondary_master_node_inventory_hostname]
+  when: chrony_is_server
