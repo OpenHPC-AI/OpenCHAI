@@ -31,7 +31,7 @@ allow {{ net }}
 {% endfor %}
 
 # Serve time even if not synchronized to a time source.
-#local stratum 10
+local stratum 10
 
 # Require authentication (nts or key option) for all NTP sources.
 #authselectmode require
