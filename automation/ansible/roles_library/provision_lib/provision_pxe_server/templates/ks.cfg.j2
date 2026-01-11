@@ -16,7 +16,7 @@ repo --name="AppStream" --baseurl={{ ks_appstream_url }}
 # 4. Localization
 keyboard --vckeymap={{ ks_keyboard }} --xlayouts='{{ ks_keyboard }}'
 lang {{ ks_lang }}
-timezone {{ ks_timezone }} --isUtc
+timezone {{ ks_timezone }} --isUtc  --ntpservers={{ headnode_ip }}
 
 # 5. Network Configuration
 network --bootproto={{ ks_bootproto }} --device=link --activate
