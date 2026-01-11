@@ -122,7 +122,8 @@ drbd_device: "/dev/drbd0"
 drbd_mount_dir: "/drbd"
 drbd_fstype: "ext4"
 drbd_primitive_name: "drbdfs"
-drbd_sync_delay: "40"
+drbd_sync_delay: "90"
+drbd_sync_retries: "50"
 
 pcs_primary_master_node_hostname: master01
 pcs_secondary_master_node_hostname: master02
