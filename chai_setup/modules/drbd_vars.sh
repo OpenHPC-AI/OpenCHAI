@@ -52,6 +52,11 @@ update_var xcat_vip_interface             "VIP interface, default:"
 update_var xcat_vip_subnet_prefix         "VIP subnet prefix (e.g. 24), default:"
 update_var xcat_vip_resource_name         "PCS VIP resource name, default:"
 
+drbd_primary_master_node_ip               "DRBD primary master node ip" 
+drbd_secondary_master_node_ip             "DRBD secondary master node ip"
+drbd_primary_master_node_hostname         "DRBD primary master node hostname"
+drbd_secondary_master_node_hostname       "DRBD secondary master node hostname"
+
 update_var drbd_resource_name             "DRBD resource name, default:"
 update_var drbd_clone_name                "DRBD clone name, default:"
 update_var drbd_fs_resource_name          "DRBD filesystem resource name, default:"
