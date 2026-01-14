@@ -160,7 +160,7 @@ dhcp_interface: ens1f2:0,ens1f2
 
 ####################### Slurm Workload Manager Variable #####################
 cluster_name: "xlr8ed-hpc"
-slurm_cluster_name: "rudra-20pf"
+slurm_cluster_name: "rudra-hpc"
 slurm_version: "slurm-25.11.0-pmix-all"
 vault_slurmdb_password: "SlrumPass"
 vault_slurmdb_ro_password: "SlrumPass"
