@@ -11,14 +11,12 @@
     #drbd_device: /dev/drbd0
     drbd_force_md_create: true
     drbd_nodes:
-      - name: "{{ primary_master_node_hostname }}"
-        ip: "{{ primary_master_node_ip }}"
+      - name: "{{ drbd_primary_master_node_hostname }}"
+        ip: "{{ drbd_primary_master_node_ip }}"
         device: /dev/drbd0
-        #disk: /dev/nvme0n1p4
-      - name: "{{ secondary_master_node_hostname }}"
-        ip: "{{ secondary_master_node_ip }}"
+      - name: "{{ drbd_secondary_master_node_hostname }}"
+        ip: "{{ drbd_secondary_master_node_ip }}"
         device: /dev/drbd0
-        #disk: /dev/nvme0n1p5
 
   roles:
     - "{{ roles_parent_path }}/storage_lib/storage_drbd_config"
