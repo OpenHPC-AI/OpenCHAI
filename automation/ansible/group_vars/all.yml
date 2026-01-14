@@ -115,6 +115,10 @@ xcat_vip_interface: "ens1f2:0"
 xcat_vip_subnet_prefix: "22"
 xcat_vip_resource_name: "vip_xCAT"
 
+drbd_primary_master_node_ip: 192.168.0.1
+drbd_secondary_master_node_ip: 192.168.0.2
+drbd_primary_master_node_hostname: "{{ primary_master_node_hostname }}"
+drbd_secondary_master_node_hostname: "{{ secondary_master_node_hostname }}"
 drbd_resource_name: "rudra_drbd"
 drbd_clone_name: "drbdfs-clone"
 drbd_fs_resource_name: "xcatfs"
