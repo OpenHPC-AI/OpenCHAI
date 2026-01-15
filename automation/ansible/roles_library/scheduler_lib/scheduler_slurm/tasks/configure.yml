@@ -1,17 +1,19 @@
 ---
+# ============================================================
+# Users and Groups
+# ============================================================
 
 - name: Ensure munge group exists
   ansible.builtin.group:
-    name: munge
-    gid: 968
+    name: "{{ munge_group }}"
+    gid: "{{ munge_gid }}"
     state: present
 
 - name: Ensure munge user exists
   ansible.builtin.user:
-    name: munge
-    uid: 971
-    group: munge
-    comment: "MUNGE Uid 'N' Gid Emporium"
+    name: "{{ munge_user }}"
+    uid: "{{ munge_uid }}"
+    group: "{{ munge_group }}"
     home: /var/lib/munge
     shell: /sbin/nologin
     create_home: yes
@@ -19,226 +21,136 @@
 
 - name: Ensure slurm group exists
   ansible.builtin.group:
-    name: slurm
-    gid: 900
+    name: "{{ slurm_group }}"
+    gid: "{{ slurm_gid }}"
     state: present
 
 - name: Ensure slurm user exists
   ansible.builtin.user:
-    name: slurm
-    uid: 900
-    group: slurm
-    comment: "SLURM workload manager"
+    name: "{{ slurm_user }}"
+    uid: "{{ slurm_uid }}"
+    group: "{{ slurm_group }}"
     home: /var/lib/slurm
     shell: /bin/bash
     create_home: yes
     state: present
 
-# Ensure required directories exist
+# ============================================================
+# Directories
+# ============================================================
+
 - name: Ensure Munge directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: munge
-    group: munge
-    mode: '0755'
+    owner: "{{ munge_user }}"
+    group: "{{ munge_group }}"
+    mode: "0755"
   loop:
     - /etc/munge
     - /var/log/munge
     - /run/munge
 
-
-
-# Ensure required directories exist
 - name: Ensure Slurm directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: slurm
-    group: slurm
-    mode: '0755'
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_group }}"
+    mode: "0755"
   loop:
-    - /etc/slurm
-    - /var/log/slurm
-    - /var/share/slurm
-    - /var/share/slurm/d
-    - /var/share/slurm/ctld
-    - /var/spool/slurmctld
-    - /etc/slurm/plugstack.conf.d
+    - "{{ slurm_conf_dir }}"
+    - "{{ slurm_log_dir }}"
+    - "{{ slurm_share_dir }}"
+    - "{{ slurm_share_dir }}/ctld"
+    - "{{ slurm_state_dir }}"
 
+# ============================================================
+# Munge Key
+# ============================================================
 
-# 🔹 Override: Copy real files if replacement is enabled
-- name: Deploy Munge Key (remote file, no overwrite)
-  ansible.builtin.copy:
-    src: "{{ configuration_dir_path }}/slurm_config/munge.key"
-    dest: /etc/munge/munge.key
-    owner: munge
-    group: munge
-    mode: "0400"
-    remote_src: true
-    force: false
-
-- name: Deploy Munge Key (from remote filesystem)
-  ansible.builtin.copy:
-    src: "{{ configuration_dir_path }}/slurm_config/munge.key"
-    dest: "/etc/munge/munge.key"
-    owner: munge
-    group: munge
-    mode: "0400"
-    remote_src: true
-
-# 🔹 Override: Copy real files if replacement is enabled
-- name: Deploy Slurm config and helper scripts
-  ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    owner: slurm
-    group: slurm
-    mode: "{{ item.mode | default('0644') }}"
-    remote_src: true
-    force: no
-  loop:
-    - { src: "{{ configuration_dir_path }}/slurm_config/slurm.conf",       dest: "/etc/slurm/slurm.conf" }
-    - { src: "{{ configuration_dir_path }}/slurm_config/slurmdbd.conf",    dest: "/etc/slurm/slurmdbd.conf" }
-      #    - { src: "{{ configuration_dir_path }}/slurm_config/plugstack.conf",    dest: "/etc/slurm/plugstack.conf.d" }
-      #    - { src: "{{ configuration_dir_path }}/slurm_config/pyxis.conf",    dest: "/etc/slurm/plugstack.conf.d/pyxis.conf" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/cli_filter.lua",    dest: "/etc/slurm/cli_filter.lua" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/job_submit.lua",    dest: "/etc/slurm/job_submit.lua" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/slurm-prolog",  dest: "/var/share/slurm/slurm-prolog", mode: "0755" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/slurm-epilog",  dest: "/var/share/slurm/slurm-epilog", mode: "0755" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/slurm.taskprolog", dest: "/var/share/slurm/slurm.taskprolog", mode: "0755" }
-    - { src: "{{ configuration_dir_path }}/slurm_script/slurmctld-prolog", dest: "/var/share/slurm/slurmctld-prolog", mode: "0755" }
-  when: slurm_replace_configs | default(false)
-
-
-# Ensure required files exist
-
-- name: Ensure Slurm log files exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: touch
-    owner: slurm
-    group: slurm
-    mode: '0644'
-  loop:
-    - /var/log/slurm/slurmctld.log
-    - /var/log/slurm/slurmdbd.log
-
-# Ensure required files exist
-- name: Ensure Slurmdbd files exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: touch
-    owner: slurm
-    group: slurm
-    mode: '0600'
-  loop:
-    - /etc/slurm/slurmdbd.conf
-
-
-- name: Ensure Slurm directories ownership
-  ansible.builtin.file:
-    path: "{{ item }}"
-    owner: slurm
-    group: slurm
-    mode: '0755'
-  loop:
-    - /etc/slurm
-    - /var/log/slurm
-    - /var/share/slurm
-    - /var/share/slurm/ctld
-    - /var/spool/slurmctld
-
-
-
-# Generate or copy slurm JWT key
-# Generate slurm JWT key if enabled
-- name: Generate slurm JWT key if enabled
-  ansible.builtin.command: >
-    dd if=/dev/urandom of=/var/share/slurm/ctld/jwt_hs256.key bs=32 count=1
-  args:
-    creates: /var/share/slurm/ctld/jwt_hs256.key
-  when: slurm_generate_jwt_key | default(true)
-
-# Ensure slurm JWT key ownership and permissions
-- name: Ensure slurm JWT key ownership and permissions
-  ansible.builtin.file:
-    path: /var/share/slurm/ctld/jwt_hs256.key
-    owner: slurm
-    group: slurm
-    mode: '0600'
-  when: slurm_generate_jwt_key | default(true)
-
-# Generate munge key if enabled
-- name: Generate munge key if enabled
+- name: Generate munge key (once)
   ansible.builtin.command: /usr/sbin/create-munge-key
   args:
     creates: /etc/munge/munge.key
-  when: munge_generate_key | default(true)
+  when: munge_generate_key
 
-- name: Ensure munge key ownership and permissions
+- name: Set munge key permissions
   ansible.builtin.file:
     path: /etc/munge/munge.key
-    owner: munge
-    group: munge
-    mode: '0400'
+    owner: "{{ munge_user }}"
+    group: "{{ munge_group }}"
+    mode: "0400"
 
-# Ensure slurm.conf exists before starting services
-- name: Check if slurm.conf exists
-  ansible.builtin.stat:
-    path: /etc/slurm/slurm.conf
-  register: slurm_conf
+# ============================================================
+# Slurm JWT Key
+# ============================================================
 
-- name: Fail if slurm.conf is missing
-  ansible.builtin.fail:
-    msg: "/etc/slurm/slurm.conf is missing! Please ensure it is created before starting services."
-  when: not slurm_conf.stat.exists
+- name: Generate Slurm JWT key
+  ansible.builtin.command: >
+    dd if=/dev/urandom of={{ slurm_jwt_key_path }} bs=32 count=1
+  args:
+    creates: "{{ slurm_jwt_key_path }}"
+  when:
+    - slurm_generate_jwt_key
+    - slurm_node_role == "master"
 
-- name: Determine Slurm master topology dynamically
+- name: Set JWT key permissions
+  ansible.builtin.file:
+    path: "{{ slurm_jwt_key_path }}"
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_group }}"
+    mode: "0600"
+  when: slurm_node_role == "master"
+
+# ============================================================
+# HA Topology Detection
+# ============================================================
+
+- name: Detect Slurm masters
   ansible.builtin.set_fact:
     slurm_primary_master: "{{ groups['hpc_master'][0] }}"
     slurm_backup_master: "{{ groups['hpc_master'][1] | default(omit) }}"
   run_once: true
 
-- name: Build Slurm master attributes dynamically
-  ansible.builtin.set_fact:
-    slurm_master_attrs:
-      - key: ClusterName
-        value: "{{ slurm_cluster_name }}"
-      - key: ControlMachine
-        value: "{{ hostvars[slurm_primary_master].ansible_hostname }}"
-      - key: ControlAddr
-        value: "{{ hostvars[slurm_primary_master].ansible_default_ipv4.address }}"
-      - key: BackupController
-        value: "{{ hostvars[slurm_backup_master].ansible_hostname }}"
-      - key: BackupAddr
-        value: "{{ hostvars[slurm_backup_master].ansible_default_ipv4.address }}"
-  when:
-    - slurm_node_role == "master"
-    - slurm_backup_master is defined
-
-
-
-
-
-- name: Update Slurm master attributes in slurm.conf
-  ansible.builtin.lineinfile:
-    path: /etc/slurm/slurm.conf
-    regexp: "^{{ item.key }}="
-    line: "{{ item.key }}={{ item.value }}"
-    backup: yes
-  loop: "{{ slurm_master_attrs }}"
-  when: slurm_node_role == "master"
-
-- name: Validate primary and backup Slurm masters are different
+- name: Validate HA topology
   ansible.builtin.assert:
     that:
       - slurm_primary_master != slurm_backup_master
-    fail_msg: "Primary and Backup Slurm masters must be different hosts"
+    fail_msg: "Primary and backup Slurm masters must be different"
   run_once: true
+  when: slurm_backup_master is defined
+
+# ============================================================
+# slurm.conf (AUTHORITATIVE)
+# ============================================================
+
+- name: Deploy slurm.conf (always updated)
+  ansible.builtin.template:
+    src: slurm.conf.j2
+    dest: "{{ slurm_conf_dir }}/slurm.conf"
+    owner: "{{ slurm_user }}"
+    group: "{{ slurm_group }}"
+    mode: "0644"
+  notify: Reload Slurm
   when:
-    - slurm_backup_master is defined
+    - slurm_node_role == "master"
+    - slurm_replace_configs
 
+# ============================================================
+# Services
+# ============================================================
 
-- import_tasks: configure_compute.yml
-                                                                                        
+- name: Ensure munge is running
+  ansible.builtin.service:
+    name: "{{ munge_service }}"
+    state: started
+    enabled: yes
+
+- name: Enable Slurmctld
+  ansible.builtin.service:
+    name: "{{ slurmctld_service }}"
+    enabled: yes
+  when: slurm_node_role == "master"
+
+- meta: flush_handlers
