@@ -109,8 +109,8 @@
 
 - name: Detect Slurm masters
   ansible.builtin.set_fact:
-    slurm_primary_master: "{{ groups['hpc_master'][0] }}"
-    slurm_backup_master: "{{ groups['hpc_master'][1] | default(omit) }}"
+    slurm_primary_master: "{{ groups[slurm_controller_group] | first }}"
+    slurm_backup_master: "{{ (groups[slurm_controller_group] | length > 1) | ternary(groups[slurm_controller_group][1], omit) }}"
   run_once: true
 
 - name: Validate HA topology
