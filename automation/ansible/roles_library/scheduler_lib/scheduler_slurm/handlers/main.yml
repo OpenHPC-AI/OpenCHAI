@@ -1,0 +1,22 @@
+---
+- name: Reload Slurm
+  block:
+    - name: Check slurmctld status
+      ansible.builtin.command: pgrep slurmctld
+      register: slurmctld_running
+      failed_when: false
+      changed_when: false
+
+    - name: Reconfigure Slurm (primary only)
+      ansible.builtin.command: scontrol reconfigure
+      when:
+        - slurmctld_running.rc == 0
+        - inventory_hostname == slurm_primary_master
+
+    - name: Start Slurmctld if stopped
+      ansible.builtin.service:
+        name: "{{ slurmctld_service }}"
+        state: started
+      when:
+        - slurmctld_running.rc != 0
+        - inventory_hostname == slurm_primary_master
