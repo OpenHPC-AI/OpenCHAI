@@ -1,0 +1,21 @@
+# ============================================================
+# OpenCHAI Slurm Configuration
+# ============================================================
+
+ClusterName={{ slurm_cluster_name }}
+
+ControlMachine={{ hostvars[slurm_primary_master].ansible_hostname }}
+ControlAddr={{ hostvars[slurm_primary_master].ansible_default_ipv4.address }}
+
+{% if slurm_backup_master is defined %}
+BackupController={{ hostvars[slurm_backup_master].ansible_hostname }}
+BackupAddr={{ hostvars[slurm_backup_master].ansible_default_ipv4.address }}
+{% endif %}
+
+SlurmUser={{ slurm_user }}
+
+StateSaveLocation={{ slurm_state_dir }}
+SlurmctldLogFile={{ slurm_log_dir }}/slurmctld.log
+SlurmdLogFile={{ slurm_log_dir }}/slurmd.log
+
+AuthType=auth/munge
