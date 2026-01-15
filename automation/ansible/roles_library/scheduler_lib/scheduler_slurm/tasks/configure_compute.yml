@@ -78,7 +78,7 @@
 
 - name: Sync central slurm.conf to local node
   copy:
-    src: "{{ configuration_dir_path }}/slurm_config/{{ cluster                                                                            _name }}_slurm.conf"
+    src: "{{ configuration_dir_path }}/slurm_config/{{ cluster_name }}_slurm.conf"
     dest: /etc/slurm/slurm.conf
     remote_src: true
     owner: slurm
