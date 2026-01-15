@@ -48,3 +48,52 @@ slurm_excluded_packages:
     - slurm-slurmd
 
 
+# ============================================================
+# Slurm Global Configuration
+# ============================================================
+slurm_cluster_name: "openchai-hpc"
+
+
+# ============================================================
+# High Availability Configuration
+# ============================================================
+slurm_ha_enabled: true
+
+# ============================================================
+# Users and Groups
+# ============================================================
+slurm_user: slurm
+slurm_group: slurm
+slurm_uid: 900
+slurm_gid: 900
+
+munge_user: munge
+munge_group: munge
+munge_uid: 971
+munge_gid: 968
+
+# ============================================================
+# Paths
+# ============================================================
+slurm_conf_dir: /etc/slurm
+slurm_log_dir: /var/log/slurm
+slurm_state_dir: /var/spool/slurmctld
+slurm_share_dir: /var/share/slurm
+
+# ============================================================
+# Security
+# ============================================================
+munge_generate_key: true
+slurm_generate_jwt_key: true
+slurm_jwt_key_path: "{{ slurm_share_dir }}/ctld/jwt_hs256.key"
+
+# ============================================================
+# Services
+# ============================================================
+munge_service: munge
+slurmctld_service: slurmctld
+
+# ============================================================
+# Config Control
+# ============================================================
+slurm_replace_configs: true
