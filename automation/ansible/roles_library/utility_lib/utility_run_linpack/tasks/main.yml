@@ -1,0 +1,5 @@
+---
+- import_tasks: selinux_check.yml
+- import_tasks: prepare_linpack.yml
+- import_tasks: render_hpl.yml
+- import_tasks: run_linpack.yml
