@@ -1,0 +1,53 @@
+---
+- name: Set Linpack hostname fact
+  set_fact:
+    linpack_hostname: "{{ inventory_hostname }}"
+  when: linpack_enable_logging
+
+- name: Generate Linpack run timestamp
+  set_fact:
+    linpack_run_timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+  when: linpack_enable_logging
+
+- name: Define Linpack log directory
+  set_fact:
+    linpack_log_dir: "{{ linpack_log_base_dir }}/{{ linpack_hostname }}_logs"
+  when: linpack_enable_logging
+
+- name: Define Linpack log file
+  set_fact:
+    linpack_log_file: >-
+      {{ linpack_log_dir }}/{{ linpack_hostname }}_{{ linpack_run_id }}_{{ linpack_run_timestamp }}.log
+  when: linpack_enable_logging
+
+- name: Create Linpack log directory
+  file:
+    path: "{{ linpack_log_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: linpack_enable_logging
+
+- name: Run Linpack with logging enabled
+  shell: |
+    set -o pipefail
+    source {{ linpack_intel_setvars }}
+    cd {{ linpack_dir }}
+    {{ linpack_mpi_cmd }} 2>&1 | tee {{ linpack_log_file }}
+  args:
+    executable: /bin/bash
+  register: linpack_run_result
+  changed_when: true
+  when: linpack_enable_logging
+
+- name: Run Linpack without logging
+  shell: |
+    source {{ linpack_intel_setvars }}
+    cd {{ linpack_dir }}
+    {{ linpack_mpi_cmd }}
+  args:
+    executable: /bin/bash
+  register: linpack_run_result
+  changed_when: true
+  when: not linpack_enable_logging
