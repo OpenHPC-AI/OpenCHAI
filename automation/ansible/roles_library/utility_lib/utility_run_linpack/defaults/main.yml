@@ -1,0 +1,29 @@
+---
+# Intel environment
+linpack_intel_setvars: /home/apps/intel/setvars.sh
+
+# Linpack benchmark directory
+linpack_dir: /home/apps/intel/mkl/2025.3/share/mkl/benchmarks/mp_linpack
+
+# Expected SELinux status (STRICT)
+linpack_required_selinux_status: "SELinux status:                 disabled"
+
+linpack_testmode: check   # check | endurance
+
+# Base directory for Linpack logs
+linpack_log_base_dir: /home/apps/intel/mkl/2025.3/share/mkl/benchmarks/mp_linpack/logs
+
+# Run index (increment if needed)
+linpack_run_id: run1
+
+
+linpack_mpi_cmd: "mpirun -np 1 ./runme_intel64_dynamic"
+
+linpack_hpl_file: "{{ linpack_dir }}/HPL.dat"
+
+# Run script files
+linpack_run_scripts:
+  - src: runme_intel64_dynamic.txt
+    dest: runme_intel64_dynamic
+  - src: runme_intel64_prv.txt
+    dest: runme_intel64_prv
