@@ -1,0 +1,6 @@
+---
+- name: Generate HPL.dat based on test mode
+  template:
+    src: HPL.dat.j2
+    dest: "{{ linpack_hpl_file }}"
+    mode: "0644"
