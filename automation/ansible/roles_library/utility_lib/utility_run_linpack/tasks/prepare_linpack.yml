@@ -1,0 +1,49 @@
+---
+- name: Verify Linpack directory exists
+  stat:
+    path: "{{ linpack_dir }}"
+  register: linpack_path
+
+- name: Fail if Linpack directory is missing
+  fail:
+    msg: "Linpack directory not found: {{ linpack_dir }}"
+  when: not linpack_path.stat.exists
+
+
+- name: Check presence of Linpack run script sources
+  stat:
+    path: "{{ linpack_dir }}/{{ item.src }}"
+  loop: "{{ linpack_run_scripts }}"
+  register: linpack_script_stats
+
+
+- name: Rename Linpack run scripts if source exists
+  command: mv -f {{ item.item.src }} {{ item.item.dest }}
+  args:
+    chdir: "{{ linpack_dir }}"
+  loop: "{{ linpack_script_stats.results }}"
+  when: item.stat.exists
+
+
+- name: Ensure execute permissions on Linpack run scripts if present
+  file:
+    path: "{{ linpack_dir }}/{{ item.dest }}"
+    mode: "0755"
+  loop: "{{ linpack_run_scripts }}"
+  when: >
+    (linpack_dir ~ '/' ~ item.dest) is exists
+
+
+- name: Validate required Linpack executable exists
+  stat:
+    path: "{{ linpack_dir }}/{{ linpack_mpi_cmd.split()[-1] }}"
+  register: linpack_exec_check
+
+
+- name: Fail if required Linpack executable is missing
+  fail:
+    msg: >
+      Required Linpack executable
+      '{{ linpack_mpi_cmd.split()[-1] }}'
+      not found in {{ linpack_dir }}
+  when: not linpack_exec_check.stat.exists
