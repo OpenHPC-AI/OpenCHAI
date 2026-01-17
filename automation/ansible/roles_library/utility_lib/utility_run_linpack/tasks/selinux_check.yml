@@ -1,0 +1,14 @@
+---
+- name: Check SELinux status
+  command: sestatus
+  register: selinux_status
+  changed_when: false
+
+- name: Abort if SELinux is not disabled
+  fail:
+    msg: |
+      Linpack requires SELinux to be fully DISABLED.
+
+      Current status:
+      {{ selinux_status.stdout }}
+  when: "'SELinux status:                 disabled' not in selinux_status.stdout"
