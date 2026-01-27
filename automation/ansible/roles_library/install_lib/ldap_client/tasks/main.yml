@@ -1,3 +1,9 @@
+- name: Install EPEL release on RHEL-based systems
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_facts.os_family == "RedHat"
+
 - name: Choose package list
   ansible.builtin.set_fact:
     _client_pkgs: "{{ sssd_packages if ldap_client_use_sssd | bool else nslcd_packages }}"
