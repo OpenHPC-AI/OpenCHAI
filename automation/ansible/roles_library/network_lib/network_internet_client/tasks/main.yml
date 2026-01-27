@@ -1,0 +1,81 @@
+# -------------------------------------------------
+# Detect interface that can reach headnode
+# -------------------------------------------------
+- name: Find interface that can ping headnode
+  ansible.builtin.shell: |
+    for i in $(ls /sys/class/net); do
+      ping -I $i -c 1 -W 1 {{ headnode_ip }} >/dev/null 2>&1 && echo $i && break
+    done
+  args:
+    executable: /bin/bash
+  register: client_iface
+  changed_when: false
+  failed_when: client_iface.stdout == ""
+
+# -------------------------------------------------
+# Configure resolv.conf (initial)
+# -------------------------------------------------
+- name: Configure DNS resolution
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    content: |
+      {% for ns in nameservers_ip %}
+      nameserver {{ ns }}
+      {% endfor %}
+      options timeout:2 attempts:3
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+
+
+# -------------------------------------------------
+# Configure default route via headnode
+# -------------------------------------------------
+- name: Check existing default route
+  ansible.builtin.command: ip route show default
+  register: default_route
+  changed_when: false
+  failed_when: false
+
+- name: Ensure default route via headnode
+  ansible.builtin.command: >
+    ip route replace default via {{ headnode_ip }} dev {{ client_iface.stdout }}
+  when: "'default via ' ~ headnode_ip not in default_route.stdout"
+
+# -------------------------------------------------
+# Internet connectivity check (no ping)
+# -------------------------------------------------
+- name: Check internet access using curl
+  ansible.builtin.command: curl -fsS --max-time 5 https://www.baidu.com
+  register: curl_check
+  changed_when: false
+  failed_when: false
+
+- name: Check internet access using DNS lookup (host)
+  ansible.builtin.command: host www.baidu.com
+  register: host_check
+  changed_when: false
+  failed_when: false
+  when: curl_check.rc != 0
+
+
+
+# -------------------------------------------------
+# Append fallback DNS config if internet is NOT accessible
+# -------------------------------------------------
+- name: Append fallback DNS configuration
+  ansible.builtin.blockinfile:
+    path: /etc/resolv.conf
+    marker: "# {mark} ANSIBLE FALLBACK DNS"
+    backup: yes
+    block: |
+      {% if fallback_dns.search_domains | length > 0 %}
+      search {{ fallback_dns.search_domains | join(' ') }}
+      {% endif %}
+      {% for ns in fallback_dns.nameservers %}
+      nameserver {{ ns }}
+      {% endfor %}
+  when:
+    - curl_check.rc != 0
+    - host_check is not defined or host_check.rc != 0
