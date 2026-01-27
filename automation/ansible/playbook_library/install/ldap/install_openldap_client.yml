@@ -13,7 +13,11 @@
     ldap_backend: "nss-pam-ldapd"   # or "sssd"
     # Server/Bind settings
     ldap_uri: "ldap://{{ primary_ldap_node_ip }}"
-    ldap_uris: ["ldap://{{ secondary_ldap_node_ip }}"]   # can set multiple
+    # can set multiple
+    ldap_uris:
+      - "ldap://{{ primary_ldap_node_ip }}"
+      - "ldap://{{ secondary_ldap_node_ip }}"
+
     ldap_base_dn: "{{ ldap_base_dn }}"
     ldap_tls_reqcert: "never"             # never|allow|demand (set to demand with proper CA)
     #ldap_cacert_src: "/files/certs/ca.crt"
