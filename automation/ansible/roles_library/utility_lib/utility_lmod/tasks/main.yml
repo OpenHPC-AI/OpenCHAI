@@ -76,7 +76,7 @@
 
     - name: Fail if any required RPM is missing locally
       ansible.builtin.fail:
-        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_path }}"
+        msg: "RPM for package {{ item.item }} not found in {{ dev_rpm_base }}"
       when:
         - missing_packages | length > 0
         - item.matched == 0
