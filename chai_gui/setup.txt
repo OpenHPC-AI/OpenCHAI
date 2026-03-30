@@ -3,5 +3,11 @@ cd chai_gui/backend && python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app:app --reload --port 8000 &
 
+
+# On RHEL/Rocky 8
+curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+dnf install -y nodejs
+node --version   # should show v20.x
+
 cd ../frontend && npm install && npm run dev
 # → open http://localhost:5173
