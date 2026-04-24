@@ -28,4 +28,5 @@
 # - Ensure that SSH access is working using the provided user, password, and port before running Ansible.
 
 #ansible_hostname         ip             ansible_user  ansible_password      group          hostname   ssh_port
+
 headnode                 172.10.3.201    root          redhat                headnode       headnode        22
