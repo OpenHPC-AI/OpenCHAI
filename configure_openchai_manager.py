@@ -17,8 +17,12 @@ import logging
 import platform
 import urllib.request
 import urllib.error
+import urllib.parse
+import base64
+import getpass
 import ssl
 import tarfile
+from dataclasses import dataclass
 from pathlib import Path
 from html.parser import HTMLParser
 from typing import Dict, List, Optional, Set, Tuple
@@ -90,11 +94,48 @@ def error_exit(msg: str):
 
 
 # ─────────────────────────────────────────────
-# Constants
+# !! CONFIGURABLE NETWORK CONSTANTS !!
+# Change VAULT_PORT here to redirect all network
+# access to a different port without editing
+# any other part of the script.
 # ─────────────────────────────────────────────
-OPENCHAI_VAULT_URL = (
-    "https://hpcsangrah-test.pune.cdac.in/vault/OpenCHAI/hpcsuite_registry/"
-)
+VAULT_HOST     = "hpcsangrah-test.pune.cdac.in"
+VAULT_PORT     = 443          # ← change port here (e.g. 443 for HTTPS, 8080, etc.)
+VAULT_PATH     = "/vault/OpenCHAI/hpcsuite_registry/"
+
+# Derive the full base URL from the components above.
+# Port 80  → http://…   (no explicit port in URL for cleanliness)
+# Port 443 → https://…  (no explicit port in URL for cleanliness)
+# Any other port → http://…:<port>  (explicit port always shown)
+def _build_vault_url(host: str, port: int, path: str) -> str:
+    if port == 443:
+        scheme  = "https"
+        portstr = ""
+    elif port == 80:
+        scheme  = "http"
+        portstr = ""
+    else:
+        scheme  = "http"
+        portstr = f":{port}"
+    return f"{scheme}://{host}{portstr}{path}"
+
+OPENCHAI_VAULT_URL: str = _build_vault_url(VAULT_HOST, VAULT_PORT, VAULT_PATH)
+
+
+# ─────────────────────────────────────────────
+# Vault credentials dataclass
+# ─────────────────────────────────────────────
+@dataclass
+class VaultCredentials:
+    username: str
+    password: str
+
+    def auth_header(self) -> str:
+        """Return a Basic-Auth Authorization header value."""
+        token = base64.b64encode(
+            f"{self.username}:{self.password}".encode("utf-8")
+        ).decode("ascii")
+        return f"Basic {token}"
 
 
 # ─────────────────────────────────────────────
@@ -114,19 +155,30 @@ class _HrefParser(HTMLParser):
                     self.links.append(val)
 
 
-def _fetch_url(url: str, no_cert: bool = False) -> bytes:
+def _fetch_url(
+    url: str,
+    no_cert: bool = False,
+    creds: Optional[VaultCredentials] = None,
+) -> bytes:
     ctx = ssl.create_default_context()
     if no_cert:
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(url, headers={"User-Agent": "openchai-setup/1.0"})
+    headers = {"User-Agent": "openchai-setup/1.0"}
+    if creds:
+        headers["Authorization"] = creds.auth_header()
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
         return resp.read()
 
 
-def _list_remote_archives(url: str, no_cert: bool) -> List[str]:
+def _list_remote_archives(
+    url: str,
+    no_cert: bool,
+    creds: Optional[VaultCredentials] = None,
+) -> List[str]:
     try:
-        html = _fetch_url(url, no_cert).decode("utf-8", errors="replace")
+        html = _fetch_url(url, no_cert, creds).decode("utf-8", errors="replace")
         parser = _HrefParser()
         parser.feed(html)
         return parser.links
@@ -361,157 +413,477 @@ def ask_ssl_option() -> bool:
 
 
 # ─────────────────────────────────────────────
-# Section 5 – Registry Tar Handling
+# Section 4b – Vault Authentication Credentials
 # ─────────────────────────────────────────────
+def collect_vault_credentials() -> Optional[VaultCredentials]:
+    """
+    Prompt the user for HTTP Basic-Auth credentials needed to access
+    the OpenCHAI vault at VAULT_HOST:VAULT_PORT.
+
+    Returns a VaultCredentials instance, or None if the user opts out
+    (e.g. the server does not require authentication).
+    """
+    console.print(Rule("[bold]Vault Registry Authentication[/bold]"))
+
+    console.print(
+        f"[cyan]Registry URL :[/cyan] [white]{OPENCHAI_VAULT_URL}[/white]\n"
+        f"[cyan]Host         :[/cyan] [white]{VAULT_HOST}[/white]\n"
+        f"[cyan]Port         :[/cyan] [white]{VAULT_PORT}[/white]\n"
+    )
+
+    needs_auth = Confirm.ask(
+        "Does the registry server require authentication?",
+        default=True,
+    )
+
+    if not needs_auth:
+        log_notice("Skipping authentication – anonymous access assumed.")
+        return None
+
+    username = ""
+
+    while not username:
+        username = Prompt.ask("  Vault username").strip()
+
+        if not username:
+            console.print("[red]Username cannot be empty.[/red]")
+
+    console.print("  Vault password: ", end="")
+
+    password = ""
+
+    while not password:
+
+        try:
+            password = getpass.getpass(prompt="")
+
+        except Exception:
+            password = Prompt.ask(
+                "  Vault password",
+                password=True
+            )
+
+        if not password:
+            console.print(
+                "[red]Password cannot be empty. Try again.[/red]"
+            )
+            console.print("  Vault password: ", end="")
+
+    creds = VaultCredentials(
+        username=username,
+        password=password
+    )
+
+    log.info(
+        "Vault credentials collected for user: %s",
+        username
+    )
+
+    log_notice(
+        f"Credentials stored for user '{username}' "
+        f"(password redacted from log)."
+    )
+
+    return creds
+
+
+# ─────────────────────────────────────────────
+# Registry Tar Handling
+# ─────────────────────────────────────────────
+
 TAR_EXTS = (".tar.gz", ".tgz", ".tar.xz", ".tar")
 
+
 def _find_local_tars(directory: Path) -> List[Path]:
+
     if not directory.exists():
         return []
+
     return [
         f for f in directory.iterdir()
-        if f.is_file() and any(f.name.endswith(e) for e in TAR_EXTS)
+        if f.is_file()
+        and any(f.name.endswith(e) for e in TAR_EXTS)
     ]
 
 
-def _extract_tar(src, dest_dir: Path, is_stream: bool = False) -> bool:
+def _extract_tar(
+    src,
+    dest_dir: Path,
+    is_stream: bool = False
+) -> bool:
     """Extract tar from file path or file-like stream into dest_dir."""
+
     dest_dir.mkdir(parents=True, exist_ok=True)
+
     try:
+
         with Progress(
             SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(
+                "[progress.description]{task.description}"
+            ),
             console=console,
         ) as progress:
-            task = progress.add_task("Extracting archive…", total=None)
+
+            task = progress.add_task(
+                "Extracting archive…",
+                total=None
+            )
+
             if is_stream:
-                with tarfile.open(fileobj=src, mode="r|*") as tf:
+
+                with tarfile.open(
+                    fileobj=src,
+                    mode="r|*"
+                ) as tf:
+
                     tf.extractall(dest_dir)
+
             else:
-                with tarfile.open(src, mode="r:*") as tf:
+
+                with tarfile.open(
+                    src,
+                    mode="r:*"
+                ) as tf:
+
                     tf.extractall(dest_dir)
+
             progress.update(task, completed=True)
+
         return True
+
     except Exception as exc:
+
         log_warn(f"Extraction failed: {exc}")
+
         return False
 
 
-def _download_and_extract(url: str, dest_dir: Path, no_cert: bool) -> bool:
+def _download_and_extract(
+    url: str,
+    dest_dir: Path,
+    no_cert: bool,
+    creds: Optional[VaultCredentials] = None,
+) -> bool:
+
     ctx = ssl.create_default_context()
+
     if no_cert:
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
+
+    headers = {
+        "User-Agent": "openchai-setup/1.0"
+    }
+
+    if creds:
+        headers["Authorization"] = creds.auth_header()
+
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "openchai-setup/1.0"})
-        with urllib.request.urlopen(req, context=ctx, timeout=120) as resp:
-            return _extract_tar(resp, dest_dir, is_stream=True)
+
+        req = urllib.request.Request(
+            url,
+            headers=headers
+        )
+
+        with urllib.request.urlopen(
+            req,
+            context=ctx,
+            timeout=120
+        ) as resp:
+
+            return _extract_tar(
+                resp,
+                dest_dir,
+                is_stream=True
+            )
+
     except Exception as exc:
+
         log_warn(f"Download failed: {exc}")
+
         return False
 
 
-def handle_registry_tar(base_dir: Path, os_version: str, no_cert: bool) -> str:
-    console.print(Rule("[bold]Host Machine Registry (Tar)[/bold]"))
-    registry_dir = base_dir / "hpcsuite_registry" / "hostmachine_reg"
-    version_dir  = registry_dir / os_version
-    version_dir.mkdir(parents=True, exist_ok=True)
+# ─────────────────────────────────────────────
+# Main Registry Handler
+# ─────────────────────────────────────────────
+def handle_registry_tar(
+    base_dir: Path,
+    arch: str,
+    os_version: str,
+    no_cert: bool,
+    creds: Optional[VaultCredentials] = None,
+) -> str:
 
-    network_url = f"{OPENCHAI_VAULT_URL}hostmachine_reg/{os_version}/"
-    local_tars  = _find_local_tars(version_dir)
+    console.print(
+        Rule("[bold]Host Machine Registry (Tar)[/bold]")
+    )
+
+    #
+    # Updated local registry layout:
+    #
+    # hpcsuite_registry/
+    #   hostmachine_reg/
+    #     x86_64/
+    #       rocky8/
+    #
+    registry_dir = (
+        base_dir /
+        "hpcsuite_registry" /
+        "hostmachine_reg" /
+        arch
+    )
+
+    version_dir = registry_dir / os_version
+
+    version_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    #
+    # Updated remote vault layout:
+    #
+    # https://host/vault/OpenCHAI/
+    #   hpcsuite_registry/
+    #     x86_64/
+    #       rocky8/
+    #
+    network_url = (
+        f"{OPENCHAI_VAULT_URL}"
+        f"hostmachine_reg/"
+        f"{arch}/"
+        f"{os_version}/"
+    )
+
+    local_tars = _find_local_tars(version_dir)
+
     openchai_version = "__SET_LATER__"
 
-    # ── Case A: local tars found ──────────────────────────────────────────
+    # ─────────────────────────────────────────
+    # Case A – Local tar files exist
+    # ─────────────────────────────────────────
     if local_tars:
-        log_info(f"Found {len(local_tars)} local tar file(s) in {version_dir}")
 
-        choices = [t.name for t in local_tars] + ["⏭  Skip extraction"]
+        log_info(
+            f"Found {len(local_tars)} local tar file(s) "
+            f"in {version_dir}"
+        )
+
+        choices = (
+            [t.name for t in local_tars]
+            + ["⏭  Skip extraction"]
+        )
+
         for i, c in enumerate(choices, 1):
-            console.print(f"  [bold cyan]{i}[/bold cyan]  {c}")
+
+            console.print(
+                f"  [bold cyan]{i}[/bold cyan]  {c}"
+            )
 
         while True:
-            raw = Prompt.ask("Select option", default="1")
+
+            raw = Prompt.ask(
+                "Select option",
+                default="1"
+            )
+
             try:
+
                 idx = int(raw) - 1
+
                 if 0 <= idx < len(choices):
                     break
+
             except ValueError:
                 pass
-            console.print("[red]Invalid selection.[/red]")
+
+            console.print(
+                "[red]Invalid selection.[/red]"
+            )
 
         selection = choices[idx]
+
         if selection.startswith("⏭"):
             return "__SET_LATER__"
 
         chosen = local_tars[idx]
-        openchai_version = strip_tar_ext(chosen.name)
-        extracted_dir = version_dir / openchai_version
+
+        openchai_version = strip_tar_ext(
+            chosen.name
+        )
+
+        extracted_dir = (
+            version_dir / openchai_version
+        )
 
         if extracted_dir.exists():
-            log_notice(f"Registry already extracted: {openchai_version}")
+
+            log_notice(
+                f"Registry already extracted: "
+                f"{openchai_version}"
+            )
+
             return openchai_version
 
-        log_info(f"Extracting {chosen.name} → {version_dir}")
-        if _extract_tar(str(chosen), version_dir):
-            log_notice(f"Registry extracted successfully: {openchai_version}")
+        log_info(
+            f"Extracting {chosen.name} → {version_dir}"
+        )
+
+        if _extract_tar(
+            str(chosen),
+            version_dir
+        ):
+
+            log_notice(
+                f"Registry extracted successfully: "
+                f"{openchai_version}"
+            )
+
         else:
-            log_warn("Extraction failed. Will need manual setup.")
+
+            log_warn(
+                "Extraction failed. "
+                "Will need manual setup."
+            )
+
             openchai_version = "__SET_LATER__"
 
         return openchai_version
 
-    # ── Case B: no local tars ─────────────────────────────────────────────
-    log_warn(f"No tar files found in {version_dir}")
-    console.print("\n  [bold]Options:[/bold]")
-    console.print("  [cyan]1[/cyan]  Download from network")
-    console.print("  [cyan]2[/cyan]  Install manually later")
-    console.print("  [cyan]3[/cyan]  Skip")
+    # ─────────────────────────────────────────
+    # Case B – No local tar files
+    # ─────────────────────────────────────────
 
-    choice = Prompt.ask("Select option", choices=["1", "2", "3"], default="3")
+    log_warn(
+        f"No tar files found in {version_dir}"
+    )
+
+    console.print("\n  [bold]Options:[/bold]")
+    console.print(
+        "  [cyan]1[/cyan]  Download from network"
+    )
+    console.print(
+        "  [cyan]2[/cyan]  Install manually later"
+    )
+    console.print(
+        "  [cyan]3[/cyan]  Skip"
+    )
+
+    choice = Prompt.ask(
+        "Select option",
+        choices=["1", "2", "3"],
+        default="3"
+    )
 
     if choice == "2":
-        log_warn(f"Place the registry tar later in:\n  → {version_dir}")
+
+        log_warn(
+            f"Place the registry tar later in:\n"
+            f"  → {version_dir}"
+        )
+
         return "__SET_MANUALLY__"
 
     if choice == "3":
         return "__SET_LATER__"
 
-    # Download from network
-    log_info(f"Fetching tar list from {network_url} …")
-    remote_files = _list_remote_archives(network_url, no_cert)
+    #
+    # Download tar list from vault
+    #
+    log_info(
+        f"Fetching tar list from {network_url} …"
+    )
+
+    remote_files = _list_remote_archives(
+        network_url,
+        no_cert,
+        creds
+    )
 
     if not remote_files:
-        log_warn("No archives found on network.")
+
+        log_warn(
+            "No archives found on network."
+        )
+
         return "__SET_LATER__"
 
-    console.print("\n  [bold]Available tarballs:[/bold]")
+    console.print(
+        "\n  [bold]Available tarballs:[/bold]"
+    )
+
     for i, f in enumerate(remote_files, 1):
-        console.print(f"  [cyan]{i}[/cyan]  {f}")
+
+        console.print(
+            f"  [cyan]{i}[/cyan]  {f}"
+        )
 
     while True:
-        raw = Prompt.ask("Select file to download", default="1")
+
+        raw = Prompt.ask(
+            "Select file to download",
+            default="1"
+        )
+
         try:
+
             idx = int(raw) - 1
+
             if 0 <= idx < len(remote_files):
                 break
+
         except ValueError:
             pass
-        console.print("[red]Invalid selection.[/red]")
+
+        console.print(
+            "[red]Invalid selection.[/red]"
+        )
 
     selected = remote_files[idx]
-    openchai_version = strip_tar_ext(Path(selected).name)
-    extracted_dir = version_dir / openchai_version
+
+    openchai_version = strip_tar_ext(
+        Path(selected).name
+    )
+
+    extracted_dir = (
+        version_dir / openchai_version
+    )
 
     if extracted_dir.exists():
-        log_notice(f"Registry already present: {openchai_version}")
+
+        log_notice(
+            f"Registry already present: "
+            f"{openchai_version}"
+        )
+
         return openchai_version
 
     dl_url = network_url + selected
-    log_info(f"Downloading & extracting: {dl_url}")
-    if _download_and_extract(dl_url, version_dir, no_cert):
-        log_notice(f"Registry extracted: {openchai_version}")
+
+    log_info(
+        f"Downloading & extracting: {dl_url}"
+    )
+
+    if _download_and_extract(
+        dl_url,
+        version_dir,
+        no_cert,
+        creds
+    ):
+
+        log_notice(
+            f"Registry extracted: "
+            f"{openchai_version}"
+        )
+
     else:
-        log_warn("Download/extraction failed.")
+
+        log_warn(
+            "Download/extraction failed."
+        )
+
         openchai_version = "__SET_LATER__"
 
     return openchai_version
@@ -558,7 +930,12 @@ def handle_inventory(base_dir: Path):
 # ─────────────────────────────────────────────
 # Section 8 – Print summary table
 # ─────────────────────────────────────────────
-def print_summary(params: dict, base_dir: Path, openchai_version: str):
+def print_summary(
+    params: dict,
+    base_dir: Path,
+    openchai_version: str,
+    creds: Optional[VaultCredentials] = None,
+):
     console.print()
     console.print(Rule("[bold]Configuration Summary[/bold]"))
     table = Table(box=box.ROUNDED, show_header=False, padding=(0, 2))
@@ -573,6 +950,10 @@ def print_summary(params: dict, base_dir: Path, openchai_version: str):
         ("Kernel Version",       params["kernel"]),
         ("Base Directory",       str(base_dir)),
         ("OpenCHAI Version",     openchai_version),
+        ("Vault Host",           VAULT_HOST),
+        ("Vault Port",           str(VAULT_PORT)),
+        ("Vault URL",            OPENCHAI_VAULT_URL),
+        ("Vault User",           creds.username if creds else "[dim]anonymous[/dim]"),
     ]
     for k, v in rows:
         table.add_row(k, v)
@@ -744,9 +1125,10 @@ def _fetch_network_images(
     container_url: str,
     local_names: Set[str],
     no_cert: bool,
+    creds: Optional[VaultCredentials] = None,
 ):
     log_info(f"Fetching image list from {container_url} …")
-    net_imgs = _list_remote_archives(container_url, no_cert)
+    net_imgs = _list_remote_archives(container_url, no_cert, creds)
 
     if not net_imgs:
         log_warn("No images found on network.")
@@ -768,6 +1150,10 @@ def _fetch_network_images(
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
+        headers = {"User-Agent": "openchai-setup/1.0"}
+        if creds:
+            headers["Authorization"] = creds.auth_header()
+
         try:
             with Progress(
                 SpinnerColumn(),
@@ -777,7 +1163,7 @@ def _fetch_network_images(
                 console=console,
             ) as progress:
                 task = progress.add_task(f"Downloading {base}", total=None)
-                req = urllib.request.Request(url, headers={"User-Agent": "openchai-setup/1.0"})
+                req = urllib.request.Request(url, headers=headers)
                 with urllib.request.urlopen(req, context=ctx, timeout=300) as resp, open(dest, "wb") as out:
                     while True:
                             chunk = resp.read(1 << 20)
@@ -794,7 +1180,12 @@ def _fetch_network_images(
     log_notice("Network image synchronisation complete.")
 
 
-def handle_container_images(base_dir: Path, os_version: str, no_cert: bool):
+def handle_container_images(
+    base_dir: Path,
+    os_version: str,
+    no_cert: bool,
+    creds: Optional[VaultCredentials] = None,
+):
     console.print(Rule("[bold]Container Image Registry[/bold]"))
 
     container_reg_path = base_dir / "hpcsuite_registry" / "container_img_reg"
@@ -831,14 +1222,14 @@ def handle_container_images(base_dir: Path, os_version: str, no_cert: bool):
             if shutil.which("python3"):
                 _run_python_selector(python_selector)
             else:
-                _fetch_network_images(container_reg_path, container_url, local_names, no_cert)
+                _fetch_network_images(container_reg_path, container_url, local_names, no_cert, creds)
         return
 
     if Confirm.ask("Fetch any missing images from the network?", default=False):
         if not shutil.which("curl") and not shutil.which("python3"):
             log_warn("Neither curl nor python3 available. Cannot fetch network images.")
         else:
-            _fetch_network_images(container_reg_path, container_url, local_names, no_cert)
+            _fetch_network_images(container_reg_path, container_url, local_names, no_cert, creds)
     else:
         log_notice("Network image fetch skipped.")
 
@@ -846,80 +1237,250 @@ def handle_container_images(base_dir: Path, os_version: str, no_cert: bool):
 # ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────
 def main():
+
     print_banner()
-    log.info("Script started by user=%s", os.getenv("USER", "unknown"))
 
-    # 1 ─ License
-    check_license()
-
-    # 2 ─ Ansible
-    console.print(Rule("[bold]Ansible Check[/bold]"))
-    _ensure_ansible()
-
-    # 3 ─ Base directory
-    base_dir = select_base_dir()
-    (base_dir / "hpcsuite_registry" / "hostmachine_reg").mkdir(parents=True, exist_ok=True)
-    (base_dir / "hpcsuite_registry" / "container_img_reg").mkdir(parents=True, exist_ok=True)
-    log.info("BASE_DIR=%s", base_dir)
-
-    # 4 ─ OS Detection
-    console.print(Rule("[bold]OS Detection[/bold]"))
-    os_name, os_ver_id, detected_label = detect_os()
-    log_info(f"Detected OS: {os_name} {os_ver_id}")
-    log_info(f"Suggested label: {detected_label}")
-    log_notice(f"Default OS label from Headnode: {detected_label}")
-    console.print(
-        "[dim]You can override the OS version for HPC-AI Master Nodes in the next step.[/dim]\n"
+    log.info(
+        "Script started by user=%s",
+        os.getenv("USER", "unknown")
     )
 
+    # ─────────────────────────────────────────
+    # 1 ─ License
+    # ─────────────────────────────────────────
+    check_license()
+
+    # ─────────────────────────────────────────
+    # 2 ─ Ansible
+    # ─────────────────────────────────────────
+    console.print(
+        Rule("[bold]Ansible Check[/bold]")
+    )
+
+    _ensure_ansible()
+
+    # ─────────────────────────────────────────
+    # 3 ─ Base directory
+    # ─────────────────────────────────────────
+    base_dir = select_base_dir()
+
+    (
+        base_dir /
+        "hpcsuite_registry" /
+        "hostmachine_reg"
+    ).mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    (
+        base_dir /
+        "hpcsuite_registry" /
+        "container_img_reg"
+    ).mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    log.info("BASE_DIR=%s", base_dir)
+
+    # ─────────────────────────────────────────
+    # 4 ─ OS Detection
+    # ─────────────────────────────────────────
+    console.print(
+        Rule("[bold]OS Detection[/bold]")
+    )
+
+    os_name, os_ver_id, detected_label = detect_os()
+
+    log_info(
+        f"Detected OS: {os_name} {os_ver_id}"
+    )
+
+    log_info(
+        f"Suggested label: {detected_label}"
+    )
+
+    log_notice(
+        f"Default OS label from Headnode: "
+        f"{detected_label}"
+    )
+
+    console.print(
+        "[dim]You can override the OS version "
+        "for HPC-AI Master Nodes in the next "
+        "step.[/dim]\n"
+    )
+
+    # ─────────────────────────────────────────
     # 5 ─ System parameters
-    params = collect_system_params(detected_label)
+    # ─────────────────────────────────────────
+    params = collect_system_params(
+        detected_label
+    )
 
-    # 6 ─ SSL option
-    no_cert = ask_ssl_option()
+    #
+    # Backward compatibility handling
+    #
+    # If arch not returned by older function,
+    # auto-detect from machine architecture.
+    #
+    if "arch" not in params:
 
-    # 7 ─ Registry tar
-    openchai_version = handle_registry_tar(base_dir, params["os_version"], no_cert)
+        detected_arch = platform.machine().strip()
 
-    # 8 ─ Validate
-    if openchai_version not in ("__SET_LATER__", "__SET_MANUALLY__"):
-        validate_registry(base_dir, params["os_version"], openchai_version)
-    else:
-        log_warn(
-            "OpenCHAI version not yet set. "
-            "Update 'openchai_version' in group_vars/all.yml when ready."
+        #
+        # Normalize common arch names
+        #
+        arch_map = {
+            "x86_64": "x86_64",
+            "amd64": "x86_64",
+            "aarch64": "aarch64",
+            "arm64": "aarch64",
+        }
+
+        detected_arch = arch_map.get(
+            detected_arch.lower(),
+            detected_arch
         )
 
+        params["arch"] = detected_arch
+
+        log_warn(
+            "Architecture not found in "
+            "collect_system_params(). "
+            f"Auto-detected arch: "
+            f"{detected_arch}"
+        )
+
+    log_notice(
+        f"Selected architecture: "
+        f"{params['arch']}"
+    )
+
+    # ─────────────────────────────────────────
+    # 6 ─ SSL option
+    # ─────────────────────────────────────────
+    no_cert = ask_ssl_option()
+
+    # ─────────────────────────────────────────
+    # 6b ─ Vault credentials
+    # ─────────────────────────────────────────
+    creds = collect_vault_credentials()
+
+    # ─────────────────────────────────────────
+    # 7 ─ Registry tar
+    # ─────────────────────────────────────────
+    openchai_version = handle_registry_tar(
+        base_dir,
+        params["arch"],
+        params["os_version"],
+        no_cert,
+        creds
+    )
+
+    # ─────────────────────────────────────────
+    # 8 ─ Validate Registry
+    # ─────────────────────────────────────────
+    if openchai_version not in (
+        "__SET_LATER__",
+        "__SET_MANUALLY__"
+    ):
+
+        validate_registry(
+            base_dir,
+            params["arch"],
+            params["os_version"],
+            openchai_version
+        )
+
+    else:
+
+        log_warn(
+            "OpenCHAI version not yet set. "
+            "Update 'openchai_version' in "
+            "group_vars/all.yml when ready."
+        )
+
+    # ─────────────────────────────────────────
     # 9 ─ Inventory
+    # ─────────────────────────────────────────
     handle_inventory(base_dir)
 
+    # ─────────────────────────────────────────
     # 10 ─ Summary
-    print_summary(params, base_dir, openchai_version)
+    # ─────────────────────────────────────────
+    print_summary(
+        params,
+        base_dir,
+        openchai_version,
+        creds
+    )
 
+    # ─────────────────────────────────────────
     # 11 ─ Update config files
-    console.print(Rule("[bold]Updating Configuration Files[/bold]"))
-    update_all_yml(base_dir, params, openchai_version)
+    # ─────────────────────────────────────────
+    console.print(
+        Rule("[bold]Updating Configuration Files[/bold]")
+    )
+
+    update_all_yml(
+        base_dir,
+        params,
+        openchai_version
+    )
+
     update_script_base_dirs(base_dir)
+
     update_ansible_cfg(base_dir)
 
+    # ─────────────────────────────────────────
     # 12 ─ Container images
-    handle_container_images(base_dir, params["os_version"], no_cert)
+    # ─────────────────────────────────────────
+    handle_container_images(
+        base_dir,
+        params["os_version"],
+        no_cert,
+        creds
+    )
 
-    # ─ Done ───────────────────────────────────
+    # ─────────────────────────────────────────
+    # Done
+    # ─────────────────────────────────────────
     console.print()
-    console.print(Panel.fit(
-        f"[bold green]✅  OpenCHAI Manager configuration completed![/bold green]\n"
-        f"[dim]Log file: {LOG_PATH}[/dim]",
-        border_style="green",
-        padding=(1, 4),
-    ))
-    log.info("Script finished successfully.")
+
+    console.print(
+        Panel.fit(
+            (
+                "[bold green]✅  OpenCHAI "
+                "Manager configuration "
+                "completed![/bold green]\n"
+                f"[dim]Log file: "
+                f"{LOG_PATH}[/dim]"
+            ),
+            border_style="green",
+            padding=(1, 4),
+        )
+    )
+
+    log.info(
+        "Script finished successfully."
+    )
 
 
 if __name__ == "__main__":
+
     try:
         main()
+
     except KeyboardInterrupt:
-        console.print("\n[yellow]Aborted by user.[/yellow]")
+
+        console.print(
+            "\n[yellow]Aborted by user.[/yellow]"
+        )
+
         sys.exit(130)
