@@ -15,7 +15,7 @@
 | Manager Tool             | Ansible                      | latest                        |
 | Container                | Docker                       | latest                        |
 | Container                | Apptainer                    | latest                        |
-| Container                | Enroot                       | latest                        |
+| Container                | Enroot                       | 4.2.0                        |
 | Orchestration            | Docker-Compose               | latest                        |
 | Orchestration            | Kubernetes                   | latest                        |
 | Device Replication       | DRBD                         | 9.31.0                        |
