@@ -64,10 +64,11 @@
 # HEADNODE fallback (optional)
 # ------------------------------------------------------------
 
+
 - name: Check headnode RPM directory
   ansible.builtin.stat:
     path: "{{ nfs_rpm_dir }}"
-  delegate_to: "{{ groups['headnode'][0] }}"
+  delegate_to: localhost
   run_once: true
   register: headnode_rpm_dir
   failed_when: false
