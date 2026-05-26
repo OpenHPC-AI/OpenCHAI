@@ -1,0 +1,19 @@
+---
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+
+
+
+- import_playbook: ../../../automation/ansible/playbook_library/security/configure_selinux.yml
+  vars:
+    selinux_mode: disabled
+    selinux_install_if_missing: true
