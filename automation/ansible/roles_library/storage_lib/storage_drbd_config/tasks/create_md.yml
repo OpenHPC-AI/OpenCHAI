@@ -1,0 +1,10 @@
+---
+# -----------------------------
+# Create metadata (optional)
+# -----------------------------
+- name: Create DRBD metadata non-interactively (if requested)
+  command: drbdadm create-md --force {{ drbd_resource_name }}
+  when: drbd_force_md_create | default(false) | bool
+  register: drbd_create_md
+  changed_when: "'Writing meta data' in (drbd_create_md.stdout | default('')) or ('successfully' in (drbd_create_md.stdout | default('')))"
+  failed_when: drbd_create_md.rc != 0 and ('already contains meta data' not in (drbd_create_md.stdout | default('')))
