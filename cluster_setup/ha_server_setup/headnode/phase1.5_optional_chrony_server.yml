@@ -1,0 +1,17 @@
+---
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+
+- import_playbook: ../../../automation/ansible/playbook_library/bootstrap/configure_chrony_server.yml
+  vars:
+    chrony_allow_networks: "172.40.0.0/20"
