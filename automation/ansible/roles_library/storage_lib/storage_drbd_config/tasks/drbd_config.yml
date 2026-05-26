@@ -1,0 +1,120 @@
+---
+
+- name: Clear drbd_nodes variable
+  set_fact:
+    drbd_nodes: []
+  run_once: true
+  delegate_to: localhost
+
+- name: Build DRBD nodes structure
+  set_fact:
+    drbd_nodes: "{{ drbd_nodes + [item] }}"
+  vars:
+    item:
+      name: "{{ hostvars[host].ansible_hostname }}"
+      ip: "{{ hostvars[host].ansible_default_ipv4.address }}"
+      disk: "{{ hostvars[host].drbd_final_device }}"
+  loop: "{{ ansible_play_hosts }}"
+  loop_control:
+    loop_var: host
+  run_once: true
+  delegate_to: localhost
+
+- name: Debug drbd_nodes structure
+  debug:
+    msg: "{{ drbd_nodes }}"
+  run_once: true
+  delegate_to: localhost
+
+
+- name: Deploy DRBD resource configuration (render device)
+  template:
+    src: drbd_resource.res.j2
+    dest: "/etc/drbd.d/{{ drbd_resource_name }}.res"
+    owner: root
+    group: root
+    mode: "0644"
+  # pass drbd_final_device to template via extra_vars available to Jinja
+
+
+- name: Show ansible_hostname for each node
+  debug:
+    msg: "Host={{ inventory_hostname }} | ansible_hostname={{ ansible_hostname }}"
+
+
+- name: Decide DRBD primary and secondary
+  set_fact:
+    drbd_primary: "{{ (ansible_play_hosts | sort)[0] }}"
+    drbd_secondary: "{{ (ansible_play_hosts | sort)[1] }}"
+  run_once: true
+  delegate_to: localhost
+
+
+- name: Fetch DRBD file from secondary node
+  fetch:
+    src: /etc/drbd.d/rudra_drbd.res
+    dest: /tmp/drbd_res_files/
+    flat: yes
+  when: inventory_hostname == drbd_secondary
+
+
+- name: Copy DRBD file to primary node
+  copy:
+    src: /tmp/drbd_res_files/rudra_drbd.res
+    dest: /etc/drbd.d/rudra_drbd.res
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname == drbd_primary
+
+- debug: var=drbd_device_map
+  run_once: true
+  delegate_to: localhost
+
+- name: Read DRBD resource file
+  slurp:
+    src: /etc/drbd.d/rudra_drbd.res
+  register: drbd_res_file
+
+- name: Convert content
+  set_fact:
+    drbd_resource_content: "{{ drbd_res_file.content | b64decode }}"
+
+
+- name: Back up DRBD resource file (local copy)
+  copy:
+    src: /etc/drbd.d/rudra_drbd.res
+    dest: "/tmp/rudra_drbd.res.{{ inventory_hostname }}.bak"
+    owner: root
+    group: root
+    mode: '0600'
+    remote_src: yes
+  become: true
+
+- name: Replace disk entry for this host
+  replace:
+    path: /etc/drbd.d/rudra_drbd.res
+    regexp: '(^\s*on {{ ansible_hostname }} \{[\s\S]*?disk\s+)(\/dev\/[a-zA-Z0-9]+)'
+    replace: '\1{{ drbd_device_map[ansible_hostname] }}'
+  when: "'disk ' ~ drbd_device_map[ansible_hostname] not in (drbd_res_file.content | b64decode)"
+
+
+- debug:
+    msg: "Disk corrected to {{ drbd_device_map[ansible_hostname] }}"
+
+
+- name: Read DRBD resource file
+  command: cat /etc/drbd.d/rudra_drbd.res
+  register: drbd_res_file
+
+- name: Decide DRBD primary and secondary
+  set_fact:
+    drbd_primary: "{{ (ansible_play_hosts | sort)[0] }}"
+    drbd_secondary: "{{ (ansible_play_hosts | sort)[1] }}"
+  run_once: true
+  delegate_to: localhost
+
+
+- name: Print DRBD resource file contents
+  debug:
+    msg: "{{ drbd_res_file.stdout }}"
