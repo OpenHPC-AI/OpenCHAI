@@ -1,0 +1,16 @@
+resource {{ drbd_resource_name }} {
+    disk {
+        c-min-rate {{ drbd_disk_params.c_min_rate }};
+        c-max-rate {{ drbd_disk_params.c_max_rate }};
+        resync-rate {{ drbd_disk_params.resync_rate }};
+    }
+
+{% for node in drbd_nodes %}
+    on {{ node.name }} {
+        device {{ drbd_device | default('/dev/drbd0') }};
+        disk {{ node.disk }};
+        address {{ node.ip }}:{{ drbd_port }};
+        meta-disk internal;
+    }
+{% endfor %}
+}
