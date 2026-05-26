@@ -1,0 +1,163 @@
+---
+# ----------------------------------------------------
+# Optional override - use forced device if provided
+# ----------------------------------------------------
+
+- name: Use forced device if provided
+  set_fact:
+    drbd_final_device: "{{ drbd_force_device }}"
+  when: drbd_force_device is defined and drbd_force_device != ""
+
+
+# ----------------------------------------------------
+# Detect LVM LV containing 'drbd' (preferred)
+# ----------------------------------------------------
+
+# 1. Find all active LVs containing DRBD pattern
+- name: Find LVM LV matching DRBD name
+  shell: |
+    lvs --noheadings -o lv_path,lv_name | awk '/drbd/ {print $1}'
+  register: drbd_lvm_scan
+  changed_when: false
+
+# 2. Normalize path
+- name: Set LVM device candidate
+  set_fact:
+    drbd_lvm_device: "{{ drbd_lvm_scan.stdout_lines[0] | default('') }}"
+
+
+- name: Stat detected LVM device (if any)
+  stat:
+    path: "{{ drbd_lvm_device }}"
+  register: drbd_lvm_stat
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_device is defined
+    - drbd_lvm_device | length > 0
+
+
+# ----------------------------------------------------------------
+# Fallback: detect partition used for /drbd (unmounted or mounted)
+# ----------------------------------------------------------------
+
+- name: Detect partition that is mounted on /drbd (fast path)
+  shell: |
+    lsblk -nrpo NAME,MOUNTPOINT,TYPE | awk '$3=="part" && $2=="/drbd" {print $1; exit}'
+  register: drbd_partition_mounted
+  changed_when: false
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+
+- name: Detect largest unmounted partition (fallback)
+  shell: |
+    lsblk -nrpo NAME,SIZE,TYPE,MOUNTPOINT | awk '$3=="part" && $4=="" {print $1, $2}' | \
+    sort -k2 -h | tail -n1 | awk '{print $1}'
+  register: drbd_partition_unmounted
+  changed_when: false
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+    - (drbd_partition_mounted.stdout | default('') ) == ""
+
+- name: Decide partition candidate
+  set_fact:
+    drbd_partition_candidate: >-
+      {{ (drbd_partition_mounted.stdout | trim) if (drbd_partition_mounted.stdout | trim != '') else (drbd_partition_unmounted.stdout | trim) }}
+  when:
+    - drbd_final_device is not defined
+    - drbd_lvm_stat.stat.exists | default(false) | bool == false
+
+
+
+# -----------------------------
+# Finalize chosen device
+# -----------------------------
+
+- name: Choose final DRBD device
+  set_fact:
+    drbd_final_device: >-
+      {{
+        drbd_lvm_device | default('') | trim
+        if (drbd_lvm_device is defined and drbd_lvm_device | trim != '')
+        else
+        drbd_partition_candidate | default('') | trim
+      }}
+
+- name: Debug selected DRBD device
+  debug:
+    msg: "DRBD backing device selected for {{ inventory_hostname }}: {{ drbd_final_device | default('') }}"
+
+
+- name: Build DRBD device map keyed by ansible_hostname
+  set_fact:
+    drbd_device_map: >-
+      {{
+        dict(
+          ansible_play_hosts |
+          map('extract', hostvars) |
+          map(attribute='ansible_hostname') |
+          zip(
+            ansible_play_hosts |
+            map('extract', hostvars, 'drbd_final_device')
+          )
+        )
+      }}
+  run_once: true
+  delegate_to: localhost
+
+
+- debug:
+    var: drbd_device_map
+  run_once: true
+  delegate_to: localhost
+
+
+
+- name: Fail if no DRBD disk detected
+  fail:
+    msg: "No DRBD LVM or partition device detected!"
+  when: drbd_final_device | default('') | trim == ''
+
+
+
+# -----------------------------
+# Prepare device: ensure /drbd not mounted and optionally wipe fs signatures
+# -----------------------------
+- name: Ensure /drbd is unmounted if mounted (ignore errors)
+  command: umount {{ drbd_mount_dir }}
+  ignore_errors: true
+  changed_when: false
+
+- name: Wipe filesystem signatures from DRBD device (optional)
+  command: wipefs -a {{ drbd_final_device }}
+  when: drbd_wipefs | default(true) | bool
+  ignore_errors: true
+
+# -----------------------------
+# Deploy DRBD configuration templates
+# -----------------------------
+- name: Ensure /etc/drbd.d exists
+  file:
+    path: /etc/drbd.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Remove old DRBD resource file before regenerating
+  file:
+    path: "/etc/drbd.d/{{ drbd_resource_name }}.res"
+    state: absent
+
+- name: Deploy global DRBD configuration
+  template:
+    src: global_common.conf.j2
+    dest: /etc/drbd.d/global_common.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Set final DRBD device for subsequent tasks
+  set_fact:
+    drbd_node_disk: "{{ drbd_final_device }}"
