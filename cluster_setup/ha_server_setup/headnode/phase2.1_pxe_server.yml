@@ -1,0 +1,33 @@
+---
+- name: Master HPC Provisioning Playbook
+  hosts: all
+  gather_facts: true
+  become: true
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "🚀 Starting full HPC provisioning for {{ inventory_hostname }}"
+
+
+- import_playbook: ../../../automation/ansible/playbook_library/provision/pxe_server.yml
+  vars:
+    dhcp_clients:
+      - name: mgmt01
+        mac: 00:F0:25:01:35:A2
+        ip: 192.168.0.4
+      - name: mgmt02
+        mac: 00:F0:25:01:36:66
+        ip: 192.168.0.5
+      - name: login01
+        mac: 00:F0:25:01:74:0E
+        ip: 192.168.0.21
+      - name: login02
+        mac: 00:F0:25:01:70:C6
+        ip: 192.168.0.22
+      - name: bmcserver01
+        mac: 00:F0:25:01:36:2A
+        ip: 192.168.0.23
+    ks_timezone: Asia/Kolkata
