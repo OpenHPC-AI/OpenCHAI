@@ -1,0 +1,61 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+###############################################################################
+# PHASE 1 – PRE-REQUISITES
+###############################################################################
+# ---------------------------------------------------------------------------
+# Prepare NFS-Clients Nodes for rpm-stack distribution
+# ---------------------------------------------------------------------------
+- import_playbook: ../../../automation/ansible/playbook_library/storage/storage_nfs_client.yml
+  vars:
+    # RPM-based package installation
+    nfs_rpm_dir: "{{ rpm_stack_path }}/nfs_rpms/"
+    required_packages:
+      - nfs-utils
+      - libnfsidmap
+      - rpcbind
+
+    # NFS client configuration
+    nfs_client_packages:
+      - nfs-utils
+    nfs_client_service: nfs-client.target
+    nfs_client_state: started
+    nfs_client_enabled: true
+    nfs_client_install_if_missing: true
+
+    # Multiple NFS mounts
+    nfs_mounts:
+      - src: "{{ headnode_ip }}:{{ rpm_stack_path }}"
+        dest: "{{ rpm_stack_path }}"
+        fstype: nfs
+        opts: ro,_netdev
+      - src: "{{ headnode_ip }}:{{ configuration_dir_path }}"
+        dest: "{{ configuration_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+      - src: "{{ headnode_ip }}:{{ bin_dir_path }}"
+        dest: "{{ bin_dir_path }}"
+        fstype: nfs
+        opts: rw,hard,intr,_netdev
+
+    # mounted  → persistent (/etc/fstab)
+    # ephemeral → runtime only (HPC preferred)
+    mounted_state: ephemeral
