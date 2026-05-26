@@ -1,0 +1,62 @@
+---
+# -----------------------------
+# Bring DRBD up and optionally promote primary on designated node
+# -----------------------------
+- name: Bring DRBD resource up
+  command: drbdadm up {{ drbd_resource_name }}
+  register: drbd_up_result
+  changed_when: "'successfully' in (drbd_up_result.stdout | default('')) or drbd_up_result.rc == 0"
+  failed_when: drbd_up_result.rc != 0
+
+- name: Debug drbd up result
+  debug:
+    var: drbd_up_result.stdout_lines
+
+- name: Promote to Primary on designated master (force)
+  command: drbdadm primary --force {{ drbd_resource_name }}
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+  register: drbd_primary_result
+  ignore_errors: true
+  changed_when: "'became Primary' in (drbd_primary_result.stdout | default('')) or ('already Primary' in (drbd_primary_result.stdout | default('')))"
+
+- name: Wait for peer to be UpToDate (only run on primary)
+  command: drbdadm status {{ drbd_resource_name }}
+  register: drbd_status
+  until: "'peer-disk:UpToDate' in (drbd_status.stdout | default(''))"
+  retries: "{{ drbd_sync_retries }}"
+  delay: "{{ drbd_sync_delay }}"
+  changed_when: false
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+# -----------------------------
+# Create filesystem on /dev/drbd0 (only on primary, idempotent)
+# -----------------------------
+- name: Check existing filesystem on DRBD device (only primary)
+  command: blkid -o value -s TYPE /dev/drbd0
+  register: drbd_fs_check
+  failed_when: false
+  changed_when: false
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+
+- name: Create ext4 filesystem on DRBD device (only primary if missing)
+  command: mkfs -t {{ drbd_fstype }} /dev/drbd0
+  register: drbd_mkfs
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+    - drbd_fs_check.stdout == ""
+  changed_when: drbd_mkfs.rc == 0
+
+- name: Debug filesystem creation
+  debug:
+    msg: "Created filesystem on /dev/drbd0"
+  when:
+    - primary_master_node_hostname != ""
+    - primary_master_node_hostname in [inventory_hostname, ansible_hostname]
+    - drbd_fs_check.stdout == ""
