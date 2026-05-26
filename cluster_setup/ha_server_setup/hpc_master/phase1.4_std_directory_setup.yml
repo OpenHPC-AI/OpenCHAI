@@ -1,0 +1,31 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+###############################################################################
+# PHASE 1 – PRE-REQUISITES
+###############################################################################
+# ---------------------------------------------------------------------------
+# Standard Directory setup
+# ---------------------------------------------------------------------------
+- import_playbook: ../../../automation/ansible/playbook_library/configure/standard_dir_setup.yml
+  vars:
+    hpc_container_pv_dir: /hpc_container_pv
+    hpctool_stack_dir: /hpctool_stack
+    hpc_cluster_suite_dir: /root/hpc_cluster_suite
