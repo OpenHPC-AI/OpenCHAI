@@ -43,7 +43,7 @@ from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 from rich import box
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, DownloadColumn, TransferSpeedColumn
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn
 from rich.text import Text
 from rich.rule import Rule
 from rich.syntax import Syntax
@@ -138,6 +138,16 @@ class VaultCredentials:
         return f"Basic {token}"
 
 
+@dataclass
+class DownloadTask:
+    tool: str
+    version: str
+    filename: str
+    size: str
+    url: str
+    destination: Path
+    status: str = "PENDING"
+    detail: str = ""
 # ─────────────────────────────────────────────
 # HTML href parser (replaces grep/sed pipeline)
 # ─────────────────────────────────────────────
@@ -506,6 +516,24 @@ def _find_local_tars(directory: Path) -> List[Path]:
     ]
 
 
+def _safe_extract_tar(tf: tarfile.TarFile, path: Path):
+    """
+    Secure tar extraction preventing path traversal attacks.
+    """
+
+    abs_path = path.resolve()
+
+    for member in tf.getmembers():
+
+        member_path = (path / member.name).resolve()
+
+        if not str(member_path).startswith(str(abs_path)):
+            raise Exception(
+                f"Blocked suspicious tar path: {member.name}"
+            )
+
+    tf.extractall(path)
+
 def _extract_tar(
     src,
     dest_dir: Path,
@@ -537,7 +565,7 @@ def _extract_tar(
                     mode="r|*"
                 ) as tf:
 
-                    tf.extractall(dest_dir)
+                    _safe_extract_tar(tf, dest_dir)
 
             else:
 
@@ -546,7 +574,7 @@ def _extract_tar(
                     mode="r:*"
                 ) as tf:
 
-                    tf.extractall(dest_dir)
+                    _safe_extract_tar(tf, dest_dir)
 
             progress.update(task, completed=True)
 
@@ -558,10 +586,75 @@ def _extract_tar(
 
         return False
 
+def _show_download_queue(tasks: List[DownloadTask]):
+
+    console.print(
+        Rule("[bold]Download Queue[/bold]")
+    )
+
+    table = Table(
+        box=box.ROUNDED,
+        header_style="bold cyan"
+    )
+
+    table.add_column("#", justify="center")
+    table.add_column("Tool")
+    table.add_column("Version")
+    table.add_column("Image")
+    table.add_column("Size", justify="right")
+    table.add_column("Destination")
+
+    for idx, task in enumerate(tasks, 1):
+
+        table.add_row(
+            str(idx),
+            task.tool,
+            task.version,
+            task.filename,
+            task.size,
+            str(task.destination)
+        )
+
+    console.print(table)
+
+    console.print(
+        f"\n[bold]{len(tasks)}[/bold] image(s) queued"
+    )
+
+def _show_download_report(tasks: List[DownloadTask]):
+
+    console.print(
+        Rule("[bold]Download Report[/bold]")
+    )
+
+    table = Table(
+        box=box.SIMPLE_HEAVY
+    )
+
+    table.add_column("Status")
+    table.add_column("Tool")
+    table.add_column("Image")
+    table.add_column("Detail")
+
+    for task in tasks:
+
+        status_icon = {
+            "DONE": "✔",
+            "SKIP": "⏭",
+            "FAILED": "❌"
+        }.get(task.status, "?")
+
+        table.add_row(
+            status_icon,
+            task.tool,
+            task.filename,
+            task.detail
+        )
+
+    console.print(table)
 
 def _download_and_extract(
-    url: str,
-    dest_dir: Path,
+    task: DownloadTask,
     no_cert: bool,
     creds: Optional[VaultCredentials] = None,
 ) -> bool:
@@ -579,31 +672,104 @@ def _download_and_extract(
     if creds:
         headers["Authorization"] = creds.auth_header()
 
+    tmp_tar = (
+        task.destination.parent /
+        f"{task.filename}.download"
+    )
+
     try:
 
         req = urllib.request.Request(
-            url,
+            task.url,
             headers=headers
         )
 
         with urllib.request.urlopen(
             req,
             context=ctx,
-            timeout=120
+            timeout=300
         ) as resp:
 
-            return _extract_tar(
-                resp,
-                dest_dir,
-                is_stream=True
+            total = int(
+                resp.headers.get(
+                    "Content-Length",
+                    0
+                )
             )
+
+            with Progress(
+                SpinnerColumn(),
+                TextColumn(
+                    "[progress.description]{task.description}"
+                ),
+                BarColumn(),
+                DownloadColumn(),
+                TransferSpeedColumn(),
+                TimeRemainingColumn(),
+                console=console,
+            ) as progress:
+
+                dl_task = progress.add_task(
+                    f"Downloading {task.filename}",
+                    total=total
+                )
+
+                with open(tmp_tar, "wb") as out:
+
+                    while True:
+
+                        chunk = resp.read(1024 * 1024)
+
+                        if not chunk:
+                            break
+
+                        out.write(chunk)
+
+                        progress.update(
+                            dl_task,
+                            advance=len(chunk)
+                        )
+
+        log_notice(
+            f"Download completed: "
+            f"{task.filename}"
+        )
+
+        if not _extract_tar(
+            str(tmp_tar),
+            task.destination.parent
+        ):
+
+            task.status = "FAILED"
+            task.detail = "Extraction failed"
+
+            return False
+
+        task.status = "DONE"
+        task.detail = "Downloaded & extracted"
+
+        return True
 
     except Exception as exc:
 
-        log_warn(f"Download failed: {exc}")
+        task.status = "FAILED"
+        task.detail = str(exc)
+
+        log_warn(
+            f"Download failed: {exc}"
+        )
 
         return False
 
+    finally:
+
+        try:
+
+            if tmp_tar.exists():
+                tmp_tar.unlink()
+
+        except Exception:
+            pass
 
 # ─────────────────────────────────────────────
 # Main Registry Handler
@@ -620,14 +786,6 @@ def handle_registry_tar(
         Rule("[bold]Host Machine Registry (Tar)[/bold]")
     )
 
-    #
-    # Updated local registry layout:
-    #
-    # hpcsuite_registry/
-    #   hostmachine_reg/
-    #     x86_64/
-    #       rocky8/
-    #
     registry_dir = (
         base_dir /
         "hpcsuite_registry" /
@@ -642,14 +800,6 @@ def handle_registry_tar(
         exist_ok=True
     )
 
-    #
-    # Updated remote vault layout:
-    #
-    # https://host/vault/OpenCHAI/
-    #   hpcsuite_registry/
-    #     x86_64/
-    #       rocky8/
-    #
     network_url = (
         f"{OPENCHAI_VAULT_URL}"
         f"hostmachine_reg/"
@@ -659,53 +809,49 @@ def handle_registry_tar(
 
     local_tars = _find_local_tars(version_dir)
 
-    openchai_version = "__SET_LATER__"
-
     # ─────────────────────────────────────────
-    # Case A – Local tar files exist
+    # LOCAL TAR FILES
     # ─────────────────────────────────────────
     if local_tars:
 
         log_info(
-            f"Found {len(local_tars)} local tar file(s) "
-            f"in {version_dir}"
+            f"Found {len(local_tars)} local tar file(s)"
         )
 
-        choices = (
-            [t.name for t in local_tars]
-            + ["⏭  Skip extraction"]
+        table = Table(
+            box=box.ROUNDED,
+            header_style="bold cyan"
         )
 
-        for i, c in enumerate(choices, 1):
+        table.add_column("#", justify="center")
+        table.add_column("Tarball")
+        table.add_column("Location")
 
-            console.print(
-                f"  [bold cyan]{i}[/bold cyan]  {c}"
+        for idx, tar in enumerate(local_tars, 1):
+
+            table.add_row(
+                str(idx),
+                tar.name,
+                str(tar.parent)
             )
 
-        while True:
+        console.print(table)
 
-            raw = Prompt.ask(
-                "Select option",
-                default="1"
-            )
+        raw = Prompt.ask(
+            "Select local tarball",
+            default="1"
+        )
 
-            try:
+        try:
+            idx = int(raw) - 1
+        except Exception:
+            log_warn("Invalid selection")
+            return "__SET_LATER__"
 
-                idx = int(raw) - 1
+        if idx < 0 or idx >= len(local_tars):
 
-                if 0 <= idx < len(choices):
-                    break
+            log_warn("Invalid selection")
 
-            except ValueError:
-                pass
-
-            console.print(
-                "[red]Invalid selection.[/red]"
-            )
-
-        selection = choices[idx]
-
-        if selection.startswith("⏭"):
             return "__SET_LATER__"
 
         chosen = local_tars[idx]
@@ -718,17 +864,18 @@ def handle_registry_tar(
             version_dir / openchai_version
         )
 
-        if extracted_dir.exists():
+        # Already extracted
+        if extracted_dir.exists() and any(extracted_dir.iterdir()):
 
             log_notice(
-                f"Registry already extracted: "
+                f"Already complete, skipping: "
                 f"{openchai_version}"
             )
 
             return openchai_version
 
         log_info(
-            f"Extracting {chosen.name} → {version_dir}"
+            f"Extracting {chosen.name}"
         )
 
         if _extract_tar(
@@ -741,35 +888,25 @@ def handle_registry_tar(
                 f"{openchai_version}"
             )
 
-        else:
+            return openchai_version
 
-            log_warn(
-                "Extraction failed. "
-                "Will need manual setup."
-            )
+        log_warn(
+            "Extraction failed."
+        )
 
-            openchai_version = "__SET_LATER__"
-
-        return openchai_version
+        return "__SET_LATER__"
 
     # ─────────────────────────────────────────
-    # Case B – No local tar files
+    # NO LOCAL TARS
     # ─────────────────────────────────────────
-
     log_warn(
         f"No tar files found in {version_dir}"
     )
 
     console.print("\n  [bold]Options:[/bold]")
-    console.print(
-        "  [cyan]1[/cyan]  Download from network"
-    )
-    console.print(
-        "  [cyan]2[/cyan]  Install manually later"
-    )
-    console.print(
-        "  [cyan]3[/cyan]  Skip"
-    )
+    console.print("  [cyan]1[/cyan]  Download from network")
+    console.print("  [cyan]2[/cyan]  Install manually later")
+    console.print("  [cyan]3[/cyan]  Skip")
 
     choice = Prompt.ask(
         "Select option",
@@ -780,18 +917,19 @@ def handle_registry_tar(
     if choice == "2":
 
         log_warn(
-            f"Place the registry tar later in:\n"
+            f"Place registry tar later in:\n"
             f"  → {version_dir}"
         )
 
         return "__SET_MANUALLY__"
 
     if choice == "3":
+
         return "__SET_LATER__"
 
-    #
-    # Download tar list from vault
-    #
+    # ─────────────────────────────────────────
+    # FETCH REMOTE FILES
+    # ─────────────────────────────────────────
     log_info(
         f"Fetching tar list from {network_url} …"
     )
@@ -810,36 +948,49 @@ def handle_registry_tar(
 
         return "__SET_LATER__"
 
-    console.print(
-        "\n  [bold]Available tarballs:[/bold]"
+    # ─────────────────────────────────────────
+    # REMOTE TABLE
+    # ─────────────────────────────────────────
+    table = Table(
+        title="Available OpenCHAI Packages",
+        box=box.ROUNDED,
+        header_style="bold cyan"
     )
 
-    for i, f in enumerate(remote_files, 1):
+    table.add_column("#", justify="center")
+    table.add_column("Package")
+    table.add_column("Version")
+    table.add_column("Tarball")
 
-        console.print(
-            f"  [cyan]{i}[/cyan]  {f}"
+    for idx, file in enumerate(remote_files, 1):
+
+        version = strip_tar_ext(file)
+
+        table.add_row(
+            str(idx),
+            "openchai",
+            version,
+            file
         )
 
-    while True:
+    console.print(table)
 
-        raw = Prompt.ask(
-            "Select file to download",
-            default="1"
-        )
+    raw = Prompt.ask(
+        "Select file to download",
+        default="1"
+    )
 
-        try:
+    try:
+        idx = int(raw) - 1
+    except Exception:
+        log_warn("Invalid selection")
+        return "__SET_LATER__"
 
-            idx = int(raw) - 1
+    if idx < 0 or idx >= len(remote_files):
 
-            if 0 <= idx < len(remote_files):
-                break
+        log_warn("Invalid selection")
 
-        except ValueError:
-            pass
-
-        console.print(
-            "[red]Invalid selection.[/red]"
-        )
+        return "__SET_LATER__"
 
     selected = remote_files[idx]
 
@@ -851,24 +1002,56 @@ def handle_registry_tar(
         version_dir / openchai_version
     )
 
-    if extracted_dir.exists():
+    # ─────────────────────────────────────────
+    # DOWNLOAD TASK
+    # ─────────────────────────────────────────
+    task = DownloadTask(
+        tool="openchai",
+        version=openchai_version,
+        filename=selected,
+        size="Unknown",
+        url=network_url + selected,
+        destination=extracted_dir,
+    )
+
+    # ─────────────────────────────────────────
+    # SHOW QUEUE
+    # ─────────────────────────────────────────
+    _show_download_queue([task])
+
+    if not Confirm.ask(
+        f"Proceed to download 1 package(s)?",
+        default=True
+    ):
+
+        return "__SET_LATER__"
+
+    # ─────────────────────────────────────────
+    # ALREADY EXISTS
+    # ─────────────────────────────────────────
+    if extracted_dir.exists() and any(extracted_dir.iterdir()):
+
+        task.status = "SKIP"
+        task.detail = "Already downloaded"
 
         log_notice(
-            f"Registry already present: "
+            f"Already complete, skipping: "
             f"{openchai_version}"
         )
 
+        _show_download_report([task])
+
         return openchai_version
 
-    dl_url = network_url + selected
-
-    log_info(
-        f"Downloading & extracting: {dl_url}"
+    # ─────────────────────────────────────────
+    # DOWNLOAD & EXTRACT
+    # ─────────────────────────────────────────
+    console.print(
+        Rule("[bold]Downloading[/bold]")
     )
 
     if _download_and_extract(
-        dl_url,
-        version_dir,
+        task,
         no_cert,
         creds
     ):
@@ -881,26 +1064,54 @@ def handle_registry_tar(
     else:
 
         log_warn(
-            "Download/extraction failed."
+            f"Failed downloading: "
+            f"{openchai_version}"
         )
 
-        openchai_version = "__SET_LATER__"
+        return "__SET_LATER__"
+
+    # ─────────────────────────────────────────
+    # REPORT
+    # ─────────────────────────────────────────
+    _show_download_report([task])
 
     return openchai_version
-
 
 # ─────────────────────────────────────────────
 # Section 6 – Registry version validation
 # ─────────────────────────────────────────────
-def validate_registry(base_dir: Path, os_version: str, openchai_version: str):
-    console.print(Rule("[bold]Registry Validation[/bold]"))
-    registry_path = base_dir / "hpcsuite_registry" / "hostmachine_reg" / os_version / openchai_version
-    if registry_path.exists():
-        log_notice(f"Version '{openchai_version}' found at: {registry_path}")
+def validate_registry(
+    base_dir: Path,
+    arch: str,
+    os_version: str,
+    openchai_version: str
+):
+
+    console.print(
+        Rule("[bold]Registry Validation[/bold]")
+    )
+
+    registry_path = (
+        base_dir
+        / "hpcsuite_registry"
+        / "hostmachine_reg"
+        / arch
+        / os_version
+        / openchai_version
+    )
+
+    if registry_path.exists() and any(registry_path.iterdir()):
+
+        log_notice(
+            f"Version '{openchai_version}' found at: "
+            f"{registry_path}"
+        )
+
     else:
+
         log_warn(
             f"Version directory not found: {registry_path}\n"
-            "  Update 'openchai_version' later in group_vars/all.yml"
+            "Update 'openchai_version' later in group_vars/all.yml"
         )
 
 
