@@ -1,0 +1,53 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+###############################################################################
+# PHASE 1 – PRE-REQUISITES
+###############################################################################
+# ---------------------------------------------------------------------------
+# Assign Interface IP Address
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../playbook_library/bootstrap/update_interface_ipaddr.yml
+  vars_prompt:
+    - name: iface_name
+      prompt: "Enter interface name (e.g. ens1f2, ib0)"
+      private: no
+      default: "ens1f2"
+
+    - name: iface_ipaddr
+      prompt: "Enter IP address"
+      private: no
+
+    - name: iface_prefix
+      prompt: "Enter network prefix (e.g. 16, 24)"
+      private: no
+      default: "16"
+
+    - name: iface_persistent
+      prompt: "Make IP persistent? (true/false)"
+      private: no
+      default: "true"
+
+- import_playbook: ../../playbook_library/network/network_manager.yml
+  vars:
+    nm_service_state: started   # Options: started, stopped, restarted
+    nm_service_enabled: true    # true or false
+    nm_install_if_missing: true  # true or false
