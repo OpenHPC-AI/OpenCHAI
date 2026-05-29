@@ -19,7 +19,7 @@ spack_hpc_apps_dir_path: "{{ hpcsuite_registry_mount_path }}/spack_hpc_applicati
 roles_parent_path: "{{ base_dir }}/automation/ansible/roles_library"
 inventory_file: "{{ base_dir }}/automation/ansible/inventory/inventory_def.txt"
 
-hpcsangrah_vault_network_url: "https://hpcsangrah-test.pune.cdac.in:8008/vault"
+hpcsangrah_vault_network_url: "https://hpcsangrah-test.pune.cdac.in/vault"
 
 # Ansible inventroy hostname
 primary_master_node_inventory_hostname: "{{ (lookup('pipe', 'grep ^hpc-master01 ' + inventory_file)).split()[0] }}"
@@ -47,13 +47,15 @@ secondary_mgmt_node_hostname: "{{ (lookup('pipe', 'grep ^hpc-mgmt02 ' + inventor
 
 ####################### Pre-Requisite Variables #################################
 # internet client variable
-nameservers:
-  - 10.208.192.11
-  - 10.208.192.12
+fallback_dns:
+  nameservers:
+    - 192.168.10.11
+    - 192.168.10.12
 
-search_domains:
-  - pune.cdac.in
-  - cdac.in
+  search_domains:
+    - server.cdac.in
+    - cdac.in
+
 
 chrony_allow_networks:
   - 10.10.0.0/16
