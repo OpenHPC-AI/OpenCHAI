@@ -1,0 +1,32 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+# =======================================================================================================
+# ==============================  PHASE 5: Provisioning: xCAT Installation   ============================
+# =======================================================================================================
+
+- import_playbook: ../../../automation/ansible/playbook_library/utility/utility_pcs_xcat_basic.yml
+  vars:
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: "{{ pcs_cluster_password }}"
+    pcs_cluster_name: "{{ pcs_cluster_name }}"
+    xcat_service_name: "xcat"
+    mounted_state: ephemeral
