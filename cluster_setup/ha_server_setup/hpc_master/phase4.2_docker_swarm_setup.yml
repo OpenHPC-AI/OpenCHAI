@@ -1,0 +1,36 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+# =======================================================================================================
+# ==============================  PHASE 4: Container Environement Setup  ================================
+# ======================================================================================================
+
+# ---------------------------------------------------------------------------
+# Docker Swarm Configuration
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../../automation/ansible/playbook_library/container/docker-swarm/swarm_ha_setup.yml
+  vars:
+    primary_manager: "{{ primary_swarm_manager }}"
+    swarm_managers:
+      - "{{ primary_swarm_manager }}"
+      - "{{ secondary_swarm_manager }}"
+      - "{{ tertiary_swarm_manager }}"
+    swarm_token_file: "/hpctool_stack/docker_swarm/manager_join_token.txt"
