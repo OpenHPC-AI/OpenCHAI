@@ -1,0 +1,65 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+###############################################################################
+# PHASE 2 – HIGH AVAILABILITY
+###############################################################################
+
+- import_playbook: ../../../automation/ansible/playbook_library/utility/update_kernel.yml
+
+- import_playbook: ../../../automation/ansible/playbook_library/utility/utility_pcs_drbd.yml
+  vars:
+    drbd_use_local_rpms: true
+    pcs_manage_services: true
+    allow_package_removal: false
+    pcs_reinstall_packages: false
+
+- import_playbook: ../../../automation/ansible/playbook_library/storage/storage_drbd_configure.yml
+  vars:
+    drbd_resource_name: rudra_drbd
+    drbd_force_md_create: true
+    drbd_nodes:
+      - name: "{{ primary_master_node_hostname }}"
+        ip: "{{ primary_master_node_ip }}"
+        device: /dev/drbd0
+      - name: "{{ secondary_master_node_hostname }}"
+        ip: "{{ secondary_master_node_ip }}"
+        device: /dev/drbd0
+
+- import_playbook: ../../../automation/ansible/playbook_library/utility/utility_pcs_basic.yml
+  vars:
+    vip_interface: ens1f2
+    vip_ip: 192.168.0.3
+    vip_prefix: ens1f2:0
+    vip_resource_name: vip_xCAt
+
+    drbd_resource_name: rudra_drbd
+    drbd_clone_name: drbdfs-clone
+    drbd_fs_resource_name: xcatfs
+    drbd_device: /dev/drbd0
+    drbd_mount_dir: /drbd
+    drbd_fstype: ext4
+
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: pcs@drbd@123
+    pcs_cluster_name: drbd_xCAT
+
+    mounted_state: ephemeral
