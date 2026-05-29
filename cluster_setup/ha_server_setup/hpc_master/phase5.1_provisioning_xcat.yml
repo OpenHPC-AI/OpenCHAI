@@ -1,0 +1,53 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+# =======================================================================================================
+# ==============================  PHASE 4: Provisioning: xCAT Installation   ============================
+# =======================================================================================================
+
+- import_playbook: ../../../automation/ansible/playbook_library/provision/xcat-container/xcat-management/configure_xcat_ha_cluster.yml
+  vars:
+    swarm_label_key: xcat_master
+    swarm_label_value: true
+    xCAT_reg_path: "{{ hpcsuite_registry_mount_path }}/container_img_reg/xCAT_reg"
+    xcat_version: "{{ xcat_version_tag }}"
+    xcat_image: "{{ xcat_docker_img }}"
+    xcat_container_img: "{{ xcat_container_img_tar }}"
+    xcat_reg_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/container_img_reg/{{ os_version }}/xCAT_reg/{{ xcat_version }}/{{ xcat_container_img }}"
+    xcat_provisioning_osimage_network_url: "{{ hpcsangrah_vault_network_url }}/OpenCHAI/hpcsuite_registry/provisioning_osimage/{{ os_version }}"
+    ssl_certificate_check: no
+    xcatdata_base_config: "xcatdata_{{ os_version }}.tgz"
+
+- import_playbook: ../../../automation/ansible/playbook_library/configure/xcat_docker_hostmachine_setup.yml
+  vars:
+    xcat_version: "{{ xcat_repo_version_tag }}"
+    xcat_baseos: "{{ rhel_linux_label }}"
+    xcat_reporoot: "https://xcat.org/files/xcat/repos/yum"
+    xcat_core_type: "{{ 'core-snap' if xcat_version == 'devel' else 'xcat-core' }}"
+    os_architecture: "{{ os_arch }}"
+
+- import_playbook: ../../../automation/ansible/playbook_library/utility/utility_pcs_xcat_basic.yml
+  vars:
+    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
+    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    pcs_cluster_password: "{{ pcs_cluster_password }}"
+    pcs_cluster_name: "{{ pcs_cluster_name }}"
+    xcat_service_name: "xcat"
+    mounted_state: ephemeral
