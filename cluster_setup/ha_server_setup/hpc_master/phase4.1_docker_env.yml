@@ -1,0 +1,42 @@
+---
+###############################################################################
+# Master HPC Provisioning – Enterprise Orchestrator
+###############################################################################
+
+- name: Master HPC Provisioning Playbook
+  hosts: hpc_master
+  gather_facts: no
+  ignore_unreachable: yes
+  become: true
+
+  vars_files:
+    - ../../../automation/ansible/group_vars/all.yml
+
+  tasks:
+    - name: Display starting banner
+      ansible.builtin.debug:
+        msg: "Starting HPC provisioning on {{ inventory_hostname }}"
+      tags: [always]
+
+# =======================================================================================================
+# ==============================  PHASE 3: Container Environement Setup  ================================
+# =======================================================================================================
+
+# ---------------------------------------------------------------------------
+# Docker Engine Installation
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../../automation/ansible/playbook_library/container/docker-engine/install_docker_latest.yml
+  vars:
+    docker_repo_url: "https://download.docker.com/linux/rhel/docker-ce.repo"
+    docker_remove_exiting: true # or false
+    docker_install: true # or false
+    at_install_allow_erasing: false # or true
+    docker_service_enable: yes # or no
+    docker_engine_rpm_stack_path: "{{ rpm_stack_path }}/docker_rpm"
+
+# ---------------------------------------------------------------------------
+# Docker Compose Bin Installation
+# ---------------------------------------------------------------------------
+
+- import_playbook: ../../../automation/ansible/playbook_library/container/docker-compose/install_docker_compose.yml
