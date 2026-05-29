@@ -13,19 +13,26 @@
   failed_when: client_iface.stdout == ""
 
 # -------------------------------------------------
-# Configure resolv.conf (initial)
+# Backup resolv.conf (initial)
 # -------------------------------------------------
-- name: Configure DNS resolution
-  ansible.builtin.copy:
-    dest: /etc/resolv.conf
-    content: |
-      nameserver {{ headnode_ip }}
-      options timeout:2 attempts:3
+- name: Check if resolv.conf exists
+  ansible.builtin.stat:
+    path: /etc/resolv.conf
+  register: resolv_conf
+
+- name: Move existing resolv.conf to backup
+  ansible.builtin.command:
+    cmd: mv /etc/resolv.conf /etc/resolv.conf.bak
+  when: resolv_conf.stat.exists
+  ignore_errors: true
+
+- name: Create empty resolv.conf file
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    state: touch
     owner: root
     group: root
-    mode: '0644'
-    backup: yes
-
+    mode: "0644"
 # -------------------------------------------------
 # Configure default route via headnode
 # -------------------------------------------------
