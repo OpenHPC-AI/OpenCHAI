@@ -63,6 +63,14 @@
         regexp: '^ONBOOT='
         line: "ONBOOT=yes"
         create: yes
+
+    - name: Set Interface Type
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^TYPE='
+        line: "TYPE={{ interface_type }}"
+        create: yes
+
   when: iface_persistent | bool
 
 # =====================================================
@@ -95,4 +103,12 @@
         regexp: '^ONBOOT='
         line: "ONBOOT=no"
         create: yes
+
+    - name: Set Interface Type
+      ansible.builtin.lineinfile:
+        path: "{{ iface_cfg }}"
+        regexp: '^TYPE='
+        line: "TYPE=InfiniBand"
+        create: yes
+
   when: not iface_persistent | bool
