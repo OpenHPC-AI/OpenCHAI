@@ -29,6 +29,6 @@
 
 - import_playbook: ../../../automation/ansible/playbook_library/network/network_manager.yml
   vars:
-    nm_service_state: started   # Options: started, stopped, restarted
+    nm_service_state: restarted   # Options: started, stopped, restarted
     nm_service_enabled: true    # true or false
     nm_install_if_missing: true  # true or false
