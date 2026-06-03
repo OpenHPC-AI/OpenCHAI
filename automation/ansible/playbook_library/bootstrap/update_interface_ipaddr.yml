@@ -27,5 +27,11 @@
       private: no
       default: "true"
 
+    - name: interface_type
+      prompt: "Set Interface Type? (Ethernet/InfiniBand)"
+      private: no
+      default: "Ethernet"
+
+
   roles:
     - "{{ roles_parent_path }}/bootstrap_lib/update_interface_ipaddr"
