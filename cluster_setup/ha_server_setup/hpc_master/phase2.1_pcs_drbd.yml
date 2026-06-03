@@ -36,11 +36,11 @@
     drbd_resource_name: rudra_drbd
     drbd_force_md_create: true
     drbd_nodes:
-      - name: "{{ primary_master_node_hostname }}"
-        ip: "{{ primary_master_node_ip }}"
+      - name: master01
+        ip: 192.168.10.1
         device: /dev/drbd0
-      - name: "{{ secondary_master_node_hostname }}"
-        ip: "{{ secondary_master_node_ip }}"
+      - name: master02
+        ip: 192.168.10.2
         device: /dev/drbd0
 
 - import_playbook: ../../../automation/ansible/playbook_library/utility/utility_pcs_basic.yml
@@ -48,7 +48,7 @@
     vip_interface: ens1f2
     vip_ip: 192.168.0.3
     vip_prefix: ens1f2:0
-    vip_resource_name: vip_xCAt
+    vip_resource_name: vip_xCAT
 
     drbd_resource_name: rudra_drbd
     drbd_clone_name: drbdfs-clone
@@ -57,8 +57,8 @@
     drbd_mount_dir: /drbd
     drbd_fstype: ext4
 
-    primary_master_node_hostname: "{{ pcs_primary_master_node_hostname }}"
-    secondary_master_node_hostname: "{{ pcs_secondary_master_node_hostname }}"
+    primary_master_node_hostname: master01
+    secondary_master_node_hostname: master02
     pcs_cluster_password: pcs@drbd@123
     pcs_cluster_name: drbd_xCAT
 
