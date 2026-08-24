@@ -10,33 +10,32 @@
 
 ## 1. Overall OpenCHAI Navigation Flow
 
-```mermaid
 flowchart TD
-    Start([User opens app URL]) --> Auth{JWT token in\nlocalStorage?}
-    Auth -->|No / invalid| Login[/Login Page/]
-    Auth -->|Yes, valid| Shell[Authenticated App Shell\nNavbar + Sidebar]
+    Start([User opens OpenCHAI URL]) --> Auth{JWT token available}
 
-    Login -->|Submit valid Linux/PAM creds| Shell
-    Login -->|Invalid creds| Login
+    Auth -->|No or invalid token| Login[Login Page]
+    Auth -->|Valid token| Shell[Authenticated App Shell]
 
-    Shell --> Dashboard[Dashboard '/dashboard']
-    Shell --> Releases[CHAI Releases Wizard '/releases']
-    Shell --> Inventory[Inventory '/inventory']
-    Shell --> ClusterGroup[Cluster Setup group]
-    Shell --> Nodes[Nodes '/nodes']
-    Shell --> Services[Services '/services']
-    Shell --> Playbooks[Playbooks '/playbooks']
-    Shell --> Logs[Deploy Logs '/logs' — opens NEW TAB]
-    Shell --> Backups[Backup History '/backups']
-    Shell --> Audit[Audit Log '/audit']
+    Login -->|Valid Linux PAM credentials| Shell
+    Login -->|Invalid credentials| Login
 
-    ClusterGroup --> CSWizard[Setup Wizard '/cluster']
-    ClusterGroup --> CSSingle[Single Server '/cluster/single']
-    ClusterGroup --> CSHA[HA Server Setup '/cluster/ha']
+    Shell --> Dashboard[Dashboard]
+    Shell --> Releases[CHAI Releases Wizard]
+    Shell --> Inventory[Inventory]
+    Shell --> ClusterGroup[Cluster Setup]
+    Shell --> Nodes[Nodes]
+    Shell --> Services[Services]
+    Shell --> Playbooks[Playbooks]
+    Shell --> Logs[Deploy Logs - opens new tab]
+    Shell --> Backups[Backup History]
+    Shell --> Audit[Audit Log]
 
-    Shell -->|Sign Out| Login
-    Shell -->|Session expires (401 anywhere)| Login
-```
+    ClusterGroup --> CSWizard[Setup Wizard]
+    ClusterGroup --> CSSingle[Single Server Setup]
+    ClusterGroup --> CSHA[HA Server Setup]
+
+    Shell -->|Sign out| Login
+    Shell -->|Session expires - 401 response| Login
 
 **Entry point:** any URL under the app domain. `ProtectedRoute` checks auth state; unauthenticated users are redirected to `/login` with the originally-requested path preserved so login returns them to where they meant to go. Any unknown path (`*`) silently redirects to `/dashboard` — there is no custom 404 page.
 
