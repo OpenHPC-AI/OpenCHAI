@@ -2,7 +2,7 @@
 
 **Purpose:** Baseline documentation of the OpenCHAI Cluster Manager GUI exactly as implemented. Nothing here is a recommendation for how the product *should* work — it is a record of how it *does* work today.
 
-**Source analyzed:** `chai_gui/` (the actively maintained frontend — React + Vite + Tailwind, Python/Flask-style backend). Two other snapshots exist in the repo (`chai_gui_new/`, `chai_gui_bk_24jul/`) but are older, less-modified copies of the same structure — they are not separately documented.
+**Source analyzed:** `chai_gui/` (the actively maintained frontend — React + Vite + Tailwind, Python/Flask-style backend).
 
 **Stack notes (context for the design team):** React Router SPA, single persistent Navbar + Sidebar shell wrapping all authenticated pages, JWT auth stored in `localStorage`, live job output via WebSocket, toast notifications (`react-hot-toast`) for async success/error feedback, `window.confirm()` native browser dialogs for destructive-action confirmation (not custom modals).
 
