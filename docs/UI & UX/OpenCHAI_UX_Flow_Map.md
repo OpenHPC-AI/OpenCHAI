@@ -10,6 +10,8 @@
 
 ## 1. Overall OpenCHAI Navigation Flow
 
+```mermaid
+
 flowchart TD
     Start([User opens OpenCHAI URL]) --> Auth{JWT token available}
 
@@ -36,6 +38,7 @@ flowchart TD
 
     Shell -->|Sign out| Login
     Shell -->|Session expires - 401 response| Login
+```
 
 **Entry point:** any URL under the app domain. `ProtectedRoute` checks auth state; unauthenticated users are redirected to `/login` with the originally-requested path preserved so login returns them to where they meant to go. Any unknown path (`*`) silently redirects to `/dashboard` — there is no custom 404 page.
 
