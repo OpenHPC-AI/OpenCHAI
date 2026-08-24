@@ -1,6 +1,6 @@
 # OpenCHAI Cluster Manager — Current‑State UX / Functional Flow Map
 
-**Purpose:** Baseline documentation of the OpenCHAI Cluster Manager GUI exactly as implemented, for the UI/UX design team to use as the starting point for redesign. Nothing here is a recommendation for how the product *should* work — it is a record of how it *does* work today.
+**Purpose:** Baseline documentation of the OpenCHAI Cluster Manager GUI exactly as implemented. Nothing here is a recommendation for how the product *should* work — it is a record of how it *does* work today.
 
 **Source analyzed:** `chai_gui/` (the actively maintained frontend — React + Vite + Tailwind, Python/Flask-style backend). Two other snapshots exist in the repo (`chai_gui_new/`, `chai_gui_bk_24jul/`) but are older, less-modified copies of the same structure — they are not separately documented.
 
